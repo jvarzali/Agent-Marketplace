@@ -1,15 +1,16 @@
 "use client";
 
+import { Bot, House, Inbox, ScrollText, Snowflake } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 
 const NAV = [
-  { href: "/", label: "Overview" },
-  { href: "/approvals", label: "Approvals" },
-  { href: "/agents", label: "Agents" },
-  { href: "/activity", label: "Activity" },
+  { href: "/", label: "Overview", Icon: House },
+  { href: "/approvals", label: "Approvals", Icon: Inbox },
+  { href: "/agents", label: "Agents", Icon: Bot },
+  { href: "/activity", label: "Activity", Icon: ScrollText },
 ] as const;
 
 function isActive(path: string, href: string) {
@@ -28,58 +29,56 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="shell">
-      <aside className="rail" aria-label="Main">
+      <header className="bar">
         <Link href="/" className="brand">
           <span className="brand__mark" aria-hidden="true" />
           AgentMart
         </Link>
 
-        <nav className="rail__nav">
+        <nav className="bar__nav" aria-label="Main">
           {NAV.map((n) => (
             <Link key={n.href} href={n.href} className="navlink" aria-current={isActive(path, n.href) ? "page" : undefined}>
+              <n.Icon size={17} aria-hidden="true" />
               {n.label}
               {n.href === "/approvals" && pending > 0 && <span className="count">{pending}</span>}
             </Link>
           ))}
         </nav>
 
-        <div className="rail__foot">
-          <button className="btn btn--stop btn--block" onClick={store.freezeAll} disabled={activeCount === 0}>
-            {activeCount === 0 ? "All agents frozen" : "Freeze all agents"}
-          </button>
-          <p className="rail__hint">
-            {activeCount === 0
-              ? "Nothing can spend. Unfreeze agents one at a time from Agents."
-              : `Stops ${activeCount} ${activeCount === 1 ? "agent" : "agents"} and cancels every card right away.`}
-          </p>
-          <div className="rail__user">
-            <span>{store.userEmail}</span>
+        <div className="bar__end">
+          <span className="bar__user">
+            {store.userEmail}
             {confirmReset ? (
-              <span className="rail__reset">
-                <button className="linkbtn" onClick={() => { store.resetDemo(); setConfirmReset(false); }}>
+              <>
+                <button
+                  className="linkbtn"
+                  onClick={() => {
+                    store.resetDemo();
+                    setConfirmReset(false);
+                  }}
+                >
                   Reset
                 </button>
                 <button className="linkbtn" onClick={() => setConfirmReset(false)}>
                   Keep
                 </button>
-              </span>
+              </>
             ) : (
               <button className="linkbtn" onClick={() => setConfirmReset(true)}>
-                Reset demo data
+                Reset demo
               </button>
             )}
-          </div>
+          </span>
+          <button
+            className="btn btn--stop btn--sm"
+            onClick={store.freezeAll}
+            disabled={activeCount === 0}
+            title={activeCount ? `Stops ${activeCount} agents and cancels every card right away` : undefined}
+          >
+            <Snowflake size={16} aria-hidden="true" />
+            {activeCount === 0 ? "All frozen" : "Freeze all"}
+          </button>
         </div>
-      </aside>
-
-      <header className="topbar">
-        <Link href="/" className="brand">
-          <span className="brand__mark" aria-hidden="true" />
-          AgentMart
-        </Link>
-        <button className="btn btn--stop btn--sm" onClick={store.freezeAll} disabled={activeCount === 0}>
-          {activeCount === 0 ? "All frozen" : "Freeze all"}
-        </button>
       </header>
 
       <main className="main" id="main">
@@ -89,8 +88,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <nav className="tabbar" aria-label="Main">
         {NAV.map((n) => (
           <Link key={n.href} href={n.href} className="tab" aria-current={isActive(path, n.href) ? "page" : undefined}>
+            <span className="tab__icon">
+              <n.Icon size={20} aria-hidden="true" />
+              {n.href === "/approvals" && pending > 0 && <span className="count count--dot">{pending}</span>}
+            </span>
             {n.label}
-            {n.href === "/approvals" && pending > 0 && <span className="count">{pending}</span>}
           </Link>
         ))}
       </nav>

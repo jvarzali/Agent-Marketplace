@@ -94,50 +94,64 @@ function hours(range: string): string {
   return `${fmt(a)} to ${fmt(b)}`;
 }
 
-/** Plain-English description of a policy, one sentence per rule group. */
-export function describePolicy(p: Policy): string[] {
-  const out: string[] = [];
+export interface PolicyLine {
+  label: string;
+  text: string;
+}
 
-  out.push(
-    p.merchants.mode === "allowlist"
-      ? p.merchants.allow_domains.length
-        ? `Shops only at ${list(p.merchants.allow_domains)}.`
-        : "Can't shop anywhere yet. Add at least one store."
-      : "Can shop at any store, except gambling, money transfer and crypto merchants.",
-  );
+const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+
+/** Plain-English description of a policy, one labeled line per rule group. */
+export function describePolicy(p: Policy): PolicyLine[] {
+  const out: PolicyLine[] = [];
+
+  out.push({
+    label: "Stores",
+    text:
+      p.merchants.mode === "allowlist"
+        ? p.merchants.allow_domains.length
+          ? `Only ${list(p.merchants.allow_domains)}.`
+          : "None yet. Add at least one store."
+        : "Any store, except gambling, money transfer and crypto merchants.",
+  });
 
   const allowed = p.categories.allow.map((c) => categoryLabel[c].toLowerCase());
-  out.push(allowed.length ? `Buys ${list(allowed)}.` : "Can buy any kind of item that isn't blocked.");
+  out.push({ label: "Buys", text: allowed.length ? `${cap(list(allowed))}.` : "Anything that isn't blocked." });
 
   const blocked = Array.from(new Set([...ALWAYS_BLOCKED, ...p.categories.deny])).map((c) =>
     categoryLabel[c].toLowerCase(),
   );
-  out.push(`Never buys ${list(blocked)}.`);
+  out.push({ label: "Never buys", text: `${cap(list(blocked))}.` });
 
   const l = p.limits;
-  out.push(
-    `Spends up to ${money(l.per_order_total)} an order including tax and shipping, ${money(l.per_day)} a day, ${money(
+  out.push({
+    label: "Spending",
+    text: `${money(l.per_order_total)} an order with tax and shipping. ${money(l.per_day)} a day, ${money(
       l.per_week,
-    )} a week and ${money(l.per_month)} a month.`,
-  );
-  out.push(
-    `At most ${l.max_orders_per_day} ${l.max_orders_per_day === 1 ? "order" : "orders"} a day and ${l.max_quantity_per_item} of any one item.`,
-  );
+    )} a week, ${money(l.per_month)} a month.`,
+  });
+  out.push({
+    label: "Orders",
+    text: `Up to ${l.max_orders_per_day} a day, ${l.max_quantity_per_item} of any one item.`,
+  });
 
+  let asks: string;
   if (p.approval.always) {
-    out.push("Asks you before every purchase.");
+    asks = "Before every purchase.";
   } else {
-    const asks: string[] = [];
-    if (p.approval.require_if_total_over !== null) asks.push(`an order is over ${money(p.approval.require_if_total_over)}`);
-    if (p.approval.require_for_new_merchant) asks.push("it's a store it hasn't used before");
-    if (p.approval.require_if_category_uncertain) asks.push("it isn't sure what an item is");
-    out.push(asks.length ? `Asks you when ${list(asks)}.` : "Buys without asking when every rule passes.");
+    const when: string[] = [];
+    if (p.approval.require_if_total_over !== null) when.push(`an order is over ${money(p.approval.require_if_total_over)}`);
+    if (p.approval.require_for_new_merchant) when.push("it's a new store");
+    if (p.approval.require_if_category_uncertain) when.push("it isn't sure what an item is");
+    asks = when.length ? `When ${list(when)}.` : "Never, when every rule passes.";
   }
+  out.push({ label: "Asks you", text: asks });
 
   const tzCity = p.schedule.timezone.split("/").pop()?.replace(/_/g, " ") ?? p.schedule.timezone;
-  out.push(
-    p.schedule.allowed_hours ? `Only shops ${hours(p.schedule.allowed_hours)}, ${tzCity} time.` : "Can shop at any hour.",
-  );
+  out.push({
+    label: "Hours",
+    text: p.schedule.allowed_hours ? `${cap(hours(p.schedule.allowed_hours))}, ${tzCity} time.` : "Any time.",
+  });
 
   return out;
 }

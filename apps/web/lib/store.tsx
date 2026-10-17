@@ -136,6 +136,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       approve: (requestId) => {
         const now = Date.now();
         const last4 = String(1000 + Math.floor(Math.random() * 9000));
+        const target = data.requests.find((x) => x.id === requestId);
+        const owner = target && data.agents.find((a) => a.id === target.agentId);
+        if (target?.status === "pending_approval" && owner?.status === "active") {
+          notify(`Approved ${money(target.total)} at ${target.merchantName}. Card ending ${last4} issued for this cart only.`);
+        }
         update((s) => {
           const r = s.requests.find((x) => x.id === requestId);
           const agent = r && s.agents.find((a) => a.id === r.agentId);
@@ -167,6 +172,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       },
 
       deny: (requestId) => {
+        const target = data.requests.find((x) => x.id === requestId);
+        if (target?.status === "pending_approval") {
+          notify(`Denied ${money(target.total)} at ${target.merchantName}. The agent was told no.`);
+        }
         update((s) => {
           const r = s.requests.find((x) => x.id === requestId);
           if (!r || r.status !== "pending_approval") return s;

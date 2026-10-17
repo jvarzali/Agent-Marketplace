@@ -1,16 +1,33 @@
 "use client";
 
+import { Ban, Check, CircleCheck, Clock, Copy, Snowflake } from "lucide-react";
 import { useState } from "react";
 import { money, relTime } from "@/lib/format";
 import { useNow } from "@/lib/store";
 import type { Agent, CheckOutcome, Tone } from "@/lib/types";
 
-export function Pill({ tone, children }: { tone: Tone; children: React.ReactNode }) {
-  return <span className={`pill pill--${tone}`}>{children}</span>;
+// Each tone has its own shape too, so status never depends on color alone.
+const TONE_ICON = { good: CircleCheck, hold: Clock, stop: Ban, info: null } as const;
+
+export function Pill({ tone, icon, children }: { tone: Tone; icon?: React.ReactNode; children: React.ReactNode }) {
+  const Icon = TONE_ICON[tone];
+  return (
+    <span className={`pill pill--${tone}`}>
+      {icon ?? (Icon && <Icon size={12} strokeWidth={2.5} aria-hidden="true" />)}
+      {children}
+    </span>
+  );
 }
 
 export function AgentStatus({ agent }: { agent: Agent }) {
-  return agent.status === "frozen" ? <Pill tone="stop">Frozen</Pill> : <Pill tone="good">Active</Pill>;
+  if (agent.status === "frozen") {
+    return (
+      <Pill tone="stop" icon={<Snowflake size={12} strokeWidth={2.5} aria-hidden="true" />}>
+        Frozen
+      </Pill>
+    );
+  }
+  return <Pill tone="good">Active</Pill>;
 }
 
 export function Ago({ ts }: { ts: number }) {
@@ -22,13 +39,23 @@ export function Ago({ ts }: { ts: number }) {
   );
 }
 
-export function Meter({ label, used, limit }: { label: string; used: number; limit: number }) {
+export function Meter({
+  label,
+  used,
+  limit,
+  inline = false,
+}: {
+  label?: string;
+  used: number;
+  limit: number;
+  inline?: boolean;
+}) {
   const pct = limit > 0 ? Math.min(100, (used / limit) * 100) : 100;
   const tone = pct >= 90 ? "stop" : pct >= 70 ? "hold" : "good";
   return (
-    <div className="meter">
+    <div className={inline ? "meter meter--inline" : "meter"}>
       <div className="meter__row">
-        <span>{label}</span>
+        {label && <span>{label}</span>}
         <span className="num">
           {money(used)} <span className="muted">of {money(limit)}</span>
         </span>
@@ -36,7 +63,7 @@ export function Meter({ label, used, limit }: { label: string; used: number; lim
       <div
         className="meter__track"
         role="meter"
-        aria-label={label}
+        aria-label={label ?? "Spent of limit"}
         aria-valuemin={0}
         aria-valuemax={limit}
         aria-valuenow={used}
@@ -44,6 +71,30 @@ export function Meter({ label, used, limit }: { label: string; used: number; lim
         <div className={`meter__fill meter__fill--${tone}`} style={{ width: `${pct}%` }} />
       </div>
     </div>
+  );
+}
+
+/** Ledger section heading: a heavy rule, the title, and an optional aside on the right. */
+export function LedgerHead({ title, aside, id }: { title: string; aside?: React.ReactNode; id?: string }) {
+  return (
+    <div className="ledger__head">
+      <h2 id={id}>{title}</h2>
+      {aside && <div className="ledger__aside">{aside}</div>}
+    </div>
+  );
+}
+
+/** Label / value rows, like the lines of a statement. */
+export function Facts({ rows }: { rows: { label: string; text: React.ReactNode }[] }) {
+  return (
+    <dl className="facts">
+      {rows.map((r) => (
+        <div key={r.label} className="facts__row">
+          <dt>{r.label}</dt>
+          <dd>{r.text}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
@@ -93,6 +144,7 @@ export function CopyField({ value, label, multiline = false }: { value: string; 
       <div className="copy__head">
         <span>{label}</span>
         <button className="btn btn--sm" onClick={copy}>
+          {copied ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
           {copied ? "Copied" : "Copy"}
         </button>
       </div>

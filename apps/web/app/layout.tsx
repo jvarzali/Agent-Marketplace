@@ -8,7 +8,7 @@ const sans = Schibsted_Grotesk({ subsets: ["latin"], variable: "--font-sans", di
 const mono = Spline_Sans_Mono({ subsets: ["latin"], variable: "--font-receipt", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "AgentMart",
+  title: { default: "AgentMart", template: "%s | AgentMart" },
   description: "Set what your AI agents can buy, approve purchases, and freeze spending instantly.",
 };
 

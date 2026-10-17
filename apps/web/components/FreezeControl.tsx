@@ -1,5 +1,6 @@
 "use client";
 
+import { Play, Snowflake } from "lucide-react";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import type { Agent } from "@/lib/types";
@@ -11,12 +12,13 @@ import type { Agent } from "@/lib/types";
 export function FreezeControl({ agent, large = false }: { agent: Agent; large?: boolean }) {
   const store = useStore();
   const [confirming, setConfirming] = useState(false);
-  const size = large ? " btn--lg" : "";
+  const size = large ? " btn--lg" : " btn--sm";
 
   if (agent.status === "active") {
     return (
-      <button className={`btn btn--stop${size}`} onClick={() => store.freeze(agent.id)}>
-        Freeze {large ? agent.name : ""}
+      <button className={`btn${large ? " btn--stop" : " btn--stop-quiet"}${size}`} onClick={() => store.freeze(agent.id)}>
+        <Snowflake size={large ? 20 : 16} aria-hidden="true" />
+        Freeze{large ? ` ${agent.name}` : ""}
       </button>
     );
   }
@@ -43,6 +45,7 @@ export function FreezeControl({ agent, large = false }: { agent: Agent; large?: 
 
   return (
     <button className={`btn${size}`} onClick={() => setConfirming(true)}>
+      <Play size={large ? 18 : 14} aria-hidden="true" />
       Unfreeze{large ? ` ${agent.name}` : ""}
     </button>
   );
