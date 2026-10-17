@@ -27,11 +27,11 @@
   --stop-ink: #ffffff;
   --stop-tint: #fdeaea;
 
-  --side: #000000;
-  --side-2: #141414;
-  --side-ink: #ffffff;
-  --side-ink-2: #a3a3a3;
-  --side-line: #262626;
+  --side: #ffffff;
+  --side-2: #f0f0f0;
+  --side-ink: #000000;
+  --side-ink-2: #5c5c5c;
+  --side-line: #e3e3e3;
 
   --slip: #fffdf8;
   --slip-stub: #f5f1e6;
@@ -90,6 +90,8 @@
 
     --side: #000000;
     --side-2: #161616;
+    --side-ink: #ffffff;
+    --side-ink-2: #a3a3a3;
     --side-line: #1f1f1f;
 
     color-scheme: dark;
@@ -121,6 +123,8 @@
 
   --side: #000000;
   --side-2: #161616;
+  --side-ink: #ffffff;
+  --side-ink-2: #a3a3a3;
   --side-line: #1f1f1f;
 
   color-scheme: dark;
@@ -267,6 +271,7 @@ svg {
   flex-direction: column;
   width: var(--side-w);
   padding-top: env(safe-area-inset-top, 0px);
+  border-right: 1px solid var(--side-line);
   background: var(--side);
   color: var(--side-ink);
   overflow-y: auto;
@@ -391,10 +396,10 @@ svg {
 .side__dot {
   width: 8px;
   height: 8px;
-  background: #4ade80;
+  background: var(--guard);
 }
 .side__dot--frozen {
-  background: #f87171;
+  background: var(--stop);
 }
 
 .side__nav--account {
