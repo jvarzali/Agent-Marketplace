@@ -7,8 +7,18 @@ import { Ago, Kpi, LedgerHead, Pill } from "@/components/bits";
 import { SlipQueue } from "@/components/SlipQueue";
 import { auditLabel, auditTone, money, sumLimits } from "@/lib/format";
 import { useStore } from "@/lib/store";
+import type { Tone } from "@/lib/types";
 
 const count = (n: number) => Math.round(n).toString();
+
+// Budget tiles stay neutral until spending passes 80% of the budget, then amber, then red once over it.
+// No limit (null) means there's nothing to warn about.
+function budgetTone(used: number, limit: number | null): Tone | undefined {
+  if (limit === null) return undefined;
+  if (limit <= 0) return used > 0 ? "stop" : undefined;
+  const share = used / limit;
+  return share > 1 ? "stop" : share > 0.8 ? "hold" : undefined;
+}
 
 export function OverviewView() {
   const store = useStore();
@@ -41,6 +51,7 @@ export function OverviewView() {
       <dl className="kpis">
         <Kpi
           label="Waiting on you"
+          href="/approvals"
           value={waitingTotal}
           tone={pending.length ? "hold" : undefined}
           note={
@@ -55,21 +66,26 @@ export function OverviewView() {
         />
         <Kpi
           label="Spent this week"
+          href="/agents"
           value={weekTotal}
+          tone={budgetTone(weekTotal, weekLimit)}
           note={budgetNote(weekTotal, weekLimit, "weekly")}
           meter={weekLimit === null ? undefined : { used: weekTotal, limit: weekLimit }}
         />
         <Kpi
           label="Spent this month"
+          href="/activity?type=money"
           value={monthTotal}
+          tone={budgetTone(monthTotal, monthLimit)}
           note={budgetNote(monthTotal, monthLimit, "monthly")}
           meter={monthLimit === null ? undefined : { used: monthTotal, limit: monthLimit }}
         />
         <Kpi
           label="Agents active"
+          href="/agents"
           value={active}
           format={count}
-          tone={active < agents.length ? "stop" : "good"}
+          segments={agents.map((a) => (a.status === "active" ? "good" : "stop"))}
           note={
             active < agents.length
               ? `${agents.length - active} of ${agents.length} frozen`

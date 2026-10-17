@@ -13,7 +13,6 @@ export function LoginView({ callbackUrl, sent, error }: { callbackUrl: string; s
     <div className="login">
       <div className="login__card">
         <p className="brand">
-          <span className="brand__mark" aria-hidden="true" />
           AgentMart
         </p>
         {sent ? (

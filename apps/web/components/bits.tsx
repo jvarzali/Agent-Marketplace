@@ -1,6 +1,7 @@
 "use client";
 
-import { Ban, Check, CircleCheck, Clock, Copy, Snowflake } from "lucide-react";
+import { ArrowUpRight, Ban, Check, CircleCheck, Clock, Copy, Snowflake } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { money, relTime } from "@/lib/format";
 import { useNow } from "@/lib/store";
@@ -45,6 +46,7 @@ export function Meter({
   limit,
   inline = false,
   bare = false,
+  tone: toneOverride,
 }: {
   label?: string;
   used: number;
@@ -53,9 +55,11 @@ export function Meter({
   inline?: boolean;
   /** Bar and percentage only, for tables that already show the amounts. */
   bare?: boolean;
+  /** Fixed fill color instead of the usual green / amber / red by how full it is. */
+  tone?: Tone | "neutral";
 }) {
   const pct = limit === null ? 0 : limit > 0 ? Math.min(100, (used / limit) * 100) : 100;
-  const tone = pct >= 90 ? "stop" : pct >= 70 ? "hold" : "good";
+  const tone = toneOverride ?? (pct >= 90 ? "stop" : pct >= 70 ? "hold" : "good");
   if (limit === null) {
     return (
       <div className={`meter${inline ? " meter--inline" : ""}${bare ? " meter--bare" : ""}`}>
@@ -121,7 +125,11 @@ export function CountUp({ value, format = money }: { value: number; format?: (n:
   return <span className="num">{format(shown)}</span>;
 }
 
-/** One figure in the KPI strip: label, big number, a line of context, and an optional bar. */
+/**
+ * One figure in the KPI strip: label, big number, a line of context, and an optional bar.
+ * With `href` the label becomes a link stretched over the whole tile. `tone` colors the rule
+ * on top (neutral when unset) and the bar; `segments` splits the rule into one block per item.
+ */
 export function Kpi({
   label,
   value,
@@ -129,6 +137,8 @@ export function Kpi({
   note,
   tone,
   meter,
+  href,
+  segments,
 }: {
   label: string;
   value: number;
@@ -136,17 +146,36 @@ export function Kpi({
   note: React.ReactNode;
   tone?: Tone;
   meter?: { used: number; limit: number };
+  href?: string;
+  segments?: Tone[];
 }) {
+  const cls = `kpi${tone ? ` kpi--${tone}` : ""}${href ? " kpi--link" : ""}${segments ? " kpi--segmented" : ""}`;
   return (
-    <div className={`kpi${tone ? ` kpi--${tone}` : ""}`}>
-      <dt className="kpi__label">{label}</dt>
+    <div className={cls}>
+      <dt className="kpi__label">
+        {segments && (
+          <span className="kpi__segs" aria-hidden="true">
+            {segments.map((t, i) => (
+              <span key={i} className={`kpi__seg kpi__seg--${t}`} />
+            ))}
+          </span>
+        )}
+        {href ? (
+          <Link href={href} className="kpi__link">
+            {label}
+            <ArrowUpRight size={16} className="kpi__go" aria-hidden="true" />
+          </Link>
+        ) : (
+          label
+        )}
+      </dt>
       <dd className="kpi__value">
         <CountUp value={value} format={format} />
       </dd>
       <dd className="kpi__note">{note}</dd>
       {meter && (
         <dd className="kpi__meter">
-          <Meter used={meter.used} limit={meter.limit} bare />
+          <Meter used={meter.used} limit={meter.limit} bare tone={tone ?? "neutral"} />
         </dd>
       )}
     </div>
