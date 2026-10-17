@@ -22,7 +22,8 @@ interface Store extends Snapshot {
   pending: PurchaseRequest[];
   /** Purchases the rules allowed outright, with no approval step. Newest first. */
   autoBuys: PurchaseRequest[];
-  markAutoSeen: () => Promise<void>;
+  /** Marks automated purchases as checked now; returns the previous mark. */
+  markAutoSeen: () => number;
   approve: (requestId: string) => Promise<void>;
   deny: (requestId: string) => Promise<void>;
   /** Approve a purchase that was denied, by you or by the rules. See overrideBlock for when it isn't allowed. */
@@ -112,10 +113,13 @@ export function StoreProvider({ initial, children }: { initial: Snapshot; childr
       pending: data.requests.filter((r) => r.status === "pending_approval").sort((a, b) => b.createdAt - a.createdAt),
       autoBuys: data.requests.filter((r) => r.autoApproved && BOUGHT.has(r.status)).sort((a, b) => b.createdAt - a.createdAt),
 
-      markAutoSeen: async () => {
-        // Clear the badge right away; the saved time comes back with the next snapshot.
+      markAutoSeen: () => {
+        // Saved on the account, so "since you last checked" matches on every device. Clear the
+        // badge right away; the stored time comes back with the next snapshot.
+        const before = data.autoSeenAt;
         setData((s) => ({ ...s, autoSeenAt: Date.now() }));
-        await call(() => actions.markAutoPurchasesSeen(), true);
+        void call(() => actions.markAutoPurchasesSeen(), true);
+        return before;
       },
 
       approve: async (requestId) => {
