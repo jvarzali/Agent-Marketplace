@@ -1,6 +1,10 @@
 node_modules/
-.next/
+dist/
 out/
-*.tsbuildinfo
 .env
 .env.local
+generated/
+*.tsbuildinfo
+.pgdata/
+coverage/
+.next/
