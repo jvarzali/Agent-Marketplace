@@ -4,12 +4,14 @@ import Link from "next/link";
 import { Facts } from "@/components/bits";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { categoryLabel } from "@/lib/format";
-import { ALWAYS_BLOCKED, SELECTABLE_CATEGORIES, TIMEZONES, describePolicy, policyWarnings } from "@/lib/policy";
+import { categoryName } from "@/lib/format";
+import { ALWAYS_BLOCKED, BLOCKED_BY_DEFAULT, SELECTABLE_CATEGORIES, TIMEZONES, describePolicy, policyWarnings } from "@/lib/policy";
 import { useStore } from "@/lib/store";
 import type { Category, Policy } from "@/lib/types";
 
-const LIMIT_FIELDS: { key: keyof Policy["limits"]; label: string; money: boolean }[] = [
+type LimitKey = "per_order_total" | "per_day" | "per_week" | "per_month" | "max_orders_per_day" | "max_quantity_per_item";
+
+const LIMIT_FIELDS: { key: LimitKey; label: string; money: boolean }[] = [
   { key: "per_order_total", label: "Per order", money: true },
   { key: "per_day", label: "Per day", money: true },
   { key: "per_week", label: "Per week", money: true },
@@ -24,6 +26,7 @@ export function PolicyEditorView({ id }: { id: string }) {
   const agent = store.agent(id);
   const [p, setP] = useState<Policy | null>(agent ? structuredClone(agent.policy) : null);
   const [domainDraft, setDomainDraft] = useState("");
+  const [saving, setSaving] = useState(false);
 
   if (!agent || !p) {
     return (
@@ -87,10 +90,12 @@ export function PolicyEditorView({ id }: { id: string }) {
 
       <form
         className="editor"
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
-          store.savePolicy(agent.id, p);
-          router.push(`/agents/${agent.id}`);
+          setSaving(true);
+          const ok = await store.savePolicy(agent.id, p);
+          setSaving(false);
+          if (ok) router.push(`/agents/${agent.id}`);
         }}
       >
         <div className="editor__form">
@@ -110,8 +115,8 @@ export function PolicyEditorView({ id }: { id: string }) {
                 <input
                   type="radio"
                   name="mode"
-                  checked={p.merchants.mode === "any"}
-                  onChange={() => set((x) => void (x.merchants.mode = "any"))}
+                  checked={p.merchants.mode === "blocklist"}
+                  onChange={() => set((x) => void (x.merchants.mode = "blocklist"))}
                 />
                 Any store
               </label>
@@ -156,7 +161,24 @@ export function PolicyEditorView({ id }: { id: string }) {
                 </div>
               </>
             )}
-            <p className="fine">Gambling, money transfer and crypto merchants are always blocked.</p>
+            {p.merchants.mode === "blocklist" && p.merchants.deny_domains.length > 0 && (
+              <ul className="chips" aria-label="Blocked stores">
+                {p.merchants.deny_domains.map((d) => (
+                  <li key={d} className="chip">
+                    Not {d}
+                    <button
+                      type="button"
+                      className="chip__x"
+                      aria-label={`Stop blocking ${d}`}
+                      onClick={() => set((x) => void (x.merchants.deny_domains = x.merchants.deny_domains.filter((v) => v !== d)))}
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="fine">Gambling, money transfer and cash-like merchants are always blocked.</p>
           </fieldset>
 
           <fieldset className="fs">
@@ -166,10 +188,14 @@ export function PolicyEditorView({ id }: { id: string }) {
               {SELECTABLE_CATEGORIES.map((c) => {
                 const allowed = p.categories.allow.includes(c);
                 const denied = p.categories.deny.includes(c);
+                const byDefault = BLOCKED_BY_DEFAULT.includes(c) && !allowed;
                 return (
                   <div key={c} className="cat">
-                    <span className="cat__name">{categoryLabel[c]}</span>
-                    <div className="seg" role="group" aria-label={categoryLabel[c]}>
+                    <span className="cat__name">
+                      {categoryName(c)}
+                      {byDefault && <span className="fine block">Blocked unless you allow it</span>}
+                    </span>
+                    <div className="seg" role="group" aria-label={categoryName(c)}>
                       <button
                         type="button"
                         className="seg__btn"
@@ -192,7 +218,7 @@ export function PolicyEditorView({ id }: { id: string }) {
               })}
               {ALWAYS_BLOCKED.map((c) => (
                 <div key={c} className="cat cat--locked">
-                  <span className="cat__name">{categoryLabel[c]}</span>
+                  <span className="cat__name">{categoryName(c)}</span>
                   <span className="fine">Always blocked</span>
                 </div>
               ))}
@@ -212,14 +238,17 @@ export function PolicyEditorView({ id }: { id: string }) {
                       inputMode="decimal"
                       min={0}
                       step={f.money ? 1 : 1}
-                      value={p.limits[f.key]}
-                      onChange={(e) => set((x) => void (x.limits[f.key] = Number(e.target.value)))}
+                      placeholder="No limit"
+                      value={p.limits[f.key] ?? ""}
+                      onChange={(e) =>
+                        set((x) => void (x.limits[f.key] = e.target.value === "" ? null : Number(e.target.value)))
+                      }
                     />
                   </span>
                 </label>
               ))}
             </div>
-            <p className="fine">Order limits include tax and shipping. Budgets count requests still waiting on you, so an agent can&rsquo;t stack requests past them.</p>
+            <p className="fine">Leave a box empty for no limit. Order limits include tax and shipping. Budgets count requests still waiting on you, so an agent can&rsquo;t stack requests past them.</p>
           </fieldset>
 
           <fieldset className="fs">
@@ -314,7 +343,7 @@ export function PolicyEditorView({ id }: { id: string }) {
                     value={p.schedule.timezone}
                     onChange={(e) => set((x) => void (x.schedule.timezone = e.target.value))}
                   >
-                    {TIMEZONES.map((tz) => (
+                    {(TIMEZONES.includes(p.schedule.timezone) ? TIMEZONES : [p.schedule.timezone, ...TIMEZONES]).map((tz) => (
                       <option key={tz} value={tz}>
                         {tz.replace(/_/g, " ")}
                       </option>
@@ -341,8 +370,8 @@ export function PolicyEditorView({ id }: { id: string }) {
               <Link href={`/agents/${agent.id}`} className="btn">
                 Cancel
               </Link>
-              <button type="submit" className="btn btn--primary" disabled={!dirty}>
-                Save as version {agent.policy.version + 1}
+              <button type="submit" className="btn btn--primary" disabled={!dirty || saving}>
+                {saving ? "Saving…" : `Save as version ${agent.policy.version + 1}`}
               </button>
             </div>
           </div>

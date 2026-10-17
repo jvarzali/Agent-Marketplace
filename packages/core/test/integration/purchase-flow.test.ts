@@ -430,3 +430,31 @@ describe("policy management", () => {
     expect((await t.wallet.owner.getPolicy(t.user.id, agent.id)).rules.approval.always).toBe(true);
   });
 });
+
+describe("dashboard snapshot", () => {
+  it("returns agents with budgets, purchases with checks and card, events, and only the user's own data", async () => {
+    const t = await setup();
+    const other = await setup();
+    await other.wallet.purchases.requestPurchase(other.agent, groceries({ total: 5 }));
+    const auto = await t.wallet.purchases.requestPurchase(t.agent, groceries({ total: 10 }));
+    await t.wallet.purchases.getPurchaseStatus(t.agent, auto.id);
+    t.advance(60_000);
+    const pending = await t.wallet.purchases.requestPurchase(t.agent, groceries({ total: 40 }));
+    expect(pending.status).toBe("pending_approval");
+
+    const s = await t.wallet.owner.getDashboardSnapshot(t.user.id);
+    expect(s.user.email).toBe(t.user.email);
+    expect(s.agents).toHaveLength(1);
+    expect(s.agents[0]!.client).toBe("custom");
+    expect(s.agents[0]!.budget.windows.find((w) => w.window === "per_week")!.committedCents).toBe(5000);
+    expect(s.purchases.map((p) => p.id)).toEqual([pending.id, auto.id]);
+    const [p, a] = s.purchases;
+    expect(p!.decidedAt).toBeNull();
+    expect(p!.checks.some((c) => c.outcome === "needs_approval")).toBe(true);
+    expect(p!.items[0]!.classification?.category).toBe("groceries");
+    expect(a!.credential).toMatchObject({ amountLimitCents: 1000, status: "active" });
+    expect(a!.decidedAt).not.toBeNull();
+    expect(s.events.every((e) => e.userId === t.user.id)).toBe(true);
+    expect(s.events.some((e) => e.type === "credential.issued")).toBe(true);
+  });
+});

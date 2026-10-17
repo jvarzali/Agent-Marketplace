@@ -351,7 +351,7 @@ export class PurchaseService {
         // The transaction failed after a card was created: make sure it can never be used.
         await this.deps.issuer.cancelCard(createdCardId).catch(() => undefined);
       }
-      if (e instanceof WalletError) throw e;
+      if (WalletError.is(e)) throw e;
       this.deps.logger.error("credential issuance failed", { requestId: id, error: e instanceof Error ? e.message : String(e) });
       throw new WalletError("issuer_error", "Could not issue a card right now. Try get_purchase_status again in a minute; do not resubmit the purchase.");
     }

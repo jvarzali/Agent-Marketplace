@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Ago, AgentStatus, CopyField, Facts, LedgerHead, Meter, Pill, Trust } from "@/components/bits";
 import { FreezeControl } from "@/components/FreezeControl";
-import { money, statusLabel, statusTone } from "@/lib/format";
+import { clientLabel, money, statusLabel, statusTone } from "@/lib/format";
 import { describePolicy } from "@/lib/policy";
 import { useStore } from "@/lib/store";
 
@@ -14,6 +14,7 @@ export function AgentDetailView({ id }: { id: string }) {
   const agent = store.agent(id);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [confirmRotate, setConfirmRotate] = useState(false);
+  const [rotating, setRotating] = useState(false);
 
   if (!agent) {
     return (
@@ -26,7 +27,7 @@ export function AgentDetailView({ id }: { id: string }) {
   }
 
   const l = agent.policy.limits;
-  const suggestions = store.suggestions.filter((s) => s.agentId === agent.id && s.status === "open");
+  const suggestions = store.suggestions.filter((s) => s.agentId === agent.id);
   const requests = store.requests.filter((r) => r.agentId === agent.id).sort((a, b) => b.createdAt - a.createdAt);
 
   return (
@@ -40,7 +41,7 @@ export function AgentDetailView({ id }: { id: string }) {
         <p className="pagetitle__meta">
           <AgentStatus agent={agent} />
           <span>
-            {agent.client === "Custom" ? "Own agent" : agent.client}, added <Ago ts={agent.createdAt} />
+            {clientLabel[agent.client]}, added <Ago ts={agent.createdAt} />
           </span>
         </p>
         <div className="pagetitle__action">
@@ -78,7 +79,10 @@ export function AgentDetailView({ id }: { id: string }) {
             <Meter label="This month" used={agent.spend.month} limit={l.per_month} />
           </div>
           <p className="fine">
-            {agent.spend.ordersToday} of {l.max_orders_per_day} orders used today. Includes requests still waiting on you.
+            {l.max_orders_per_day === null
+              ? `${agent.spend.ordersToday} orders in the last 24 hours.`
+              : `${agent.spend.ordersToday} of ${l.max_orders_per_day} orders used in the last 24 hours.`}{" "}
+            Includes requests still waiting on you.
           </p>
         </section>
 
@@ -104,13 +108,19 @@ export function AgentDetailView({ id }: { id: string }) {
                 label: "Trust",
                 text: (
                   <span className="trustblock">
-                    <Trust level={agent.trustLevel} /> Level {agent.trustLevel} of 5
+                    <Trust level={agent.trustLevel} /> {agent.trustLevel ? `Level ${agent.trustLevel} of 5` : "New, no track record yet"}
                   </span>
                 ),
               },
               {
                 label: "API key",
-                text: newKey ? "New key below" : <code className="keyprefix">{agent.keyPrefix}…</code>,
+                text: newKey ? (
+                  "New key below"
+                ) : agent.keyRevoked ? (
+                  "Revoked. Replace it to reconnect the agent."
+                ) : (
+                  <code className="keyprefix">{agent.keyPrefix}…</code>
+                ),
               },
             ]}
           />
@@ -129,12 +139,16 @@ export function AgentDetailView({ id }: { id: string }) {
               </button>
               <button
                 className="btn btn--sm btn--stop"
-                onClick={() => {
-                  setNewKey(store.rotateKey(agent.id));
+                disabled={rotating}
+                onClick={async () => {
+                  setRotating(true);
+                  const key = await store.rotateKey(agent.id);
+                  setRotating(false);
+                  if (key) setNewKey(key);
                   setConfirmRotate(false);
                 }}
               >
-                Revoke and replace
+                {rotating ? "Replacing…" : "Revoke and replace"}
               </button>
             </div>
           ) : (

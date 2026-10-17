@@ -2,6 +2,8 @@
 
 import { Monitor, Moon, Sun } from "lucide-react";
 import { Facts, LedgerHead } from "@/components/bits";
+import { PushToggle } from "@/components/PushToggle";
+import { signOutAction } from "@/lib/actions";
 import { useStore } from "@/lib/store";
 import { type ThemePref, useTheme } from "@/lib/theme";
 
@@ -11,7 +13,7 @@ const THEMES: { id: ThemePref; label: string; Icon: typeof Sun }[] = [
   { id: "dark", label: "Dark", Icon: Moon },
 ];
 
-export function SettingsView() {
+export function SettingsView({ vapidPublicKey }: { vapidPublicKey: string | null }) {
   const store = useStore();
   const [theme, setTheme] = useTheme();
 
@@ -41,7 +43,24 @@ export function SettingsView() {
 
       <section className="ledger" aria-labelledby="account">
         <LedgerHead id="account" title="Account" />
-        <Facts rows={[{ label: "Email", text: store.userEmail }]} />
+        <Facts
+          rows={[
+            { label: "Email", text: store.userEmail },
+            {
+              label: "Notifications",
+              text: vapidPublicKey ? (
+                <PushToggle vapidPublicKey={vapidPublicKey} />
+              ) : (
+                "Approval requests arrive by email. Push isn’t set up on this server."
+              ),
+            },
+          ]}
+        />
+        <form action={signOutAction}>
+          <button className="btn btn--sm" type="submit">
+            Sign out
+          </button>
+        </form>
       </section>
     </div>
   );

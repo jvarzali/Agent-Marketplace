@@ -2,10 +2,13 @@
  * Standalone dev server for the agent API, MCP endpoint, webhooks and cron, until the
  * Next.js app mounts the same handler. `npm run dev:api` → http://localhost:4000
  */
-import "dotenv/config";
+import { config as loadEnv } from "dotenv";
 import { createServer } from "node:http";
 import { getWallet, MockCardIssuer } from "@agent-wallet/core";
 import { createApiHandler } from "./handler";
+
+// The monorepo keeps one .env at its root; a package-local .env (if any) wins.
+loadEnv({ path: [".env", new URL("../../../.env", import.meta.url).pathname], quiet: true });
 
 const port = Number(process.env["API_PORT"] ?? 4000);
 const handle = createApiHandler();

@@ -1,6 +1,7 @@
 import type { AuditEvent, Prisma, PurchaseRequest } from "@agent-wallet/db";
 import type { CartItem } from "../cart";
 import type { ItemClassification } from "../classifier/types";
+import { computeBudget, type Budget } from "../policy/budget";
 import { windowSpend, WINDOWS, type RuleCheck } from "../policy/engine";
 import { describePolicy, type PolicySummarySection } from "../policy/describe";
 import { safeParsePolicy, type PolicyRules } from "../policy/schema";
@@ -10,9 +11,13 @@ import { audit, json, lockAgent, minutes, WalletError, type AuthedAgent, type Wa
 import { loadActivePolicy, loadHistory } from "./history";
 import { cancelCredentials } from "./purchases";
 
+export const AGENT_CLIENTS = ["claude", "chatgpt", "custom"] as const;
+export type AgentClient = (typeof AGENT_CLIENTS)[number];
+
 export interface AgentSummary {
   id: string;
   name: string;
+  client: AgentClient;
   status: "active" | "frozen";
   trustLevel: number;
   apiKeyPrefix: string;
@@ -55,6 +60,37 @@ export interface ApprovalContext {
   canDecide: boolean;
 }
 
+/** Everything the dashboard renders, in one round trip. Amounts in cents. */
+export interface DashboardSnapshot {
+  user: { id: string; email: string; name: string | null; timezone: string };
+  agents: (AgentSummary & { rules: PolicyRules; budget: Budget })[];
+  /** Most recent first. Agent-supplied text is untrusted; item `url`s are http(s) or null. */
+  purchases: {
+    id: string;
+    agentId: string;
+    merchantDomain: string;
+    merchantName: string;
+    items: (CartItem & { url: string | null; classification: ItemClassification | null })[];
+    subtotalCents: number;
+    taxCents: number;
+    shippingCents: number;
+    totalCents: number;
+    currency: string;
+    agentReasoning: string;
+    cartHash: string;
+    status: PurchaseRequest["status"];
+    checks: RuleCheck[];
+    createdAt: Date;
+    /** When it left pending_approval (human decision, auto-approval, expiry, cancel), if it has. */
+    decidedAt: Date | null;
+    pendingExpiresAt: Date | null;
+    /** The latest card issued for it, without secrets. */
+    credential: { last4: string; amountLimitCents: number; expiresAt: Date; status: "active" | "used" | "cancelled" | "expired" } | null;
+  }[];
+  events: (AuditEvent & { agentName: string | null })[];
+  suggestions: { id: string; agentId: string; category: string; maxTotalCents: number; streakCount: number; message: string; createdAt: Date }[];
+}
+
 export interface ActivityQuery {
   agentId?: string;
   severity?: "info" | "warning" | "security";
@@ -95,9 +131,11 @@ export class OwnerService {
 
   // ───────────── agents ─────────────
 
-  async createAgent(userId: string, input: { name: string; template?: PolicyTemplateId; rules?: unknown }): Promise<{ agent: AgentSummary; apiKey: string }> {
+  async createAgent(userId: string, input: { name: string; client?: AgentClient; template?: PolicyTemplateId; rules?: unknown }): Promise<{ agent: AgentSummary; apiKey: string }> {
     const name = input.name.trim();
     if (!name || name.length > 80) throw new WalletError("validation", "Agent name must be 1-80 characters.");
+    const client = input.client ?? "custom";
+    if (!AGENT_CLIENTS.includes(client)) throw new WalletError("validation", `client must be one of ${AGENT_CLIENTS.join(", ")}.`);
     const user = await this.deps.db.user.findUnique({ where: { id: userId } });
     if (!user) throw new WalletError("not_found", "User not found.");
     let rules: PolicyRules;
@@ -111,7 +149,7 @@ export class OwnerService {
     const key = generateApiKey();
     const now = this.deps.now();
     const agent = await this.deps.db.$transaction(async (tx) => {
-      const a = await tx.agent.create({ data: { userId, name, apiKeyHash: key.hash, apiKeyPrefix: key.prefix, createdAt: now } });
+      const a = await tx.agent.create({ data: { userId, name, client, apiKeyHash: key.hash, apiKeyPrefix: key.prefix, createdAt: now } });
       await tx.policy.create({ data: { agentId: a.id, version: 1, rules: json(rules), createdByUserId: userId, createdAt: now } });
       await audit(tx, { userId, agentId: a.id, type: "agent.created", payload: { name, template: input.template ?? (input.rules ? "custom" : "approve_everything") } }, now);
       await audit(tx, { userId, agentId: a.id, type: "policy.updated", payload: { version: 1, rules } }, now);
@@ -435,6 +473,62 @@ export class OwnerService {
     };
   }
 
+  /**
+   * The dashboard's whole view in one call: agents with their rules and budgets, recent
+   * purchases with every rule check, the activity log and open trust suggestions.
+   */
+  async getDashboardSnapshot(userId: string, opts: { purchaseLimit?: number; eventLimit?: number } = {}): Promise<DashboardSnapshot> {
+    const now = this.deps.now();
+    const user = await this.deps.db.user.findUnique({ where: { id: userId } });
+    if (!user) throw new WalletError("not_found", "User not found.");
+    const summaries = await this.summaries(userId);
+    const agents = await Promise.all(
+      summaries.map(async (a) => {
+        const [history, policy] = await Promise.all([loadHistory(this.deps.db, a.id, now), loadActivePolicy(this.deps.db, a.id)]);
+        return { ...a, rules: policy.rules, budget: computeBudget(policy.rules, history, now) };
+      }),
+    );
+    const rows = await this.deps.db.purchaseRequest.findMany({
+      where: { agent: { userId } },
+      include: {
+        approvals: { orderBy: { decidedAt: "desc" }, take: 1, select: { decidedAt: true } },
+        credentials: { orderBy: { createdAt: "desc" }, take: 1, select: { last4: true, amountLimitCents: true, expiresAt: true, status: true } },
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: Math.min(opts.purchaseLimit ?? 200, 500),
+    });
+    const purchases = rows.map((r) => {
+      const classifications = r.classifications as unknown as ItemClassification[];
+      return {
+        id: r.id,
+        agentId: r.agentId,
+        merchantDomain: r.merchantDomain,
+        merchantName: r.merchantName,
+        items: (r.items as unknown as CartItem[]).map((i, idx) => ({ ...i, url: safeHttpUrl(i.url), classification: classifications.find((c) => c.index === idx) ?? null })),
+        subtotalCents: r.subtotalCents,
+        taxCents: r.taxCents,
+        shippingCents: r.shippingCents,
+        totalCents: r.totalCents,
+        currency: r.currency,
+        agentReasoning: r.agentReasoning,
+        cartHash: r.cartHash,
+        status: r.status,
+        checks: r.decisionReasons as unknown as RuleCheck[],
+        createdAt: r.createdAt,
+        decidedAt: r.status === "pending_approval" ? null : (r.approvals[0]?.decidedAt ?? r.updatedAt),
+        pendingExpiresAt: r.pendingExpiresAt,
+        credential: r.credentials[0] ?? null,
+      };
+    });
+    const { events } = await this.listActivity(userId, { limit: opts.eventLimit ?? 200 });
+    const suggestions = await this.deps.db.trustSuggestion.findMany({
+      where: { status: "open", agent: { userId } },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, agentId: true, category: true, maxTotalCents: true, streakCount: true, message: true, createdAt: true },
+    });
+    return { user: { id: user.id, email: user.email, name: user.name, timezone: user.timezone }, agents, purchases, events, suggestions };
+  }
+
   // ───────────── push subscriptions ─────────────
 
   async savePushSubscription(userId: string, sub: { endpoint: string; keys: { p256dh: string; auth: string } }) {
@@ -465,6 +559,7 @@ export class OwnerService {
         return {
           id: a.id,
           name: a.name,
+          client: (AGENT_CLIENTS as readonly string[]).includes(a.client) ? (a.client as AgentClient) : "custom",
           status: a.status,
           trustLevel: a.trustLevel,
           apiKeyPrefix: a.apiKeyPrefix,

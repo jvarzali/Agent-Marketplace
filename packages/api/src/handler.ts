@@ -45,7 +45,7 @@ export function createApiHandler(getW: () => Wallet = getWallet, opts: { cronSec
       }
       return await route(wallet, agent, req, path);
     } catch (e) {
-      if (e instanceof WalletError) return error(e.status, e.code, e.message, undefined, e.details);
+      if (WalletError.is(e)) return error(e.status, e.code, e.message, undefined, e.details);
       wallet.deps.logger.error("api error", { path, error: e instanceof Error ? e.message : String(e) });
       return error(500, "internal", "Internal error.");
     }

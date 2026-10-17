@@ -3,7 +3,8 @@
 import { Bot, House, Inbox, ScrollText, Settings, Snowflake } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { PushToggle } from "@/components/PushToggle";
+import { signOutAction } from "@/lib/actions";
 import { useNow, useStore } from "@/lib/store";
 
 const NAV = [
@@ -17,13 +18,10 @@ function isActive(path: string, href: string) {
   return href === "/" ? path === "/" : path.startsWith(href);
 }
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({ children, vapidPublicKey }: { children: React.ReactNode; vapidPublicKey: string | null }) {
   const path = usePathname();
   const store = useStore();
   const now = useNow(60_000);
-  const [confirmReset, setConfirmReset] = useState(false);
-
-  if (path === "/login") return <>{children}</>;
 
   const activeCount = store.agents.filter((a) => a.status === "active").length;
   const pending = store.pending.length;
@@ -123,26 +121,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="bar__end">
             <span className="bar__user">
               {store.userEmail}
-              {confirmReset ? (
-                <>
-                  <button
-                    className="linkbtn"
-                    onClick={() => {
-                      store.resetDemo();
-                      setConfirmReset(false);
-                    }}
-                  >
-                    Reset
-                  </button>
-                  <button className="linkbtn" onClick={() => setConfirmReset(false)}>
-                    Keep
-                  </button>
-                </>
-              ) : (
-                <button className="linkbtn" onClick={() => setConfirmReset(true)}>
-                  Reset demo
+              <PushToggle vapidPublicKey={vapidPublicKey} />
+              <form action={signOutAction}>
+                <button className="linkbtn" type="submit">
+                  Sign out
                 </button>
-              )}
+              </form>
             </span>
             <Link
               href="/settings"

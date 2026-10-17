@@ -1,4 +1,4 @@
-import { categoryLabel, clockTime, money, safeLink } from "@/lib/format";
+import { categoryName, clockTime, money, safeLink } from "@/lib/format";
 import type { Agent, PurchaseRequest } from "@/lib/types";
 
 const LOW_CONFIDENCE = 0.7;
@@ -61,9 +61,10 @@ export function Receipt({
                     <span className={unsure ? "receipt__unsure" : undefined}>
                       {unsure
                         ? `Unclear category (${Math.round(item.categoryConfidence * 100)}% sure)`
-                        : categoryLabel[item.category]}
+                        : categoryName(item.category)}
                     </span>
                     {!compact &&
+                      item.url !== null &&
                       (link.href ? (
                         <a href={link.href} target="_blank" rel="noopener noreferrer nofollow" className="receipt__link">
                           View on {link.domain}

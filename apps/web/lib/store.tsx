@@ -1,12 +1,14 @@
 "use client";
 
-// Client-side mock of the backend. Every mutation here stands in for a call to
-// /packages/core via the REST API; pages only talk to this hook, so swapping in
-// real fetches later doesn't touch the UI. No rule evaluation happens here: the
-// rule checks shown in the UI come from the (mock) policy engine output.
+// Client-side view of the backend. The server renders the first snapshot; every mutation is a
+// Server Action (lib/actions.ts) that returns a fresh snapshot, and the store polls so new
+// requests from agents show up without a reload. No rule evaluation happens here.
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import * as actions from "./actions";
+import type { ActionResult } from "./actions";
 import { money } from "./format";
+<<<<<<< HEAD
 import { seed, type Snapshot } from "./mock-data";
 import { ALWAYS_BLOCKED, templatePolicy, type TemplateId } from "./policy";
 import type { Agent, AgentClient, AuditEvent, Policy, PurchaseRequest } from "./types";
@@ -15,13 +17,20 @@ import type { Agent, AgentClient, AuditEvent, Policy, PurchaseRequest } from "./
 const STORAGE_KEY = "agentmart.demo.v3";
 const CREDENTIAL_TTL_MS = 30 * 60_000;
 const BOUGHT = new Set<PurchaseRequest["status"]>(["approved", "credential_issued", "completed"]);
+=======
+import type { TemplateId } from "./policy";
+import type { Agent, AgentClient, Policy, PurchaseRequest, Snapshot } from "./types";
+
+const POLL_MS = 15_000;
+>>>>>>> 3b72f5c5b735cc16badeda0fc3b180f0e1a8d16e
 
 interface Store extends Snapshot {
   toast: string | null;
   dismissToast: () => void;
-  agent: (id: string) => Agent | undefined;
+  agent: (id: string | null) => Agent | undefined;
   request: (id: string) => PurchaseRequest | undefined;
   pending: PurchaseRequest[];
+<<<<<<< HEAD
   /** Purchases the rules allowed outright, with no approval step. Newest first. */
   autoBuys: PurchaseRequest[];
   markAutoSeen: () => void;
@@ -38,50 +47,31 @@ interface Store extends Snapshot {
   acceptSuggestion: (id: string) => void;
   dismissSuggestion: (id: string) => void;
   resetDemo: () => void;
+=======
+  approve: (requestId: string) => Promise<void>;
+  deny: (requestId: string) => Promise<void>;
+  freeze: (agentId: string) => Promise<void>;
+  unfreeze: (agentId: string) => Promise<void>;
+  freezeAll: () => Promise<void>;
+  /** Resolves true when saved. */
+  savePolicy: (agentId: string, policy: Policy) => Promise<boolean>;
+  createAgent: (name: string, client: AgentClient, template: TemplateId) => Promise<{ agentId: string; apiKey: string } | null>;
+  rotateKey: (agentId: string) => Promise<string | null>;
+  acceptSuggestion: (id: string) => Promise<void>;
+  dismissSuggestion: (id: string) => Promise<void>;
+  refresh: () => Promise<void>;
+>>>>>>> 3b72f5c5b735cc16badeda0fc3b180f0e1a8d16e
 }
 
 const Ctx = createContext<Store | null>(null);
 
-function rid(prefix: string): string {
-  const bytes = new Uint8Array(6);
-  crypto.getRandomValues(bytes);
-  return `${prefix}_${Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")}`;
-}
-
-function mockApiKey(): string {
-  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
-  return "ag_live_" + Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
-}
-
-function load(): Snapshot {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as Snapshot;
-  } catch {
-    // Storage unavailable or corrupt: fall through to fresh demo data.
-  }
-  return seed(Date.now());
-}
-
-export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [data, setData] = useState<Snapshot | null>(null);
+export function StoreProvider({ initial, children }: { initial: Snapshot; children: React.ReactNode }) {
+  const [data, setData] = useState<Snapshot>(initial);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    setData(load());
-  }, []);
-
-  useEffect(() => {
-    if (!data) return;
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch {
-      // Non-fatal: the demo just won't survive a reload.
-    }
-  }, [data]);
+  // Responses can land out of order (a poll racing a mutation): only apply the newest.
+  const issued = useRef(0);
+  const applied = useRef(0);
 
   const notify = useCallback((msg: string) => {
     setToast(msg);
@@ -89,118 +79,100 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     toastTimer.current = setTimeout(() => setToast(null), 5000);
   }, []);
 
-  const update = useCallback((fn: (s: Snapshot) => Snapshot) => {
-    setData((s) => (s ? fn(s) : s));
-  }, []);
+  /** Run an action, apply its snapshot, surface errors. Returns the data on success. */
+  const call = useCallback(
+    async <T,>(fn: () => Promise<ActionResult<T>>, quiet = false): Promise<{ data: T } | null> => {
+      const n = ++issued.current;
+      let r: ActionResult<T>;
+      try {
+        r = await fn();
+      } catch {
+        if (!quiet) notify("Couldn't reach the server. Check your connection and try again.");
+        return null;
+      }
+      if (!r.ok && r.signedOut) {
+        window.location.assign(`/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`);
+        return null;
+      }
+      if (r.snapshot && n > applied.current) {
+        applied.current = n;
+        setData(r.snapshot);
+      }
+      if (!r.ok) {
+        if (!quiet) notify(r.error);
+        return null;
+      }
+      return { data: r.data };
+    },
+    [notify],
+  );
 
-  const store = useMemo<Store | null>(() => {
-    if (!data) return null;
+  const refresh = useCallback(async () => {
+    await call(() => actions.refreshSnapshot(), true);
+  }, [call]);
 
-    const ev = (e: Omit<AuditEvent, "id" | "createdAt">): AuditEvent => ({
-      ...e,
-      id: rid("evt"),
-      createdAt: Date.now(),
-    });
-
-    const freezeIn = (s: Snapshot, agentId: string): { s: Snapshot; cancelled: number } => {
-      let cancelled = 0;
-      const requests = s.requests.map((r) => {
-        if (r.agentId !== agentId) return r;
-        if (r.status === "pending_approval") return { ...r, status: "cancelled" as const, decidedAt: Date.now() };
-        if (r.credential?.status === "active") {
-          cancelled++;
-          return { ...r, status: "cancelled" as const, credential: { ...r.credential, status: "cancelled" as const } };
-        }
-        return r;
-      });
-      const agent = s.agents.find((a) => a.id === agentId);
-      return {
-        cancelled,
-        s: {
-          ...s,
-          requests,
-          agents: s.agents.map((a) => (a.id === agentId ? { ...a, status: "frozen" } : a)),
-          events: [
-            ev({
-              agentId,
-              type: "frozen",
-              summary: `You froze ${agent?.name ?? "an agent"}. ${cancelled} active ${cancelled === 1 ? "card" : "cards"} cancelled.`,
-            }),
-            ...s.events,
-          ],
-        },
-      };
+  useEffect(() => {
+    const tick = () => {
+      if (document.visibilityState === "visible") void refresh();
     };
+    const t = setInterval(tick, POLL_MS);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", tick);
+    };
+  }, [refresh]);
+
+  const store = useMemo<Store>(() => {
+    const agent = (id: string | null) => (id ? data.agents.find((a) => a.id === id) : undefined);
+    const request = (id: string) => data.requests.find((r) => r.id === id);
 
     return {
       ...data,
       toast,
       dismissToast: () => setToast(null),
-      agent: (id) => data.agents.find((a) => a.id === id),
-      request: (id) => data.requests.find((r) => r.id === id),
+      agent,
+      request,
       pending: data.requests.filter((r) => r.status === "pending_approval").sort((a, b) => b.createdAt - a.createdAt),
       autoBuys: data.requests
         .filter((r) => BOUGHT.has(r.status) && !r.checks.some((c) => c.outcome === "approval"))
         .sort((a, b) => b.createdAt - a.createdAt),
       markAutoSeen: () => update((s) => ({ ...s, autoSeenAt: Date.now() })),
 
-      approve: (requestId) => {
-        const now = Date.now();
-        const last4 = String(1000 + Math.floor(Math.random() * 9000));
-        const target = data.requests.find((x) => x.id === requestId);
-        const owner = target && data.agents.find((a) => a.id === target.agentId);
-        if (target?.status === "pending_approval" && owner?.status === "active") {
-          notify(`Approved ${money(target.total)} at ${target.merchantName}. Card ending ${last4} issued for this cart only.`);
-        }
-        update((s) => {
-          const r = s.requests.find((x) => x.id === requestId);
-          const agent = r && s.agents.find((a) => a.id === r.agentId);
-          if (!r || !agent || r.status !== "pending_approval" || agent.status !== "active") return s;
-          return {
-            ...s,
-            requests: s.requests.map((x) =>
-              x.id === requestId
-                ? {
-                    ...x,
-                    status: "credential_issued",
-                    decidedAt: now,
-                    credential: { last4, amountLimit: x.total, expiresAt: now + CREDENTIAL_TTL_MS, status: "active" },
-                  }
-                : x,
-            ),
-            events: [
-              ev({
-                agentId: r.agentId,
-                type: "credential_issued",
-                requestId,
-                summary: `Single-use card ending ${last4} issued for ${money(r.total)} at ${r.merchantName}, good for 30 minutes.`,
-              }),
-              ev({ agentId: r.agentId, type: "approved", requestId, summary: `You approved ${money(r.total)} at ${r.merchantName}.` }),
-              ...s.events,
-            ],
-          };
-        });
+      approve: async (requestId) => {
+        const r = request(requestId);
+        if (!r) return;
+        const res = await call(() => actions.decideRequest(requestId, "approved", r.cartHash));
+        if (!res) return;
+        if (res.data.status === "expired") notify("That request expired before you decided. The agent will have to ask again.");
+        else
+          notify(
+            `Approved ${money(r.total)} at ${r.merchantName}. ${agent(r.agentId)?.name ?? "The agent"} gets a single-use card for this cart when it checks back.`,
+          );
       },
 
-      deny: (requestId) => {
-        const target = data.requests.find((x) => x.id === requestId);
-        if (target?.status === "pending_approval") {
-          notify(`Denied ${money(target.total)} at ${target.merchantName}. The agent was told no.`);
-        }
-        update((s) => {
-          const r = s.requests.find((x) => x.id === requestId);
-          if (!r || r.status !== "pending_approval") return s;
-          return {
-            ...s,
-            requests: s.requests.map((x) => (x.id === requestId ? { ...x, status: "denied", decidedAt: Date.now() } : x)),
-            events: [
-              ev({ agentId: r.agentId, type: "denied", requestId, summary: `You denied ${money(r.total)} at ${r.merchantName}.` }),
-              ...s.events,
-            ],
-          };
-        });
+      deny: async (requestId) => {
+        const r = request(requestId);
+        if (!r) return;
+        const res = await call(() => actions.decideRequest(requestId, "denied", r.cartHash));
+        if (res) notify(res.data.status === "expired" ? "That request had already expired." : `Denied ${money(r.total)} at ${r.merchantName}. The agent was told no.`);
       },
 
+      freeze: async (agentId) => {
+        const name = agent(agentId)?.name ?? "Agent";
+        const res = await call(() => actions.freezeAgent(agentId));
+        if (res) {
+          const cards = res.data.cancelledCards;
+          notify(`${name} is frozen. New requests are blocked${cards ? ` and ${cards} ${cards === 1 ? "card was" : "cards were"} cancelled` : ""}.`);
+        }
+      },
+
+      unfreeze: async (agentId) => {
+        const name = agent(agentId)?.name ?? "Agent";
+        if (await call(() => actions.unfreezeAgent(agentId))) notify(`${name} can request purchases again.`);
+      },
+
+<<<<<<< HEAD
       overrideDenied: (requestId) => {
         const now = Date.now();
         const last4 = String(1000 + Math.floor(Math.random() * 9000));
@@ -247,116 +219,48 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const name = data.agents.find((a) => a.id === agentId)?.name ?? "Agent";
         update((s) => freezeIn(s, agentId).s);
         notify(`${name} is frozen. New requests are blocked and its cards are cancelled.`);
+=======
+      freezeAll: async () => {
+        const active = data.agents.filter((a) => a.status === "active").length;
+        const res = await call(() => actions.freezeAll());
+        if (res)
+          notify(
+            active
+              ? `Froze ${active} ${active === 1 ? "agent" : "agents"}. Every active card is cancelled.`
+              : "Every agent was already frozen.",
+          );
+>>>>>>> 3b72f5c5b735cc16badeda0fc3b180f0e1a8d16e
       },
 
-      unfreeze: (agentId) => {
-        update((s) => {
-          const agent = s.agents.find((a) => a.id === agentId);
-          return {
-            ...s,
-            agents: s.agents.map((a) => (a.id === agentId ? { ...a, status: "active" } : a)),
-            events: [ev({ agentId, type: "unfrozen", summary: `You unfroze ${agent?.name ?? "an agent"}.` }), ...s.events],
-          };
-        });
+      savePolicy: async (agentId, policy) => {
+        const res = await call(() => actions.savePolicy(agentId, policy));
+        if (res) notify(`Saved as version ${res.data}. It applies to the next purchase request.`);
+        return !!res;
       },
 
-      freezeAll: () => {
-        const active = data.agents.filter((a) => a.status === "active");
-        update((s) => active.reduce((acc, a) => freezeIn(acc, a.id).s, s));
-        notify(
-          active.length
-            ? `Froze ${active.length} ${active.length === 1 ? "agent" : "agents"}. Every active card is cancelled.`
-            : "Every agent was already frozen.",
-        );
+      createAgent: async (name, client, template) => {
+        const res = await call(() => actions.createAgent(name, client, template));
+        return res ? res.data : null;
       },
 
-      savePolicy: (agentId, policy) => {
-        update((s) => {
-          const agent = s.agents.find((a) => a.id === agentId);
-          if (!agent) return s;
-          const version = agent.policy.version + 1;
-          return {
-            ...s,
-            agents: s.agents.map((a) => (a.id === agentId ? { ...a, policy: { ...policy, version } } : a)),
-            events: [
-              ev({ agentId, type: "policy_changed", summary: `You saved version ${version} of ${agent.name}'s rules.` }),
-              ...s.events,
-            ],
-          };
-        });
-        notify("Rules saved. They apply to the next purchase request.");
+      rotateKey: async (agentId) => {
+        const res = await call(() => actions.rotateKey(agentId));
+        if (res) notify("Old key revoked. Update your agent with the new key.");
+        return res ? res.data : null;
       },
 
-      createAgent: (name, client, template) => {
-        const apiKey = mockApiKey();
-        const agent: Agent = {
-          id: rid("agt"),
-          name,
-          client,
-          status: "active",
-          trustLevel: 1,
-          createdAt: Date.now(),
-          keyPrefix: apiKey.slice(0, 12),
-          policy: templatePolicy(template),
-          spend: { today: 0, week: 0, month: 0, ordersToday: 0 },
-        };
-        update((s) => ({
-          ...s,
-          agents: [...s.agents, agent],
-          events: [ev({ agentId: agent.id, type: "agent_created", summary: `You added ${name}.` }), ...s.events],
-        }));
-        return { agent, apiKey };
+      acceptSuggestion: async (id) => {
+        if (await call(() => actions.acceptSuggestion(id))) notify("Rule updated as a new version.");
       },
 
-      rotateKey: (agentId) => {
-        const apiKey = mockApiKey();
-        update((s) => ({
-          ...s,
-          agents: s.agents.map((a) => (a.id === agentId ? { ...a, keyPrefix: apiKey.slice(0, 12) } : a)),
-        }));
-        notify("Old key revoked. Update your agent with the new key.");
-        return apiKey;
+      dismissSuggestion: async (id) => {
+        await call(() => actions.dismissSuggestion(id));
       },
 
-      acceptSuggestion: (id) => {
-        update((s) => {
-          const sug = s.suggestions.find((x) => x.id === id);
-          const agent = sug && s.agents.find((a) => a.id === sug.agentId);
-          if (!sug || !agent) return s;
-          const version = agent.policy.version + 1;
-          return {
-            ...s,
-            suggestions: s.suggestions.map((x) => (x.id === id ? { ...x, status: "accepted" } : x)),
-            agents: s.agents.map((a) =>
-              a.id === agent.id
-                ? { ...a, policy: { ...a.policy, version, approval: { ...a.policy.approval, ...sug.apply } } }
-                : a,
-            ),
-            events: [
-              ev({
-                agentId: agent.id,
-                type: "policy_changed",
-                summary: `You raised ${agent.name}'s ask-first amount to ${money(sug.apply.require_if_total_over)}.`,
-              }),
-              ...s.events,
-            ],
-          };
-        });
-        notify("Rule updated.");
-      },
-
-      dismissSuggestion: (id) => {
-        update((s) => ({ ...s, suggestions: s.suggestions.map((x) => (x.id === id ? { ...x, status: "dismissed" } : x)) }));
-      },
-
-      resetDemo: () => {
-        setData(seed(Date.now()));
-        notify("Demo data reset.");
-      },
+      refresh,
     };
-  }, [data, toast, update, notify]);
+  }, [data, toast, call, notify, refresh]);
 
-  if (!store) return <div className="boot" aria-busy="true" />;
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>;
 }
 

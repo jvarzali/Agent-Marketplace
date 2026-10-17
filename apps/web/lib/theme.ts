@@ -1,16 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { THEME_KEY } from "./theme-boot";
 
 // Appearance is a per-browser preference, so it lives in localStorage rather
-// than the demo store. "system" leaves <html> without data-theme and the CSS
+// than the database. "system" leaves <html> without data-theme and the CSS
 // follows prefers-color-scheme.
 export type ThemePref = "system" | "light" | "dark";
 
-export const THEME_KEY = "agentmart.theme";
-
-/** Runs in <head> before first paint so a saved theme never flashes the other one. */
-export const themeBootScript = `try{var t=localStorage.getItem("${THEME_KEY}");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}`;
 
 function readPref(): ThemePref {
   try {

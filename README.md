@@ -28,8 +28,8 @@ Human ──chat──▶ Agent (Claude, ChatGPT, …)
 | 2. Purchase flow with `MockCardIssuer`, audit log, integration tests | ✅ |
 | 3. REST API for agents (API-key auth, rate limiting) | ✅ |
 | 4. MCP server (remote HTTP + local stdio) | ✅ |
-| 5. Dashboard | ⏳ built separately in `apps/web`. Backend services and the integration contract are ready: [`docs/frontend-integration.md`](docs/frontend-integration.md) |
-| 6. Notifications: email (Resend or console) and web push (VAPID or console) | ✅ backend; service worker in `docs/` |
+| 5. Dashboard (`apps/web`): email sign-in, approvals, agents, freeze, policy editor, activity, onboarding, trust suggestions | ✅ wired to the backend |
+| 6. Notifications: email (Resend or console) and web push (VAPID or console) | ✅ (push toggle in the dashboard header) |
 | 7. Trust suggestions | ✅ |
 | 8. Stripe Issuing adapter + webhook handling | ✅ written against current Stripe docs; **not yet run against a live Stripe account** |
 | 9. Browser extension | later |
@@ -48,7 +48,7 @@ packages/core   ALL business logic
   scripts/seed.ts demo data
 packages/api    Web-standard Request→Response handler for REST + MCP + webhooks + cron; dev server
 packages/mcp    MCP server (tools), Streamable HTTP handler, stdio entrypoint
-apps/web        (dashboard, separate agent) mounts packages/api; see docs/frontend-integration.md
+apps/web        Next.js dashboard; also serves packages/api at /api/* (see docs/frontend-integration.md)
 ```
 
 The web app, REST API and MCP server are thin layers. Rules live only in `packages/core`.
@@ -63,8 +63,13 @@ cp .env.example .env            # defaults work for local dev
 npm run db:up                   # throwaway Postgres in ./.pgdata on :54329 (or: docker compose up -d)
 npm run db:migrate              # apply migrations
 npm run db:seed                 # demo user + 2 agents + history; prints the agents' API keys
-npm run dev:api                 # agent API + MCP on http://localhost:4000
+npm run dev                     # dashboard + agent API + MCP on http://localhost:3000
 ```
+
+Set `AUTH_SECRET` in `.env` (`npx auth secret`). Sign in at http://localhost:3000 as
+`demo@agentwallet.dev`; without `RESEND_API_KEY` the sign-in link is printed in the `npm run dev`
+log. `npm run dev:api` still starts the standalone agent API on :4000, which is the only place
+the dev-only charge simulator lives.
 
 `npm run db:reset` drops and recreates the dev database (then run `db:seed` again).
 
@@ -75,6 +80,7 @@ All of them are documented in [`.env.example`](.env.example). The important ones
 | Variable | Purpose |
 |---|---|
 | `DATABASE_URL` | Postgres connection |
+| `AUTH_SECRET` | signs dashboard session cookies |
 | `APP_URL` | dashboard URL, used in notification links |
 | `CARD_ISSUER` | `mock` (default) or `stripe` |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_ISSUING_CARDHOLDER_ID` | Stripe Issuing |
@@ -106,13 +112,13 @@ Create an agent in the dashboard (or use a key printed by `db:seed`). The key is
 
 ### Claude (remote MCP, recommended)
 
-The MCP endpoint is `POST {APP_URL}/api/mcp` (or `http://localhost:4000/api/mcp` with the dev
-server), authenticated with the agent's key as a bearer token.
+The MCP endpoint is `POST {APP_URL}/api/mcp` (`http://localhost:3000/api/mcp` with `npm run dev`,
+or `:4000` with the standalone `npm run dev:api` server), authenticated with the agent's key as a bearer token.
 
 **Claude Code:**
 
 ```bash
-claude mcp add --transport http agent-wallet http://localhost:4000/api/mcp \
+claude mcp add --transport http agent-wallet http://localhost:3000/api/mcp \
   --header "Authorization: Bearer aw_your_agent_key"
 ```
 
@@ -174,23 +180,25 @@ Same logic, `Authorization: Bearer <key>`:
 
 ```bash
 KEY=aw_...
-curl -s localhost:4000/api/v1/agent/policy -H "authorization: Bearer $KEY"
-curl -s localhost:4000/api/v1/agent/budget -H "authorization: Bearer $KEY"
-curl -s localhost:4000/api/v1/purchases -H "authorization: Bearer $KEY" -H 'content-type: application/json' -d '{
+curl -s localhost:3000/api/v1/agent/policy -H "authorization: Bearer $KEY"
+curl -s localhost:3000/api/v1/agent/budget -H "authorization: Bearer $KEY"
+curl -s localhost:3000/api/v1/purchases -H "authorization: Bearer $KEY" -H 'content-type: application/json' -d '{
   "merchant_domain": "amazon.com", "merchant_name": "Amazon",
   "items": [{ "name": "Organic bananas", "unit_price": 3.49, "quantity": 2, "url": "https://www.amazon.com/dp/B0" }],
   "subtotal": 6.98, "tax": 0.5, "shipping": 0, "total": 7.48, "currency": "USD",
   "reasoning": "User asked for bananas"
 }'
-curl -s localhost:4000/api/v1/purchases/<id> -H "authorization: Bearer $KEY"          # card shown once
-curl -s -X POST localhost:4000/api/v1/purchases/<id>/result -H "authorization: Bearer $KEY" \
+curl -s localhost:3000/api/v1/purchases/<id> -H "authorization: Bearer $KEY"          # card shown once
+curl -s -X POST localhost:3000/api/v1/purchases/<id>/result -H "authorization: Bearer $KEY" \
   -H 'content-type: application/json' -d '{"success": true, "order_reference": "112-3"}'
 ```
 
 Other endpoints: `POST /api/v1/purchases/:id/status` with `{ "current_cart": … }`,
 `POST /api/v1/purchases/:id/cancel`, `GET /api/v1/purchases`.
 
-**Dev-only charge simulator** (mock issuer, dev server): play the card network.
+**Dev-only charge simulator** (mock issuer, standalone `npm run dev:api` server only): play the
+card network. Mock cards live in the memory of the process that issued them, so the agent must
+be connected to `:4000` (not the dashboard on `:3000`) for the purchase you simulate.
 
 ```bash
 curl -s -X POST localhost:4000/dev/simulate-charge -H 'content-type: application/json' \
@@ -288,7 +296,7 @@ Defaults I picked where the brief left room. Change any of them freely.
 
 ### Hosting notes
 
-- Any Node host works. On Vercel, mount `packages/api` in the Next.js app (see the frontend guide).
+- Any Node host works. On Vercel, deploy `apps/web` (it already serves `packages/api` at `/api/*`).
   Use a managed Postgres (e.g. Neon). Call `/api/cron/expire` every minute. Vercel Cron's
   per-minute schedules need a paid plan; otherwise use any external scheduler.
 - Stripe's synchronous authorization webhook must answer within 2 seconds. Keep the webhook
