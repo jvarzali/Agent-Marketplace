@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, House, Inbox, ScrollText, Snowflake } from "lucide-react";
+import { Bot, House, Inbox, ScrollText, Settings, Snowflake } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -27,7 +27,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const activeCount = store.agents.filter((a) => a.status === "active").length;
   const pending = store.pending.length;
-  const section = NAV.find((n) => isActive(path, n.href))?.label ?? "Overview";
+  const section = path.startsWith("/settings")
+    ? "Settings"
+    : (NAV.find((n) => isActive(path, n.href))?.label ?? "Overview");
   const today = new Date(now).toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
@@ -92,6 +94,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         )}
 
+        <nav className="side__nav side__nav--account" aria-label="Account">
+          <p className="side__label">Account</p>
+          <Link href="/settings" className="navlink" aria-current={path.startsWith("/settings") ? "page" : undefined}>
+            <Settings size={17} aria-hidden="true" />
+            Settings
+          </Link>
+        </nav>
+
         <div className="side__foot">
           {freezeAll}
           <p className="side__hint">
@@ -136,6 +146,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </button>
               )}
             </span>
+            <Link
+              href="/settings"
+              className="iconlink"
+              aria-label="Settings"
+              title="Settings"
+              aria-current={path.startsWith("/settings") ? "page" : undefined}
+            >
+              <Settings size={18} aria-hidden="true" />
+            </Link>
             <span className="bar__freeze">{freezeAll}</span>
           </div>
         </header>

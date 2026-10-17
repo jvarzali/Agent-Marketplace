@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Spline_Sans_Mono } from "next/font/google";
 import { AppShell } from "@/components/AppShell";
 import { StoreProvider } from "@/lib/store";
+import { themeBootScript } from "@/lib/theme";
 import "./globals.css";
 
 const sans = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
@@ -24,7 +25,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sans.variable} ${mono.variable}`}>
+    // The boot script may set data-theme before React hydrates.
+    <html lang="en" className={`${sans.variable} ${mono.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+      </head>
       <body>
         <a href="#main" className="skip">
           Skip to content

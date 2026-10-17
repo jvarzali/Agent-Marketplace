@@ -62,8 +62,10 @@
   color-scheme: light;
 }
 
+/* Dark follows the system unless the viewer picked a theme in Settings,
+   which sets data-theme on <html>. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --paper: #0a0a0a;
     --surface: #141414;
     --sunk: #1d1d1d;
@@ -92,6 +94,36 @@
 
     color-scheme: dark;
   }
+}
+
+:root[data-theme="dark"] {
+  --paper: #0a0a0a;
+  --surface: #141414;
+  --sunk: #1d1d1d;
+  --ink: #fafafa;
+  --ink-2: #c4c4c4;
+  --ink-3: #949494;
+  --line: #262626;
+  --line-strong: #404040;
+  --control: #6b6b6b;
+
+  --accent: #7088ff;
+  --accent-ink: #000000;
+
+  --guard: #4ade80;
+  --guard-ink: #03140a;
+  --guard-tint: #0e2617;
+  --hold: #fbbf24;
+  --hold-tint: #2b2008;
+  --stop: #f87171;
+  --stop-ink: #1f0606;
+  --stop-tint: #2c1111;
+
+  --side: #000000;
+  --side-2: #161616;
+  --side-line: #1f1f1f;
+
+  color-scheme: dark;
 }
 
 *,
@@ -365,8 +397,13 @@ svg {
   background: #f87171;
 }
 
-.side__foot {
+.side__nav--account {
   margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--side-line);
+}
+
+.side__foot {
   padding: 16px 20px calc(20px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--side-line);
 }
@@ -435,6 +472,22 @@ svg {
 }
 .bar__freeze {
   display: none;
+}
+.iconlink {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid transparent;
+  color: var(--ink-2);
+  transition:
+    color 150ms ease,
+    border-color 150ms ease;
+}
+.iconlink:hover,
+.iconlink[aria-current="page"] {
+  color: var(--accent);
+  border-color: var(--line);
 }
 
 .tabbar {
@@ -716,6 +769,69 @@ svg {
 }
 .kpi--good {
   box-shadow: inset 0 4px 0 var(--guard);
+}
+/* One block per agent along the top edge instead of a single rule. */
+.kpi--segmented {
+  position: relative;
+  box-shadow: none;
+}
+.kpi__segs {
+  position: absolute;
+  inset: 0 0 auto;
+  display: flex;
+  gap: 2px;
+  height: 4px;
+}
+.kpi__seg {
+  flex: 1;
+  background: var(--ink);
+}
+.kpi__seg--good {
+  background: var(--guard);
+}
+.kpi__seg--stop {
+  background: var(--stop);
+}
+.kpi__seg--hold {
+  background: var(--hold);
+}
+/* Clickable tiles: the label's link covers the tile, so the whole module is the target. */
+.kpi--link {
+  position: relative;
+  transition: background-color 150ms ease;
+}
+.kpi--link:hover {
+  background: color-mix(in srgb, var(--sunk) 55%, var(--surface));
+}
+.kpi--link:has(.kpi__link:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+.kpi__link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: inherit;
+  text-decoration: none;
+}
+.kpi__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.kpi__link:focus-visible {
+  outline: none;
+}
+.kpi__go {
+  color: var(--ink-3);
+  transition:
+    color 150ms ease,
+    transform 150ms ease;
+}
+.kpi--link:hover .kpi__go {
+  color: var(--accent);
+  transform: translate(2px, -2px);
 }
 .kpi__label {
   padding-top: 4px;
@@ -1554,6 +1670,9 @@ svg {
 }
 .meter__fill {
   height: 100%;
+}
+.meter__fill--neutral {
+  background: var(--ink);
 }
 .meter__fill--good {
   background: var(--guard);
