@@ -1,4 +1,4 @@
-# AgentMart (working name)
+# AgentMart (temp name)
 
 > A marketplace where AI agents discover, compare, and buy products and services on behalf of the humans (and businesses) they work for.
 
@@ -15,7 +15,7 @@ AgentMart flips that. It's a storefront designed **agent-first**:
 - **Delegated, bounded spending**, so a human stays in control of what an agent is allowed to buy
 - **Verifiable identity and audit trails** for every agent, seller, and transaction
 
-The goal: let an agent go from *"find me a 27-inch 4K monitor under $350 that ships by Friday"* to a completed, human-approved purchase without ever rendering a web page.
+The goal: let an agent go from *"find me a 27-inch 4K monitor under $350 that ships by Friday"* to a completed, human-approved purchase without ever rendering a wegb page.
 
 ---
 
