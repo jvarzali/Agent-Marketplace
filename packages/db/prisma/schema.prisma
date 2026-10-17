@@ -1,0 +1,330 @@
+// Agent Wallet data model.
+// Money is stored as integer minor units (cents) in *_cents columns.
+// Full card numbers / CVCs are NEVER stored: only the provider card id and last4.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────── Humans (Auth.js-compatible) ─────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  timezone      String    @default("America/Los_Angeles")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  accounts          Account[]
+  sessions          Session[]
+  agents            Agent[]
+  approvals         Approval[]
+  pushSubscriptions PushSubscription[]
+  auditEvents       AuditEvent[]
+
+  @@map("users")
+}
+
+// Auth.js (@auth/prisma-adapter) tables. Owned by the web app's auth config.
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("push_subscriptions")
+}
+
+// ───────────────────────── Agents & policies ─────────────────────────
+
+enum AgentStatus {
+  active
+  frozen
+}
+
+model Agent {
+  id               String      @id @default(cuid())
+  userId           String      @map("user_id")
+  name             String
+  // sha256(api key). The raw key is shown once at creation/rotation and never stored.
+  apiKeyHash       String      @unique @map("api_key_hash")
+  // First characters of the key, for display ("aw_k3f9…").
+  apiKeyPrefix     String      @map("api_key_prefix")
+  apiKeyRevokedAt  DateTime?   @map("api_key_revoked_at")
+  status           AgentStatus @default(active)
+  trustLevel       Int         @default(0) @map("trust_level")
+  frozenAt         DateTime?   @map("frozen_at")
+  createdAt        DateTime    @default(now()) @map("created_at")
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  policies         Policy[]
+  purchaseRequests PurchaseRequest[]
+  auditEvents      AuditEvent[]
+  trustSuggestions TrustSuggestion[]
+
+  @@index([userId])
+  @@map("agents")
+}
+
+// Policies are immutable and versioned. The active policy is the highest version.
+model Policy {
+  id              String   @id @default(cuid())
+  agentId         String   @map("agent_id")
+  version         Int
+  rules           Json
+  createdByUserId String?  @map("created_by_user_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, version])
+  @@map("policies")
+}
+
+// ───────────────────────── Purchases ─────────────────────────
+
+enum PurchaseStatus {
+  denied
+  pending_approval
+  approved
+  credential_issued
+  completed
+  expired
+  cancelled
+}
+
+model PurchaseRequest {
+  id              String         @id @default(cuid())
+  agentId         String         @map("agent_id")
+  policyId        String?        @map("policy_id")
+  merchantDomain  String         @map("merchant_domain")
+  merchantName    String         @map("merchant_name")
+  mcc             String?
+  // [{ name, category_hint, unit_price_cents, quantity, url }]
+  items           Json
+  // [{ index, category, confidence, source }]
+  classifications Json
+  subtotalCents   Int            @map("subtotal_cents")
+  taxCents        Int            @map("tax_cents")
+  shippingCents   Int            @map("shipping_cents")
+  totalCents      Int            @map("total_cents")
+  currency        String
+  agentReasoning  String         @map("agent_reasoning")
+  cartHash        String         @map("cart_hash")
+  status          PurchaseStatus
+  decision        String         // allow | deny | needs_approval
+  // Every rule check, not only the deciding one.
+  decisionReasons Json           @map("decision_reasons")
+  // Pending approval requests lapse after this time.
+  pendingExpiresAt DateTime?     @map("pending_expires_at")
+  // Final settled amount from the issuer (captures), and refunds received.
+  settledCents    Int?           @map("settled_cents")
+  refundedCents   Int            @default(0) @map("refunded_cents")
+  // Agent-reported order result.
+  orderReference  String?        @map("order_reference")
+  orderResult     Json?          @map("order_result")
+  cancelReason    String?        @map("cancel_reason")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  agent       Agent             @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  approvals   Approval[]
+  credentials IssuedCredential[]
+  transactions Transaction[]
+
+  @@index([agentId, createdAt])
+  @@index([agentId, merchantDomain, createdAt])
+  @@index([status])
+  @@map("purchase_requests")
+}
+
+enum ApprovalDecision {
+  approved
+  denied
+}
+
+model Approval {
+  id                String           @id @default(cuid())
+  purchaseRequestId String           @map("purchase_request_id")
+  // Null for automatic (policy-allowed) approvals.
+  decidedByUserId   String?          @map("decided_by_user_id")
+  decision          ApprovalDecision
+  // The cart hash the human actually saw. Must equal the request's hash at issuance.
+  cartHash          String           @map("cart_hash")
+  decidedAt         DateTime         @default(now()) @map("decided_at")
+  expiresAt         DateTime         @map("expires_at")
+
+  purchaseRequest PurchaseRequest @relation(fields: [purchaseRequestId], references: [id], onDelete: Cascade)
+  decidedBy       User?           @relation(fields: [decidedByUserId], references: [id])
+
+  @@index([purchaseRequestId])
+  @@map("approvals")
+}
+
+enum CredentialStatus {
+  active
+  used
+  cancelled
+  expired
+}
+
+model IssuedCredential {
+  id                String           @id @default(cuid())
+  purchaseRequestId String           @map("purchase_request_id")
+  provider          String
+  providerCardId    String           @unique @map("provider_card_id")
+  last4             String
+  amountLimitCents  Int              @map("amount_limit_cents")
+  currency          String
+  allowedMccs       String[]         @map("allowed_mccs")
+  merchantDomain    String           @map("merchant_domain")
+  expiresAt         DateTime         @map("expires_at")
+  // Credential details are returned to the agent at most once.
+  deliveredAt       DateTime?        @map("delivered_at")
+  status            CredentialStatus @default(active)
+  createdAt         DateTime         @default(now()) @map("created_at")
+
+  purchaseRequest PurchaseRequest @relation(fields: [purchaseRequestId], references: [id], onDelete: Cascade)
+  transactions    Transaction[]
+
+  @@index([status, expiresAt])
+  @@map("issued_credentials")
+}
+
+enum TransactionKind {
+  authorization
+  capture
+  refund
+}
+
+enum TransactionStatus {
+  approved
+  declined
+  settled
+  refunded
+}
+
+model Transaction {
+  id                 String            @id @default(cuid())
+  issuedCredentialId String?           @map("issued_credential_id")
+  purchaseRequestId  String?           @map("purchase_request_id")
+  // Provider event/object id; makes webhook processing idempotent.
+  providerEventId    String            @unique @map("provider_event_id")
+  kind               TransactionKind
+  status             TransactionStatus
+  amountCents        Int               @map("amount_cents")
+  currency           String
+  merchant           String
+  merchantMcc        String?           @map("merchant_mcc")
+  declineReason      String?           @map("decline_reason")
+  rawEvent           Json              @map("raw_event")
+  createdAt          DateTime          @default(now()) @map("created_at")
+
+  issuedCredential IssuedCredential? @relation(fields: [issuedCredentialId], references: [id])
+  purchaseRequest  PurchaseRequest?  @relation(fields: [purchaseRequestId], references: [id])
+
+  @@map("transactions")
+}
+
+// ───────────────────────── Audit & trust ─────────────────────────
+
+enum AuditSeverity {
+  info
+  warning
+  security
+}
+
+// Append-only: UPDATE and DELETE are rejected by a database trigger (see migrations).
+model AuditEvent {
+  id        String        @id @default(cuid())
+  userId    String        @map("user_id")
+  agentId   String?       @map("agent_id")
+  type      String
+  severity  AuditSeverity @default(info)
+  // Optional pointer to the purchase request this event concerns.
+  purchaseRequestId String? @map("purchase_request_id")
+  payload   Json
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Restrict)
+  agent Agent? @relation(fields: [agentId], references: [id], onDelete: Restrict)
+
+  @@index([userId, createdAt])
+  @@index([agentId, createdAt])
+  @@index([purchaseRequestId])
+  @@map("audit_events")
+}
+
+enum SuggestionStatus {
+  open
+  accepted
+  dismissed
+}
+
+model TrustSuggestion {
+  id             String           @id @default(cuid())
+  agentId        String           @map("agent_id")
+  category       String
+  maxTotalCents  Int              @map("max_total_cents")
+  streakCount    Int              @map("streak_count")
+  message        String
+  status         SuggestionStatus @default(open)
+  createdAt      DateTime         @default(now()) @map("created_at")
+  decidedAt      DateTime?        @map("decided_at")
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, category, maxTotalCents])
+  @@map("trust_suggestions")
+}
