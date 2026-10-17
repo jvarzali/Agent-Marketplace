@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Schibsted_Grotesk, Spline_Sans_Mono } from "next/font/google";
+import { Inter, Spline_Sans_Mono } from "next/font/google";
 import { AppShell } from "@/components/AppShell";
 import { StoreProvider } from "@/lib/store";
 import "./globals.css";
 
-const sans = Schibsted_Grotesk({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
+const sans = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
 const mono = Spline_Sans_Mono({ subsets: ["latin"], variable: "--font-receipt", display: "swap" });
 
 export const metadata: Metadata = {
@@ -17,8 +17,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f2f5f3" },
-    { media: "(prefers-color-scheme: dark)", color: "#0e1625" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
   ],
 };
 

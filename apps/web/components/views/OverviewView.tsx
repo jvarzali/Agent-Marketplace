@@ -3,46 +3,78 @@
 import { ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { AgentsTable } from "@/components/AgentsTable";
-import { Ago, LedgerHead, Pill } from "@/components/bits";
+import { Ago, Kpi, LedgerHead, Pill } from "@/components/bits";
 import { SlipQueue } from "@/components/SlipQueue";
 import { auditLabel, auditTone, money } from "@/lib/format";
 import { useStore } from "@/lib/store";
+
+const count = (n: number) => Math.round(n).toString();
 
 export function OverviewView() {
   const store = useStore();
   const { pending, agents, events } = store;
   const security = events.find((e) => e.type === "security");
   const waitingTotal = pending.reduce((n, r) => n + r.total, 0);
+  const oldest = pending.reduce((t, r) => Math.min(t, r.createdAt), Infinity);
   const weekTotal = agents.reduce((n, a) => n + a.spend.week, 0);
+  const weekLimit = agents.reduce((n, a) => n + a.policy.limits.per_week, 0);
+  const monthTotal = agents.reduce((n, a) => n + a.spend.month, 0);
+  const monthLimit = agents.reduce((n, a) => n + a.policy.limits.per_month, 0);
   const active = agents.filter((a) => a.status === "active").length;
+  const pct = (used: number, limit: number) => (limit > 0 ? Math.round((used / limit) * 100) : 0);
 
   return (
     <div className="page">
       <header className="pagetitle">
-        <h1>
+        <h1>Overview</h1>
+        <p className="pagetitle__meta">
           {pending.length === 0
             ? "Nothing is waiting on you."
             : pending.length === 1
               ? "One purchase is waiting on you."
               : `${pending.length} purchases are waiting on you.`}
-        </h1>
-        <dl className="figures">
-          <div>
-            <dt>Waiting on you</dt>
-            <dd>{money(waitingTotal)}</dd>
-          </div>
-          <div>
-            <dt>Spent this week</dt>
-            <dd>{money(weekTotal)}</dd>
-          </div>
-          <div>
-            <dt>Agents active</dt>
-            <dd>
-              {active} of {agents.length}
-            </dd>
-          </div>
-        </dl>
+        </p>
       </header>
+
+      <dl className="kpis">
+        <Kpi
+          label="Waiting on you"
+          value={waitingTotal}
+          tone={pending.length ? "hold" : undefined}
+          note={
+            pending.length ? (
+              <>
+                {pending.length} {pending.length === 1 ? "purchase" : "purchases"}, oldest <Ago ts={oldest} />
+              </>
+            ) : (
+              "No open requests"
+            )
+          }
+        />
+        <Kpi
+          label="Spent this week"
+          value={weekTotal}
+          note={`${pct(weekTotal, weekLimit)}% of ${money(weekLimit)} weekly budgets`}
+          meter={{ used: weekTotal, limit: weekLimit }}
+        />
+        <Kpi
+          label="Spent this month"
+          value={monthTotal}
+          note={`${pct(monthTotal, monthLimit)}% of ${money(monthLimit)} monthly budgets`}
+          meter={{ used: monthTotal, limit: monthLimit }}
+        />
+        <Kpi
+          label="Agents active"
+          value={active}
+          format={count}
+          tone={active < agents.length ? "stop" : "good"}
+          note={
+            active < agents.length
+              ? `${agents.length - active} of ${agents.length} frozen`
+              : `All ${agents.length} can buy`
+          }
+        />
+      </dl>
 
       {security && (
         <div className="alertrow" role="alert">
@@ -56,7 +88,7 @@ export function OverviewView() {
         </div>
       )}
 
-      <section className="ledger" aria-labelledby="waiting">
+      <section className="ledger ledger--tray" aria-labelledby="waiting">
         <LedgerHead
           id="waiting"
           title="Waiting on you"
@@ -71,7 +103,9 @@ export function OverviewView() {
         <SlipQueue
           requests={pending}
           empty={
-            <p className="empty">Your agents will ask here before buying anything your rules don&rsquo;t already allow.</p>
+            <p className="empty">
+              Your agents will ask here before buying anything your rules don&rsquo;t already allow.
+            </p>
           }
         />
       </section>
@@ -80,14 +114,14 @@ export function OverviewView() {
         <section className="ledger" aria-labelledby="agents">
           <LedgerHead
             id="agents"
-            title="Agents"
+            title="Budget vs. spent, this week"
             aside={
               <Link href="/agents" className="textlink">
                 All agents
               </Link>
             }
           />
-          <AgentsTable agents={agents} compact />
+          <AgentsTable agents={agents} budget />
         </section>
 
         <section className="ledger" aria-labelledby="recent">

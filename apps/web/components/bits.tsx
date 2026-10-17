@@ -1,7 +1,7 @@
 "use client";
 
 import { Ban, Check, CircleCheck, Clock, Copy, Snowflake } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { money, relTime } from "@/lib/format";
 import { useNow } from "@/lib/store";
 import type { Agent, CheckOutcome, Tone } from "@/lib/types";
@@ -44,20 +44,29 @@ export function Meter({
   used,
   limit,
   inline = false,
+  bare = false,
 }: {
   label?: string;
   used: number;
   limit: number;
   inline?: boolean;
+  /** Bar and percentage only, for tables that already show the amounts. */
+  bare?: boolean;
 }) {
   const pct = limit > 0 ? Math.min(100, (used / limit) * 100) : 100;
   const tone = pct >= 90 ? "stop" : pct >= 70 ? "hold" : "good";
   return (
-    <div className={inline ? "meter meter--inline" : "meter"}>
+    <div className={`meter${inline ? " meter--inline" : ""}${bare ? " meter--bare" : ""}`}>
       <div className="meter__row">
         {label && <span>{label}</span>}
         <span className="num">
-          {money(used)} <span className="muted">of {money(limit)}</span>
+          {bare ? (
+            `${Math.round(pct)}%`
+          ) : (
+            <>
+              {money(used)} <span className="muted">of {money(limit)}</span>
+            </>
+          )}
         </span>
       </div>
       <div
@@ -70,6 +79,63 @@ export function Meter({
       >
         <div className={`meter__fill meter__fill--${tone}`} style={{ width: `${pct}%` }} />
       </div>
+    </div>
+  );
+}
+
+/** Counts up to a figure when it first appears; jumps straight there under reduced motion. */
+export function CountUp({ value, format = money }: { value: number; format?: (n: number) => string }) {
+  const [shown, setShown] = useState(value);
+  const from = useRef(0);
+  useEffect(() => {
+    const start = from.current;
+    from.current = value;
+    if (start === value || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setShown(value);
+      return;
+    }
+    const t0 = performance.now();
+    let raf = 0;
+    const tick = (t: number) => {
+      const k = Math.min(1, (t - t0) / 700);
+      const eased = 1 - Math.pow(1 - k, 3);
+      setShown(start + (value - start) * eased);
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value]);
+  return <span className="num">{format(shown)}</span>;
+}
+
+/** One figure in the KPI strip: label, big number, a line of context, and an optional bar. */
+export function Kpi({
+  label,
+  value,
+  format,
+  note,
+  tone,
+  meter,
+}: {
+  label: string;
+  value: number;
+  format?: (n: number) => string;
+  note: React.ReactNode;
+  tone?: Tone;
+  meter?: { used: number; limit: number };
+}) {
+  return (
+    <div className={`kpi${tone ? ` kpi--${tone}` : ""}`}>
+      <dt className="kpi__label">{label}</dt>
+      <dd className="kpi__value">
+        <CountUp value={value} format={format} />
+      </dd>
+      <dd className="kpi__note">{note}</dd>
+      {meter && (
+        <dd className="kpi__meter">
+          <Meter used={meter.used} limit={meter.limit} bare />
+        </dd>
+      )}
     </div>
   );
 }

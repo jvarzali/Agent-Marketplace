@@ -9,8 +9,16 @@ import type { AuditEvent, AuditType } from "@/lib/types";
 
 const FILTERS: { id: string; label: string; types: AuditType[] | null }[] = [
   { id: "all", label: "Everything", types: null },
-  { id: "decisions", label: "Decisions", types: ["request_denied", "request_pending", "request_auto_approved", "approved", "denied"] },
-  { id: "money", label: "Cards and charges", types: ["credential_issued", "credential_cancelled", "transaction", "refund"] },
+  {
+    id: "decisions",
+    label: "Decisions",
+    types: ["request_denied", "request_pending", "request_auto_approved", "approved", "denied"],
+  },
+  {
+    id: "money",
+    label: "Cards and charges",
+    types: ["credential_issued", "credential_cancelled", "transaction", "refund"],
+  },
   { id: "security", label: "Security", types: ["security", "frozen", "unfrozen"] },
   { id: "changes", label: "Rule changes", types: ["policy_changed", "agent_created"] },
 ];
@@ -49,7 +57,9 @@ export function ActivityView() {
     <div className="page">
       <header className="pagetitle">
         <h1>Activity</h1>
-        <p className="pagetitle__meta">Every request, decision, card and charge. Entries can&rsquo;t be edited or deleted.</p>
+        <p className="pagetitle__meta">
+          Every request, decision, card and charge. Entries can&rsquo;t be edited or deleted.
+        </p>
       </header>
 
       <div className="filters">
@@ -66,7 +76,12 @@ export function ActivityView() {
         </label>
         <div className="seg seg--wrap" role="group" aria-label="Event type">
           {FILTERS.map((f) => (
-            <button key={f.id} className="seg__btn" aria-pressed={f.id === filter.id} onClick={() => setParam("type", f.id)}>
+            <button
+              key={f.id}
+              className="seg__btn"
+              aria-pressed={f.id === filter.id}
+              onClick={() => setParam("type", f.id)}
+            >
               {f.label}
             </button>
           ))}
@@ -74,50 +89,52 @@ export function ActivityView() {
       </div>
 
       {groups.length === 0 ? (
-        <p className="empty">
+        <p className="ledger empty">
           Nothing matches these filters.{" "}
           <button className="linkbtn" onClick={() => router.replace("/activity")}>
             Show everything
           </button>
         </p>
       ) : (
-        <div className="table-wrap">
-          <table className="table table--stack table--log">
-            <thead>
-              <tr>
-                <th scope="col">Time</th>
-                <th scope="col">Event</th>
-                <th scope="col">What happened</th>
-                <th scope="col">Agent</th>
-              </tr>
-            </thead>
-            {groups.map((g) => (
-              <tbody key={g.day}>
-                <tr className="table__day">
-                  <th scope="rowgroup" colSpan={4}>
-                    {g.day}
-                  </th>
+        <section className="ledger" aria-label="Log entries">
+          <div className="table-wrap">
+            <table className="table table--stack table--log">
+              <thead>
+                <tr>
+                  <th scope="col">Time</th>
+                  <th scope="col">Event</th>
+                  <th scope="col">What happened</th>
+                  <th scope="col">Agent</th>
                 </tr>
-                {g.items.map((e) => (
-                  <tr key={e.id} className={e.type === "security" ? "is-alert" : undefined}>
-                    <td data-label="Time" className="muted t-time">
-                      {clockTime(e.createdAt)}
-                    </td>
-                    <td data-label="Event">
-                      <Pill tone={auditTone[e.type]}>{auditLabel[e.type]}</Pill>
-                    </td>
-                    <td data-label="What happened">
-                      {e.requestId ? <Link href={`/approvals/${e.requestId}`}>{e.summary}</Link> : e.summary}
-                    </td>
-                    <td data-label="Agent" className="muted">
-                      {store.agent(e.agentId)?.name}
-                    </td>
+              </thead>
+              {groups.map((g) => (
+                <tbody key={g.day}>
+                  <tr className="table__day">
+                    <th scope="rowgroup" colSpan={4}>
+                      {g.day}
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            ))}
-          </table>
-        </div>
+                  {g.items.map((e) => (
+                    <tr key={e.id} className={e.type === "security" ? "is-alert" : undefined}>
+                      <td data-label="Time" className="muted t-time">
+                        {clockTime(e.createdAt)}
+                      </td>
+                      <td data-label="Event">
+                        <Pill tone={auditTone[e.type]}>{auditLabel[e.type]}</Pill>
+                      </td>
+                      <td data-label="What happened">
+                        {e.requestId ? <Link href={`/approvals/${e.requestId}`}>{e.summary}</Link> : e.summary}
+                      </td>
+                      <td data-label="Agent" className="muted">
+                        {store.agent(e.agentId)?.name}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              ))}
+            </table>
+          </div>
+        </section>
       )}
     </div>
   );

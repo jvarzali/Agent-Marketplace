@@ -25,7 +25,7 @@ export function ApprovalsView() {
         </p>
       </header>
 
-      <section className="ledger" aria-labelledby="waiting">
+      <section className="ledger ledger--tray" aria-labelledby="waiting">
         <LedgerHead id="waiting" title="Waiting on you" />
         <SlipQueue
           requests={store.pending}
