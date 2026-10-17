@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Ago, LedgerHead, Pill } from "@/components/bits";
 import { auditLabel, auditTone, clockTime, dayLabel, money } from "@/lib/format";
 import { useNow, useStore } from "@/lib/store";
@@ -38,11 +38,17 @@ export function ActivityView() {
   // Only opening the Automated purchases tab counts as checking them. Keep the
   // previous mark while the tab is open so new ones stay flagged until you leave it.
   const onAuto = filter.id === "auto";
-  const [seenBefore, setSeenBefore] = useState(store.autoSeenAt);
+  const [seenBefore, setSeenBefore] = useState<number>(Infinity);
+  const marked = useRef(false);
   useEffect(() => {
-    if (!onAuto) return;
-    setSeenBefore(store.autoSeenAt);
-    store.markAutoSeen();
+    if (!onAuto) {
+      marked.current = false;
+      return;
+    }
+    // Dev Strict Mode runs effects twice; marking twice would hide every New tag.
+    if (marked.current) return;
+    marked.current = true;
+    setSeenBefore(store.markAutoSeen());
     // Runs on entering the tab only; the store object changes on every update.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onAuto]);
