@@ -862,26 +862,85 @@ svg {
 
 /* ---------- The receipt and its stub ---------- */
 
-.slips {
-  display: grid;
-  /* auto-fit lets a short queue stretch across the row; the cap stops a single slip going banner-wide */
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr));
-  gap: 28px;
-  align-items: start;
-  padding-top: 8px;
+/* Pending receipts: one row, three across on wide screens, the rest waiting
+   offscreen to the right. Slips are packed from the left with margins (not
+   gap) so a decided slip can fold its width and margin to zero and the rest
+   slide over. */
+.slipq {
+  --slip-gap: 28px;
+  container-type: inline-size;
+  position: relative;
 }
-.slips > li {
-  max-width: 560px;
+.slipq__nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.slipq__row {
+  /* three across, never narrower than a readable receipt */
+  --slip-w: max(300px, calc((100cqw - 2 * var(--slip-gap)) / 3));
+  display: flex;
+  align-items: flex-start;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 0;
+  /* room for the paper shadow, which the scroller would otherwise clip */
+  padding: 10px 0 26px;
+  margin-bottom: -16px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+.slipq__row:focus-visible {
+  outline-offset: 4px;
+}
+/* A soft fade on the right edge says there is more to scroll to. */
+.slipq__row--more {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent);
+}
+.slipq__item {
+  flex: 0 0 var(--slip-w);
+  margin-right: var(--slip-gap);
+  scroll-snap-align: start;
+  transition:
+    flex-basis 380ms cubic-bezier(0.4, 0, 0.2, 1),
+    margin-right 380ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 220ms ease;
+}
+.slipq__item:last-child {
+  margin-right: 0;
+}
+.slipq__inner {
+  width: var(--slip-w);
+}
+.slipq__item.is-leaving {
+  flex-basis: 0;
+  margin-right: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+@media (max-width: 720px) {
+  .slipq__row {
+    /* one slip and the edge of the next, to show it swipes */
+    --slip-w: min(380px, calc(100cqw - 44px));
+    --slip-gap: 16px;
+  }
 }
 
 /* Paper casts a shadow; the receipt's mask clips its own, so the wrapper carries it. */
-.slips > li,
+.slipq__inner,
 .detail__slip {
   filter: drop-shadow(0 1px 1px rgba(21, 35, 60, 0.12)) drop-shadow(0 8px 18px rgba(21, 35, 60, 0.08));
 }
 
 .receipt {
   position: relative;
+  /* keeps the perforation notches from widening a scrolling row */
+  overflow: hidden;
   background: var(--slip);
   color: var(--slip-ink);
   font-family: var(--font-slip);

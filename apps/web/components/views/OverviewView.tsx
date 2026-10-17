@@ -4,8 +4,7 @@ import { ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { AgentsTable } from "@/components/AgentsTable";
 import { Ago, LedgerHead, Pill } from "@/components/bits";
-import { ApprovalStub } from "@/components/Decision";
-import { Receipt } from "@/components/Receipt";
+import { SlipQueue } from "@/components/SlipQueue";
 import { auditLabel, auditTone, money } from "@/lib/format";
 import { useStore } from "@/lib/store";
 
@@ -69,19 +68,12 @@ export function OverviewView() {
             )
           }
         />
-        {pending.length === 0 ? (
-          <p className="empty">Your agents will ask here before buying anything your rules don&rsquo;t already allow.</p>
-        ) : (
-          <ul className="slips">
-            {pending.map((r) => (
-              <li key={r.id}>
-                <Receipt request={r} agent={store.agent(r.agentId)} compact>
-                  <ApprovalStub request={r} />
-                </Receipt>
-              </li>
-            ))}
-          </ul>
-        )}
+        <SlipQueue
+          requests={pending}
+          empty={
+            <p className="empty">Your agents will ask here before buying anything your rules don&rsquo;t already allow.</p>
+          }
+        />
       </section>
 
       <div className="columns">

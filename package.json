@@ -31,5 +31,9 @@
   },
   "optionalDependencies": {
     "@rolldown/binding-darwin-arm64": "^1.2.14"
+  },
+  "overrides": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
   }
 }

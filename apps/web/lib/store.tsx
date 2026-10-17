@@ -11,7 +11,8 @@ import { seed, type Snapshot } from "./mock-data";
 import { templatePolicy, type TemplateId } from "./policy";
 import type { Agent, AgentClient, AuditEvent, Policy, PurchaseRequest } from "./types";
 
-const STORAGE_KEY = "agentmart.demo.v1";
+// Bump when the demo seed changes so browsers pick up the new data.
+const STORAGE_KEY = "agentmart.demo.v2";
 const CREDENTIAL_TTL_MS = 30 * 60_000;
 
 interface Store extends Snapshot {

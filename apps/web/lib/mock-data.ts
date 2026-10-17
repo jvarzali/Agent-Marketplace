@@ -69,6 +69,76 @@ export function seed(now: number): Snapshot {
 
   const requests: PurchaseRequest[] = [
     {
+      id: "req_8f52",
+      agentId: "agt_errand",
+      merchantDomain: "amazon.com",
+      merchantName: "Amazon",
+      items: [
+        {
+          name: "Amazon Basics AA alkaline batteries, 24 pack",
+          category: "household",
+          categoryConfidence: 0.94,
+          unitPrice: 11.49,
+          quantity: 1,
+          url: "https://www.amazon.com/dp/B00MNV8E0C",
+        },
+      ],
+      subtotal: 11.49,
+      tax: 0,
+      shipping: 0,
+      total: 11.49,
+      currency: "USD",
+      reasoning: "The wireless keyboard you're setting up takes AA batteries and the drawer is empty.",
+      cartHash: "3f8a0d6e21c94b7a55",
+      status: "pending_approval",
+      checks: [
+        { rule: "Agent status", outcome: "pass", detail: "Errand GPT is active." },
+        { rule: "Store", outcome: "pass", detail: "Errand GPT has bought from amazon.com before." },
+        { rule: "Per-order limit", outcome: "pass", detail: "$11.49 is under $50.00 including tax." },
+        { rule: "Approve everything", outcome: "approval", detail: "This agent asks you before every purchase." },
+      ],
+      createdAt: now - 1 * MIN,
+    },
+    {
+      id: "req_8f47",
+      agentId: "agt_errand",
+      merchantDomain: "walmart.com",
+      merchantName: "Walmart",
+      items: [
+        {
+          name: "Command picture-hanging strips, 48 pairs",
+          category: "household",
+          categoryConfidence: 0.92,
+          unitPrice: 13.97,
+          quantity: 1,
+          url: "https://www.walmart.com/ip/command-picture-hanging-strips-48",
+        },
+        {
+          name: "ScotchBlue painter's tape, 1.41 in",
+          category: "household",
+          categoryConfidence: 0.9,
+          unitPrice: 6.47,
+          quantity: 1,
+          url: "https://www.walmart.com/ip/scotchblue-painters-tape",
+        },
+      ],
+      subtotal: 20.44,
+      tax: 1.69,
+      shipping: 0,
+      total: 22.13,
+      currency: "USD",
+      reasoning: "For hanging the framed prints without drilling, as you asked. Walmart has same-day pickup.",
+      cartHash: "a64c19f0e7b3d28c91",
+      status: "pending_approval",
+      checks: [
+        { rule: "Agent status", outcome: "pass", detail: "Errand GPT is active." },
+        { rule: "Store", outcome: "approval", detail: "Errand GPT hasn't bought from walmart.com before." },
+        { rule: "Per-order limit", outcome: "pass", detail: "$22.13 is under $50.00 including tax." },
+        { rule: "Approve everything", outcome: "approval", detail: "This agent asks you before every purchase." },
+      ],
+      createdAt: now - 9 * MIN,
+    },
+    {
       id: "req_8f21",
       agentId: "agt_pantry",
       merchantDomain: "target.com",
@@ -311,6 +381,22 @@ export function seed(now: number): Snapshot {
   ];
 
   const events: AuditEvent[] = [
+    {
+      id: "evt_14",
+      agentId: "agt_errand",
+      type: "request_pending",
+      summary: "Asked to spend $11.49 at Amazon. This agent asks for everything.",
+      requestId: "req_8f52",
+      createdAt: now - 1 * MIN,
+    },
+    {
+      id: "evt_13",
+      agentId: "agt_errand",
+      type: "request_pending",
+      summary: "Asked to spend $22.13 at Walmart. New store, and this agent asks for everything.",
+      requestId: "req_8f47",
+      createdAt: now - 9 * MIN,
+    },
     {
       id: "evt_12",
       agentId: "agt_pantry",

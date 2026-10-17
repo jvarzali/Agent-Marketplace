@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { Ago, LedgerHead, Pill } from "@/components/bits";
-import { ApprovalStub } from "@/components/Decision";
-import { Receipt } from "@/components/Receipt";
+import { SlipQueue } from "@/components/SlipQueue";
 import { money, statusLabel, statusTone } from "@/lib/format";
 import { useStore } from "@/lib/store";
 
@@ -28,22 +27,15 @@ export function ApprovalsView() {
 
       <section className="ledger" aria-labelledby="waiting">
         <LedgerHead id="waiting" title="Waiting on you" />
-        {store.pending.length === 0 ? (
-          <p className="empty">
-            No purchases waiting. New requests show up here and in your email.{" "}
-            <Link href="/agents">Review what your agents can buy</Link>
-          </p>
-        ) : (
-          <ul className="slips">
-            {store.pending.map((r) => (
-              <li key={r.id}>
-                <Receipt request={r} agent={store.agent(r.agentId)} compact>
-                  <ApprovalStub request={r} />
-                </Receipt>
-              </li>
-            ))}
-          </ul>
-        )}
+        <SlipQueue
+          requests={store.pending}
+          empty={
+            <p className="empty">
+              No purchases waiting. New requests show up here and in your email.{" "}
+              <Link href="/agents">Review what your agents can buy</Link>
+            </p>
+          }
+        />
       </section>
 
       {decided.length > 0 && (

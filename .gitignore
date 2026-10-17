@@ -8,3 +8,4 @@ generated/
 .pgdata/
 coverage/
 .next/
+.next-*/
