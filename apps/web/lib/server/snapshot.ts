@@ -65,6 +65,9 @@ function toRequest(p: CorePurchase): PurchaseRequest {
     reasoning: p.agentReasoning,
     cartHash: p.cartHash,
     status: p.status,
+    autoApproved: p.autoApproved,
+    overridden: p.overridden,
+    overrideBlock: p.overrideBlock,
     checks: p.checks.map(toCheck).filter((c): c is RuleCheck => c !== null),
     createdAt: p.createdAt.getTime(),
     decidedAt: p.decidedAt?.getTime(),
@@ -132,6 +135,8 @@ function describeEvent(e: CoreEvent, purchase: CorePurchase | undefined): { type
       return { type: "request_denied", summary: withReason(`Blocked ${what} before a card was issued`) };
     case "approval.approved":
       return { type: "approved", summary: `You approved ${what}.` };
+    case "approval.override":
+      return { type: "approved", summary: `You overrode the denial and approved ${what}.` };
     case "approval.denied":
       return { type: "denied", summary: `You denied ${what}.` };
     case "approval.expired":
@@ -188,6 +193,7 @@ export function toSnapshot(s: DashboardSnapshot): Snapshot {
     dollars(a.budget.windows.find((x) => x.window === w)?.committedCents ?? 0);
   return {
     userEmail: s.user.email,
+    autoSeenAt: s.user.autoPurchasesSeenAt.getTime(),
     agents: s.agents.map((a) => ({
       id: a.id,
       name: a.name,

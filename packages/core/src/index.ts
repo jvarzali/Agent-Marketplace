@@ -6,6 +6,7 @@ export * from "./policy/engine";
 export * from "./policy/budget";
 export * from "./policy/describe";
 export * from "./policy/templates";
+export * from "./policy/override";
 export * from "./trust";
 export * from "./classifier/types";
 export * from "./classifier/rules";

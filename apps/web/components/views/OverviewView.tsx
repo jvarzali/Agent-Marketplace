@@ -27,15 +27,9 @@ export function OverviewView() {
   const waitingTotal = pending.reduce((n, r) => n + r.total, 0);
   const oldest = pending.reduce((t, r) => Math.min(t, r.createdAt), Infinity);
   const weekTotal = agents.reduce((n, a) => n + a.spend.week, 0);
-<<<<<<< HEAD
-  const weekLimit = agents.reduce((n, a) => n + a.policy.limits.per_week, 0);
+  const weekLimit = sumLimits(agents.map((a) => a.policy.limits.per_week));
   const unchecked = store.autoBuys.filter((r) => r.createdAt > store.autoSeenAt);
   const uncheckedTotal = unchecked.reduce((n, r) => n + r.total, 0);
-=======
-  const weekLimit = sumLimits(agents.map((a) => a.policy.limits.per_week));
-  const monthTotal = agents.reduce((n, a) => n + a.spend.month, 0);
-  const monthLimit = sumLimits(agents.map((a) => a.policy.limits.per_month));
->>>>>>> 3b72f5c5b735cc16badeda0fc3b180f0e1a8d16e
   const active = agents.filter((a) => a.status === "active").length;
   const pct = (used: number, limit: number) => (limit > 0 ? Math.round((used / limit) * 100) : 0);
   const budgetNote = (used: number, limit: number | null, period: string) =>
@@ -90,17 +84,6 @@ export function OverviewView() {
           meter={weekLimit === null ? undefined : { used: weekTotal, limit: weekLimit }}
         />
         <Kpi
-<<<<<<< HEAD
-=======
-          label="Spent this month"
-          href="/activity?type=money"
-          value={monthTotal}
-          tone={budgetTone(monthTotal, monthLimit)}
-          note={budgetNote(monthTotal, monthLimit, "monthly")}
-          meter={monthLimit === null ? undefined : { used: monthTotal, limit: monthLimit }}
-        />
-        <Kpi
->>>>>>> 3b72f5c5b735cc16badeda0fc3b180f0e1a8d16e
           label="Agents active"
           href="/agents"
           value={active}

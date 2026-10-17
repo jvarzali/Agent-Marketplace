@@ -8,21 +8,11 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import * as actions from "./actions";
 import type { ActionResult } from "./actions";
 import { money } from "./format";
-<<<<<<< HEAD
-import { seed, type Snapshot } from "./mock-data";
-import { ALWAYS_BLOCKED, templatePolicy, type TemplateId } from "./policy";
-import type { Agent, AgentClient, AuditEvent, Policy, PurchaseRequest } from "./types";
-
-// Bump when the demo seed changes so browsers pick up the new data.
-const STORAGE_KEY = "agentmart.demo.v3";
-const CREDENTIAL_TTL_MS = 30 * 60_000;
-const BOUGHT = new Set<PurchaseRequest["status"]>(["approved", "credential_issued", "completed"]);
-=======
 import type { TemplateId } from "./policy";
 import type { Agent, AgentClient, Policy, PurchaseRequest, Snapshot } from "./types";
 
 const POLL_MS = 15_000;
->>>>>>> 3b72f5c5b735cc16badeda0fc3b180f0e1a8d16e
+const BOUGHT = new Set<PurchaseRequest["status"]>(["approved", "credential_issued", "completed"]);
 
 interface Store extends Snapshot {
   toast: string | null;
@@ -30,26 +20,13 @@ interface Store extends Snapshot {
   agent: (id: string | null) => Agent | undefined;
   request: (id: string) => PurchaseRequest | undefined;
   pending: PurchaseRequest[];
-<<<<<<< HEAD
   /** Purchases the rules allowed outright, with no approval step. Newest first. */
   autoBuys: PurchaseRequest[];
-  markAutoSeen: () => void;
-  approve: (requestId: string) => void;
-  deny: (requestId: string) => void;
-  /** Approve a purchase that was denied, by you or by the rules. See overrideBlock for when it isn't allowed. */
-  overrideDenied: (requestId: string) => void;
-  freeze: (agentId: string) => void;
-  unfreeze: (agentId: string) => void;
-  freezeAll: () => void;
-  savePolicy: (agentId: string, policy: Policy) => void;
-  createAgent: (name: string, client: AgentClient, template: TemplateId) => { agent: Agent; apiKey: string };
-  rotateKey: (agentId: string) => string;
-  acceptSuggestion: (id: string) => void;
-  dismissSuggestion: (id: string) => void;
-  resetDemo: () => void;
-=======
+  markAutoSeen: () => Promise<void>;
   approve: (requestId: string) => Promise<void>;
   deny: (requestId: string) => Promise<void>;
+  /** Approve a purchase that was denied, by you or by the rules. See overrideBlock for when it isn't allowed. */
+  overrideDenied: (requestId: string) => Promise<void>;
   freeze: (agentId: string) => Promise<void>;
   unfreeze: (agentId: string) => Promise<void>;
   freezeAll: () => Promise<void>;
@@ -60,7 +37,6 @@ interface Store extends Snapshot {
   acceptSuggestion: (id: string) => Promise<void>;
   dismissSuggestion: (id: string) => Promise<void>;
   refresh: () => Promise<void>;
->>>>>>> 3b72f5c5b735cc16badeda0fc3b180f0e1a8d16e
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -134,10 +110,13 @@ export function StoreProvider({ initial, children }: { initial: Snapshot; childr
       agent,
       request,
       pending: data.requests.filter((r) => r.status === "pending_approval").sort((a, b) => b.createdAt - a.createdAt),
-      autoBuys: data.requests
-        .filter((r) => BOUGHT.has(r.status) && !r.checks.some((c) => c.outcome === "approval"))
-        .sort((a, b) => b.createdAt - a.createdAt),
-      markAutoSeen: () => update((s) => ({ ...s, autoSeenAt: Date.now() })),
+      autoBuys: data.requests.filter((r) => r.autoApproved && BOUGHT.has(r.status)).sort((a, b) => b.createdAt - a.createdAt),
+
+      markAutoSeen: async () => {
+        // Clear the badge right away; the saved time comes back with the next snapshot.
+        setData((s) => ({ ...s, autoSeenAt: Date.now() }));
+        await call(() => actions.markAutoPurchasesSeen(), true);
+      },
 
       approve: async (requestId) => {
         const r = request(requestId);
@@ -158,6 +137,15 @@ export function StoreProvider({ initial, children }: { initial: Snapshot; childr
         if (res) notify(res.data.status === "expired" ? "That request had already expired." : `Denied ${money(r.total)} at ${r.merchantName}. The agent was told no.`);
       },
 
+      overrideDenied: async (requestId) => {
+        const r = request(requestId);
+        if (!r) return;
+        if (await call(() => actions.overrideDenial(requestId, r.cartHash)))
+          notify(
+            `Overrode the denial: ${money(r.total)} at ${r.merchantName}. ${agent(r.agentId)?.name ?? "The agent"} gets a single-use card for this cart when it checks back.`,
+          );
+      },
+
       freeze: async (agentId) => {
         const name = agent(agentId)?.name ?? "Agent";
         const res = await call(() => actions.freezeAgent(agentId));
@@ -172,54 +160,6 @@ export function StoreProvider({ initial, children }: { initial: Snapshot; childr
         if (await call(() => actions.unfreezeAgent(agentId))) notify(`${name} can request purchases again.`);
       },
 
-<<<<<<< HEAD
-      overrideDenied: (requestId) => {
-        const now = Date.now();
-        const last4 = String(1000 + Math.floor(Math.random() * 9000));
-        const target = data.requests.find((x) => x.id === requestId);
-        const owner = target && data.agents.find((a) => a.id === target.agentId);
-        if (!target || overrideBlock(target, owner)) return;
-        notify(`Overrode the denial: ${money(target.total)} at ${target.merchantName}. Card ending ${last4} issued for this cart only.`);
-        update((s) => {
-          const r = s.requests.find((x) => x.id === requestId);
-          const agent = r && s.agents.find((a) => a.id === r.agentId);
-          if (!r || overrideBlock(r, agent)) return s;
-          return {
-            ...s,
-            requests: s.requests.map((x) =>
-              x.id === requestId
-                ? {
-                    ...x,
-                    status: "credential_issued",
-                    decidedAt: now,
-                    credential: { last4, amountLimit: x.total, expiresAt: now + CREDENTIAL_TTL_MS, status: "active" },
-                  }
-                : x,
-            ),
-            events: [
-              ev({
-                agentId: r.agentId,
-                type: "credential_issued",
-                requestId,
-                summary: `Single-use card ending ${last4} issued for ${money(r.total)} at ${r.merchantName}, good for 30 minutes.`,
-              }),
-              ev({
-                agentId: r.agentId,
-                type: "approved",
-                requestId,
-                summary: `You overrode the denial and approved ${money(r.total)} at ${r.merchantName}.`,
-              }),
-              ...s.events,
-            ],
-          };
-        });
-      },
-
-      freeze: (agentId) => {
-        const name = data.agents.find((a) => a.id === agentId)?.name ?? "Agent";
-        update((s) => freezeIn(s, agentId).s);
-        notify(`${name} is frozen. New requests are blocked and its cards are cancelled.`);
-=======
       freezeAll: async () => {
         const active = data.agents.filter((a) => a.status === "active").length;
         const res = await call(() => actions.freezeAll());
@@ -229,7 +169,6 @@ export function StoreProvider({ initial, children }: { initial: Snapshot; childr
               ? `Froze ${active} ${active === 1 ? "agent" : "agents"}. Every active card is cancelled.`
               : "Every agent was already frozen.",
           );
->>>>>>> 3b72f5c5b735cc16badeda0fc3b180f0e1a8d16e
       },
 
       savePolicy: async (agentId, policy) => {
@@ -265,17 +204,15 @@ export function StoreProvider({ initial, children }: { initial: Snapshot; childr
 }
 
 /**
- * Why a denied purchase can't be overridden, or null if it can. Categories no agent may ever
- * buy (gift cards, stored value, subscriptions) stay blocked: they are how a hijacked agent
- * would cash out, so no single tap should undo that.
+ * Why a denied purchase can't be overridden, or null if it can. The backend decides (cash-like
+ * items such as gift cards never can, and stale requests can't); this adds the live agent state
+ * so the button reflects a freeze immediately. The backend re-checks everything on submit.
  */
 export function overrideBlock(r: PurchaseRequest, agent: Agent | undefined): string | null {
   if (r.status !== "denied") return "Only denied purchases can be overridden.";
-  const locked = r.items.find((i) => ALWAYS_BLOCKED.includes(i.category));
-  if (locked) return "This cart has an item no agent is ever allowed to buy, so the denial can't be overridden.";
   if (!agent) return "This agent no longer exists.";
   if (agent.status === "frozen") return `${agent.name} is frozen. Unfreeze it first to approve this.`;
-  return null;
+  return r.overrideBlock;
 }
 
 export function useStore(): Store {

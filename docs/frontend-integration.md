@@ -143,6 +143,8 @@ a fixed rule rather than a toggle.
 | Inbox list | `wallet.owner.listPendingApprovals(userId)` |
 | Detail / confirmation page at **`/approvals/[id]`** (the email and push links point here, optionally with `?intent=approve` or `?intent=deny` to preselect) | `wallet.owner.getApprovalContext(userId, id)` → merchant, each item with link and line total, totals, agent reasoning, `triggeredRules`, the agent's recent history, `confirmToken`, `canDecide` |
 | Approve / Deny (after the confirm step) | Server Action **POST**: `wallet.owner.decideApproval(userId, id, "approved" \| "denied", confirmToken)` |
+| Override a denial (after the confirm step) | `wallet.owner.overrideDenial(userId, id, confirmToken)`. Refused for cash-like carts (gift cards, stored value, blocked MCCs), broken cart math, frozen agents and requests older than `PENDING_TTL_MINUTES`; the snapshot's `overrideBlock` says why. At issuance only those hard rules are re-checked. |
+| Automated purchases badge | snapshot `purchases[].autoApproved` + `user.autoPurchasesSeenAt`; `wallet.owner.markAutoPurchasesSeen(userId)` when the user opens the list |
 
 Rules that must hold:
 - Opening `/approvals/[id]` (a GET) must **never** approve or deny anything. Approve/Deny happens

@@ -20,6 +20,8 @@ model User {
   emailVerified DateTime? @map("email_verified")
   image         String?
   timezone      String    @default("America/Los_Angeles")
+  // When the user last looked at purchases agents made without asking (dashboard badge).
+  autoPurchasesSeenAt DateTime? @map("auto_purchases_seen_at")
   createdAt     DateTime  @default(now()) @map("created_at")
 
   accounts          Account[]
@@ -202,6 +204,9 @@ model Approval {
   // Null for automatic (policy-allowed) approvals.
   decidedByUserId   String?          @map("decided_by_user_id")
   decision          ApprovalDecision
+  // True when the human approved a purchase the policy had denied. Issuance then only
+  // re-checks the hard rules (freeze, cart math, never-allowed categories and MCCs).
+  override          Boolean          @default(false)
   // The cart hash the human actually saw. Must equal the request's hash at issuance.
   cartHash          String           @map("cart_hash")
   decidedAt         DateTime         @default(now()) @map("decided_at")

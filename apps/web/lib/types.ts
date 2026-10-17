@@ -82,6 +82,12 @@ export interface PurchaseRequest {
   reasoning: string;
   cartHash: string;
   status: RequestStatus;
+  /** The rules allowed it outright, with no approval step. */
+  autoApproved: boolean;
+  /** You approved it after it had been denied. */
+  overridden: boolean;
+  /** For denied requests: why it can't be overridden (from the backend), or null if it can. */
+  overrideBlock: string | null;
   checks: RuleCheck[];
   createdAt: number;
   decidedAt?: number;
@@ -131,4 +137,6 @@ export interface Snapshot {
   requests: PurchaseRequest[];
   events: AuditEvent[];
   suggestions: TrustSuggestion[];
+  /** When you last looked at purchases agents made without asking. Saved on your account. */
+  autoSeenAt: number;
 }

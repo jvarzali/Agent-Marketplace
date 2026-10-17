@@ -4,6 +4,7 @@ import type { ItemClassification } from "../classifier/types";
 import { computeBudget, type Budget } from "../policy/budget";
 import { windowSpend, WINDOWS, type RuleCheck } from "../policy/engine";
 import { describePolicy, type PolicySummarySection } from "../policy/describe";
+import { hardDenies } from "../policy/override";
 import { safeParsePolicy, type PolicyRules } from "../policy/schema";
 import { templateRules, type PolicyTemplateId } from "../policy/templates";
 import { generateApiKey, hashApiKey, looksLikeApiKey, safeHttpUrl } from "../security";
@@ -62,7 +63,7 @@ export interface ApprovalContext {
 
 /** Everything the dashboard renders, in one round trip. Amounts in cents. */
 export interface DashboardSnapshot {
-  user: { id: string; email: string; name: string | null; timezone: string };
+  user: { id: string; email: string; name: string | null; timezone: string; autoPurchasesSeenAt: Date };
   agents: (AgentSummary & { rules: PolicyRules; budget: Budget })[];
   /** Most recent first. Agent-supplied text is untrusted; item `url`s are http(s) or null. */
   purchases: {
@@ -79,6 +80,12 @@ export interface DashboardSnapshot {
     agentReasoning: string;
     cartHash: string;
     status: PurchaseRequest["status"];
+    /** The policy allowed it outright: no human approval step. */
+    autoApproved: boolean;
+    /** A human approved it after the policy (or the human) had denied it. */
+    overridden: boolean;
+    /** For denied purchases: why an override isn't possible, or null if it is. */
+    overrideBlock: string | null;
     checks: RuleCheck[];
     createdAt: Date;
     /** When it left pending_approval (human decision, auto-approval, expiry, cancel), if it has. */
@@ -387,6 +394,53 @@ export class OwnerService {
     return result;
   }
 
+  /**
+   * Approve a purchase that was denied, by the policy or by the user. Must be called from an
+   * authenticated POST with the cart hash the user was shown. Never lifts the hard rules (see
+   * `hardDenies`): a frozen agent, broken cart math, or anything cash-like stays denied, and
+   * those are re-checked again when the card is issued.
+   */
+  async overrideDenial(userId: string, requestId: string, confirmToken: string): Promise<{ status: "approved"; expiresAt: Date }> {
+    await this.ownRequest(userId, requestId);
+    const result = await this.deps.db.$transaction(async (tx) => {
+      const now = this.deps.now();
+      const r0 = await tx.purchaseRequest.findUniqueOrThrow({ where: { id: requestId } });
+      await lockAgent(tx, r0.agentId);
+      const r = await tx.purchaseRequest.findUniqueOrThrow({ where: { id: requestId }, include: { agent: { select: { name: true, status: true } } } });
+      const blocked = this.overrideBlock(r, r.agent, now);
+      if (blocked) throw new WalletError("invalid_state", blocked);
+      if (confirmToken !== r.cartHash) return { status: "hash_mismatch" as const, agentId: r.agentId, actual: r.cartHash };
+      const expiresAt = new Date(now.getTime() + minutes(this.deps.config.approvalTtlMinutes));
+      await tx.approval.create({ data: { purchaseRequestId: r.id, decidedByUserId: userId, decision: "approved", override: true, cartHash: r.cartHash, decidedAt: now, expiresAt } });
+      await tx.purchaseRequest.update({ where: { id: r.id }, data: { status: "approved" } });
+      const overridden = (r.decisionReasons as unknown as RuleCheck[]).filter((c) => c.outcome === "deny").map((c) => c.message);
+      await audit(
+        tx,
+        { userId, agentId: r.agentId, purchaseRequestId: r.id, type: "approval.override", severity: "warning", payload: { cart_hash: r.cartHash, total_cents: r.totalCents, overridden, expires_at: expiresAt.toISOString() } },
+        now,
+      );
+      return { status: "approved" as const, expiresAt };
+    });
+    if (result.status === "hash_mismatch") {
+      await audit(this.deps.db, { userId, agentId: result.agentId, purchaseRequestId: requestId, type: "security.approval_hash_mismatch", severity: "security", payload: { shown: confirmToken, actual: result.actual } }, this.deps.now());
+      throw new WalletError("conflict", "The cart changed since you opened it. Reload the page and review it again.");
+    }
+    return result;
+  }
+
+  /** Why a purchase can't be overridden right now, or null if it can. */
+  private overrideBlock(r: PurchaseRequest, agent: { name: string; status: "active" | "frozen" }, now: Date): string | null {
+    if (r.status !== "denied") return "Only denied purchases can be overridden.";
+    const checks = r.decisionReasons as unknown as RuleCheck[];
+    const hard = hardDenies(checks, r.classifications as unknown as ItemClassification[], r.mcc).filter((c) => c.rule !== "agent.frozen");
+    if (hard.length) return `This can't be overridden: ${hard[0]!.message}`;
+    if (agent.status === "frozen") return `${agent.name} is frozen. Unfreeze it first to approve this.`;
+    if (now.getTime() - r.createdAt.getTime() > minutes(this.deps.config.pendingTtlMinutes)) {
+      return "This request is too old to approve now. Ask the agent to submit the cart again.";
+    }
+    return null;
+  }
+
   // ───────────── history & activity ─────────────
 
   async listPurchases(userId: string, q: { agentId?: string; status?: PurchaseRequest["status"]; before?: string; limit?: number } = {}) {
@@ -491,7 +545,8 @@ export class OwnerService {
     const rows = await this.deps.db.purchaseRequest.findMany({
       where: { agent: { userId } },
       include: {
-        approvals: { orderBy: { decidedAt: "desc" }, take: 1, select: { decidedAt: true } },
+        approvals: { orderBy: { decidedAt: "desc" }, take: 1, select: { decidedAt: true, override: true, decidedByUserId: true } },
+        agent: { select: { name: true, status: true } },
         credentials: { orderBy: { createdAt: "desc" }, take: 1, select: { last4: true, amountLimitCents: true, expiresAt: true, status: true } },
       },
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
@@ -513,6 +568,9 @@ export class OwnerService {
         agentReasoning: r.agentReasoning,
         cartHash: r.cartHash,
         status: r.status,
+        autoApproved: r.decision === "allow" && !r.approvals[0]?.decidedByUserId,
+        overridden: !!r.approvals[0]?.override,
+        overrideBlock: r.status === "denied" ? this.overrideBlock(r, r.agent, now) : null,
         checks: r.decisionReasons as unknown as RuleCheck[],
         createdAt: r.createdAt,
         decidedAt: r.status === "pending_approval" ? null : (r.approvals[0]?.decidedAt ?? r.updatedAt),
@@ -526,7 +584,20 @@ export class OwnerService {
       orderBy: { createdAt: "desc" },
       select: { id: true, agentId: true, category: true, maxTotalCents: true, streakCount: true, message: true, createdAt: true },
     });
-    return { user: { id: user.id, email: user.email, name: user.name, timezone: user.timezone }, agents, purchases, events, suggestions };
+    return {
+      user: { id: user.id, email: user.email, name: user.name, timezone: user.timezone, autoPurchasesSeenAt: user.autoPurchasesSeenAt ?? user.createdAt },
+      agents,
+      purchases,
+      events,
+      suggestions,
+    };
+  }
+
+  /** The user looked at the purchases agents made without asking. */
+  async markAutoPurchasesSeen(userId: string): Promise<Date> {
+    const now = this.deps.now();
+    await this.deps.db.user.update({ where: { id: userId }, data: { autoPurchasesSeenAt: now } });
+    return now;
   }
 
   // ───────────── push subscriptions ─────────────

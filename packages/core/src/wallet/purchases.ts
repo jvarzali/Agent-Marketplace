@@ -6,6 +6,7 @@ import { formatMoney, toCents } from "../money";
 import { computeBudget, type Budget } from "../policy/budget";
 import { describePolicy, describePolicyText, type PolicySummarySection } from "../policy/describe";
 import { evaluatePurchase, type RuleCheck } from "../policy/engine";
+import { hardDenies } from "../policy/override";
 import { ALWAYS_DENIED_MCCS, type PolicyRules } from "../policy/schema";
 import { audit, json, lockAgent, minutes, WalletError, type AuthedAgent, type Tx, type WalletDeps } from "./context";
 import { cartFromRow, classificationsFromRow, loadActivePolicy, loadHistory, loadKnownMerchants } from "./history";
@@ -250,7 +251,9 @@ export class PurchaseService {
           }
           if (row.status !== "approved") return { row, secrets: null, cred: null };
 
-          const approval = await tx.approval.findFirst({ where: { purchaseRequestId: id }, orderBy: { decidedAt: "desc" } });
+          // The request's status says it's approved; take the approval that did it (a human
+          // denial overridden in the same millisecond must not shadow it).
+          const approval = await tx.approval.findFirst({ where: { purchaseRequestId: id, decision: "approved" }, orderBy: { decidedAt: "desc" } });
           if (!approval || approval.decision !== "approved") {
             return { row: await this.setStatus(tx, row, "cancelled", "no_valid_approval", now), secrets: null, cred: null };
           }
@@ -264,10 +267,12 @@ export class PurchaseService {
           }
 
           // Re-check every deny rule now: the agent may have been frozen or limits tightened since approval.
+          // A human override already accepted the policy denials, so only the hard rules apply to it.
           const policy = await loadActivePolicy(tx, agent.id);
           const [history, knownMerchants] = await Promise.all([loadHistory(tx, agent.id, now, id), loadKnownMerchants(tx, agent.id)]);
-          const recheck = evaluatePurchase({ cart: cartFromRow(row), classifications: classificationsFromRow(row), policy: policy.rules, agent: { status: a.status }, history, knownMerchants, now });
-          const denies = recheck.checks.filter((c) => c.outcome === "deny");
+          const classifications = classificationsFromRow(row);
+          const recheck = evaluatePurchase({ cart: cartFromRow(row), classifications, policy: policy.rules, agent: { status: a.status }, history, knownMerchants, now });
+          const denies = approval.override ? hardDenies(recheck.checks, classifications, row.mcc) : recheck.checks.filter((c) => c.outcome === "deny");
           if (denies.length) {
             await audit(tx, { userId: agent.userId, agentId: agent.id, purchaseRequestId: id, type: "purchase.blocked_at_issuance", severity: "warning", payload: { reasons: denies.map((d) => d.message) } }, now);
             const updated = await tx.purchaseRequest.update({

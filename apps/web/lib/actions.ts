@@ -54,6 +54,15 @@ export async function decideRequest(requestId: string, decision: "approved" | "d
   });
 }
 
+/** Approve a denied purchase after all. The backend refuses cash-like carts, frozen agents and stale requests. */
+export async function overrideDenial(requestId: string, confirmToken: string) {
+  return run((u) => getWallet().owner.overrideDenial(u, id(requestId, "request"), id(confirmToken, "cart")));
+}
+
+export async function markAutoPurchasesSeen() {
+  return run(async (u) => (await getWallet().owner.markAutoPurchasesSeen(u)).getTime());
+}
+
 export async function freezeAgent(agentId: string) {
   return run((u) => getWallet().owner.freezeAgent(u, id(agentId, "agent")));
 }

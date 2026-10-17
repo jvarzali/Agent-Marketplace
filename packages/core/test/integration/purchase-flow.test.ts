@@ -458,3 +458,68 @@ describe("dashboard snapshot", () => {
     expect(s.events.some((e) => e.type === "credential.issued")).toBe(true);
   });
 });
+
+describe("overriding a denial", () => {
+  it("lets the user approve a purchase the limits denied; the card is issued despite the soft rule", async () => {
+    const t = await setup();
+    const r = await t.wallet.purchases.requestPurchase(t.agent, groceries({ total: 100 }));
+    expect(r.status).toBe("denied");
+    const snap = await t.wallet.owner.getDashboardSnapshot(t.user.id);
+    expect(snap.purchases[0]!.overrideBlock).toBeNull();
+
+    await t.wallet.owner.overrideDenial(t.user.id, r.id, r.cart_hash);
+    const s = await t.wallet.purchases.getPurchaseStatus(t.agent, r.id);
+    expect(s.status).toBe("credential_issued");
+    expect(s.credential?.amount_limit_cents).toBe(10000);
+    expect((await events(t.user.id, "approval.override")).length).toBe(1);
+    const after = await t.wallet.owner.getDashboardSnapshot(t.user.id);
+    expect(after.purchases[0]).toMatchObject({ overridden: true, autoApproved: false });
+  });
+
+  it("never overrides cash-like items, a frozen agent, a changed cart, or a stale request", async () => {
+    const t = await setup();
+    const gift = await t.wallet.purchases.requestPurchase(t.agent, groceries({ extraItems: [{ name: "Amazon.com eGift Card", unit_price: 25, quantity: 1 }] }));
+    expect(gift.status).toBe("denied");
+    await expect(t.wallet.owner.overrideDenial(t.user.id, gift.id, gift.cart_hash)).rejects.toMatchObject({ code: "invalid_state" });
+    expect((await t.wallet.owner.getDashboardSnapshot(t.user.id)).purchases[0]!.overrideBlock).toMatch(/can't be overridden/);
+
+    const big = await t.wallet.purchases.requestPurchase(t.agent, groceries({ total: 100 }));
+    await expect(t.wallet.owner.overrideDenial(t.user.id, big.id, "not-the-hash")).rejects.toMatchObject({ code: "conflict" });
+    expect((await events(t.user.id, "security.approval_hash_mismatch")).length).toBe(1);
+
+    await t.wallet.owner.freezeAgent(t.user.id, t.agent.id);
+    await expect(t.wallet.owner.overrideDenial(t.user.id, big.id, big.cart_hash)).rejects.toMatchObject({ code: "invalid_state" });
+    await t.wallet.owner.unfreezeAgent(t.user.id, t.agent.id);
+
+    t.advance(25 * 3_600_000);
+    await expect(t.wallet.owner.overrideDenial(t.user.id, big.id, big.cart_hash)).rejects.toThrow(/too old/);
+
+    const other = await setup();
+    await expect(other.wallet.owner.overrideDenial(other.user.id, big.id, big.cart_hash)).rejects.toMatchObject({ code: "not_found" });
+  });
+
+  it("a human-denied request can be overridden too", async () => {
+    const t = await setup();
+    const r = await t.wallet.purchases.requestPurchase(t.agent, groceries({ total: 40 }));
+    await t.wallet.owner.decideApproval(t.user.id, r.id, "denied", r.cart_hash);
+    await t.wallet.owner.overrideDenial(t.user.id, r.id, r.cart_hash);
+    expect((await t.wallet.purchases.getPurchaseStatus(t.agent, r.id)).status).toBe("credential_issued");
+  });
+});
+
+describe("automated purchases badge", () => {
+  it("flags policy-allowed purchases and remembers when the user last checked", async () => {
+    const t = await setup();
+    const auto = await t.wallet.purchases.requestPurchase(t.agent, groceries({ total: 10 }));
+    const asked = await t.wallet.purchases.requestPurchase(t.agent, groceries({ total: 40 }));
+    await t.wallet.owner.decideApproval(t.user.id, asked.id, "approved", asked.cart_hash);
+    const s = await t.wallet.owner.getDashboardSnapshot(t.user.id);
+    expect(s.purchases.find((p) => p.id === auto.id)!.autoApproved).toBe(true);
+    expect(s.purchases.find((p) => p.id === asked.id)!.autoApproved).toBe(false);
+    expect(s.user.autoPurchasesSeenAt.getTime()).toBeLessThanOrEqual(t.clock.now.getTime());
+
+    t.advance(60_000);
+    const seen = await t.wallet.owner.markAutoPurchasesSeen(t.user.id);
+    expect((await t.wallet.owner.getDashboardSnapshot(t.user.id)).user.autoPurchasesSeenAt).toEqual(seen);
+  });
+});

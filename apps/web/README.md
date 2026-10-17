@@ -24,6 +24,8 @@ Sign in with your email. Without `RESEND_API_KEY` the sign-in link is printed in
 ## Decisions
 
 - **Freezing is one tap; unfreezing asks first.** Stopping spending should never be slowed down. Giving spending power back should take a deliberate second step.
+- **Denials can be overridden, with a confirm step**, except carts with something no agent may ever buy (gift cards, stored value, cash-like merchants), a frozen agent, or a request more than a day old. The backend enforces this; the button just shows its reason.
+- **Automated purchases** (allowed by the rules with no approval) get their own tab in Activity and a tile on the Overview. "Since you last checked" is saved on your account, so it's the same on every device.
 - **Approve and deny both have a confirm step**, as §9 requires. Email links will open `/approvals/[id]`, which never acts on page load.
 - **Agent-written text is untrusted.** Item names and reasoning render only as React text. Item links are restricted to http(s) and opened with `rel="noopener noreferrer nofollow"`. Reasoning is labeled as written by the agent.
 - **Safety rules the UI shows as locked:** gift cards and stored value are always blocked, subscriptions are blocked unless allowed, and "ask when unsure what an item is" is always on. The backend enforces all three; the UI only reflects them.
