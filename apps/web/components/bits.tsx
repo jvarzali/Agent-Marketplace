@@ -35,7 +35,8 @@ export function Ago({ ts }: { ts: number }) {
   const now = useNow();
   return (
     <time dateTime={new Date(ts).toISOString()} title={new Date(ts).toLocaleString()}>
-      {relTime(ts, now)}
+      {/* Ago is for past events; the shared clock ticks every 15s, so a brand-new timestamp can sit just ahead of it. */}
+      {relTime(Math.min(ts, now), now)}
     </time>
   );
 }

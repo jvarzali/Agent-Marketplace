@@ -1,10 +1,10 @@
 "use client";
 
-import { Check, X } from "lucide-react";
+import { Check, RotateCcw, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { countdown, money } from "@/lib/format";
-import { useNow, useStore } from "@/lib/store";
+import { overrideBlock, useNow, useStore } from "@/lib/store";
 import type { PurchaseRequest } from "@/lib/types";
 
 /**
@@ -17,6 +17,15 @@ export function Decision({ request: r }: { request: PurchaseRequest }) {
   const agent = store.agent(r.agentId);
   const [choice, setChoice] = useState<"approve" | "deny" | null>(null);
   const now = useNow(1000);
+
+  if (r.status === "denied") {
+    return (
+      <>
+        <DecisionResult request={r} now={now} />
+        <Override request={r} />
+      </>
+    );
+  }
 
   if (r.status !== "pending_approval") {
     return <DecisionResult request={r} now={now} />;
@@ -79,6 +88,45 @@ export function Decision({ request: r }: { request: PurchaseRequest }) {
   );
 }
 
+/** Approve a denied purchase after all, with the same two-tap confirm as a normal approval. */
+function Override({ request: r }: { request: PurchaseRequest }) {
+  const store = useStore();
+  const agent = store.agent(r.agentId);
+  const [confirming, setConfirming] = useState(false);
+  const blocked = overrideBlock(r, agent);
+
+  if (blocked) {
+    return <p className="decision__note stub__locked">{blocked}</p>;
+  }
+
+  if (confirming) {
+    return (
+      <div className="decision decision--confirm" role="group" aria-label="Confirm override">
+        <p className="decision__note">
+          {`This overrides the denial. ${agent?.name ?? "The agent"} gets a single-use card for exactly ${money(r.total)} at ${r.merchantDomain}, good for 30 minutes.`}
+        </p>
+        <div className="decision__actions">
+          <button className="btn" onClick={() => setConfirming(false)}>
+            Go back
+          </button>
+          <button className="btn btn--go" autoFocus onClick={() => store.overrideDenied(r.id)}>
+            Yes, approve {money(r.total)}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="decision__actions">
+      <button className="btn" onClick={() => setConfirming(true)}>
+        <RotateCcw size={16} aria-hidden="true" />
+        Override and approve {money(r.total)}
+      </button>
+    </div>
+  );
+}
+
 function DecisionResult({ request: r, now }: { request: PurchaseRequest; now: number }) {
   if (r.status === "credential_issued" && r.credential) {
     const left = r.credential.expiresAt - now;
@@ -108,7 +156,7 @@ export function ApprovalStub({ request: r, detailsLink = true }: { request: Purc
   const reasons = r.checks.filter((c) => c.outcome === "approval" || c.outcome === "deny");
   return (
     <>
-      {r.status === "pending_approval" && reasons.length > 0 && (
+      {(r.status === "pending_approval" || r.status === "denied") && reasons.length > 0 && (
         <ul className="stub__reasons">
           {reasons.map((c, i) => (
             <li key={i}>{c.detail}</li>

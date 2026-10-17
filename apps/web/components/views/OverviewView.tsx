@@ -26,8 +26,8 @@ export function OverviewView() {
   const oldest = pending.reduce((t, r) => Math.min(t, r.createdAt), Infinity);
   const weekTotal = agents.reduce((n, a) => n + a.spend.week, 0);
   const weekLimit = agents.reduce((n, a) => n + a.policy.limits.per_week, 0);
-  const monthTotal = agents.reduce((n, a) => n + a.spend.month, 0);
-  const monthLimit = agents.reduce((n, a) => n + a.policy.limits.per_month, 0);
+  const unchecked = store.autoBuys.filter((r) => r.createdAt > store.autoSeenAt);
+  const uncheckedTotal = unchecked.reduce((n, r) => n + r.total, 0);
   const active = agents.filter((a) => a.status === "active").length;
   const pct = (used: number, limit: number) => (limit > 0 ? Math.round((used / limit) * 100) : 0);
 
@@ -61,6 +61,17 @@ export function OverviewView() {
           }
         />
         <Kpi
+          label="Automated purchases"
+          href="/activity?type=auto"
+          value={uncheckedTotal}
+          tone={unchecked.length ? "hold" : undefined}
+          note={
+            unchecked.length
+              ? `${unchecked.length} ${unchecked.length === 1 ? "purchase" : "purchases"} since you last checked`
+              : "Nothing new since you last checked"
+          }
+        />
+        <Kpi
           label="Spent this week"
           href="/agents"
           value={weekTotal}
@@ -69,19 +80,11 @@ export function OverviewView() {
           meter={{ used: weekTotal, limit: weekLimit }}
         />
         <Kpi
-          label="Spent this month"
-          href="/activity?type=money"
-          value={monthTotal}
-          tone={budgetTone(monthTotal, monthLimit)}
-          note={`${pct(monthTotal, monthLimit)}% of ${money(monthLimit)} monthly budgets`}
-          meter={{ used: monthTotal, limit: monthLimit }}
-        />
-        <Kpi
           label="Agents active"
           href="/agents"
           value={active}
           format={count}
-          segments={agents.map((a) => (a.status === "active" ? "good" : "stop"))}
+          segments={agents.map((a) => (a.status === "active" ? "info" : "stop"))}
           note={
             active < agents.length
               ? `${agents.length - active} of ${agents.length} frozen`

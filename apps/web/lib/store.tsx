@@ -8,12 +8,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { money } from "./format";
 import { seed, type Snapshot } from "./mock-data";
-import { templatePolicy, type TemplateId } from "./policy";
+import { ALWAYS_BLOCKED, templatePolicy, type TemplateId } from "./policy";
 import type { Agent, AgentClient, AuditEvent, Policy, PurchaseRequest } from "./types";
 
 // Bump when the demo seed changes so browsers pick up the new data.
-const STORAGE_KEY = "agentmart.demo.v2";
+const STORAGE_KEY = "agentmart.demo.v3";
 const CREDENTIAL_TTL_MS = 30 * 60_000;
+const BOUGHT = new Set<PurchaseRequest["status"]>(["approved", "credential_issued", "completed"]);
 
 interface Store extends Snapshot {
   toast: string | null;
@@ -21,8 +22,13 @@ interface Store extends Snapshot {
   agent: (id: string) => Agent | undefined;
   request: (id: string) => PurchaseRequest | undefined;
   pending: PurchaseRequest[];
+  /** Purchases the rules allowed outright, with no approval step. Newest first. */
+  autoBuys: PurchaseRequest[];
+  markAutoSeen: () => void;
   approve: (requestId: string) => void;
   deny: (requestId: string) => void;
+  /** Approve a purchase that was denied, by you or by the rules. See overrideBlock for when it isn't allowed. */
+  overrideDenied: (requestId: string) => void;
   freeze: (agentId: string) => void;
   unfreeze: (agentId: string) => void;
   freezeAll: () => void;
@@ -133,6 +139,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       agent: (id) => data.agents.find((a) => a.id === id),
       request: (id) => data.requests.find((r) => r.id === id),
       pending: data.requests.filter((r) => r.status === "pending_approval").sort((a, b) => b.createdAt - a.createdAt),
+      autoBuys: data.requests
+        .filter((r) => BOUGHT.has(r.status) && !r.checks.some((c) => c.outcome === "approval"))
+        .sort((a, b) => b.createdAt - a.createdAt),
+      markAutoSeen: () => update((s) => ({ ...s, autoSeenAt: Date.now() })),
 
       approve: (requestId) => {
         const now = Date.now();
@@ -185,6 +195,48 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             requests: s.requests.map((x) => (x.id === requestId ? { ...x, status: "denied", decidedAt: Date.now() } : x)),
             events: [
               ev({ agentId: r.agentId, type: "denied", requestId, summary: `You denied ${money(r.total)} at ${r.merchantName}.` }),
+              ...s.events,
+            ],
+          };
+        });
+      },
+
+      overrideDenied: (requestId) => {
+        const now = Date.now();
+        const last4 = String(1000 + Math.floor(Math.random() * 9000));
+        const target = data.requests.find((x) => x.id === requestId);
+        const owner = target && data.agents.find((a) => a.id === target.agentId);
+        if (!target || overrideBlock(target, owner)) return;
+        notify(`Overrode the denial: ${money(target.total)} at ${target.merchantName}. Card ending ${last4} issued for this cart only.`);
+        update((s) => {
+          const r = s.requests.find((x) => x.id === requestId);
+          const agent = r && s.agents.find((a) => a.id === r.agentId);
+          if (!r || overrideBlock(r, agent)) return s;
+          return {
+            ...s,
+            requests: s.requests.map((x) =>
+              x.id === requestId
+                ? {
+                    ...x,
+                    status: "credential_issued",
+                    decidedAt: now,
+                    credential: { last4, amountLimit: x.total, expiresAt: now + CREDENTIAL_TTL_MS, status: "active" },
+                  }
+                : x,
+            ),
+            events: [
+              ev({
+                agentId: r.agentId,
+                type: "credential_issued",
+                requestId,
+                summary: `Single-use card ending ${last4} issued for ${money(r.total)} at ${r.merchantName}, good for 30 minutes.`,
+              }),
+              ev({
+                agentId: r.agentId,
+                type: "approved",
+                requestId,
+                summary: `You overrode the denial and approved ${money(r.total)} at ${r.merchantName}.`,
+              }),
               ...s.events,
             ],
           };
@@ -306,6 +358,20 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   if (!store) return <div className="boot" aria-busy="true" />;
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>;
+}
+
+/**
+ * Why a denied purchase can't be overridden, or null if it can. Categories no agent may ever
+ * buy (gift cards, stored value, subscriptions) stay blocked: they are how a hijacked agent
+ * would cash out, so no single tap should undo that.
+ */
+export function overrideBlock(r: PurchaseRequest, agent: Agent | undefined): string | null {
+  if (r.status !== "denied") return "Only denied purchases can be overridden.";
+  const locked = r.items.find((i) => ALWAYS_BLOCKED.includes(i.category));
+  if (locked) return "This cart has an item no agent is ever allowed to buy, so the denial can't be overridden.";
+  if (!agent) return "This agent no longer exists.";
+  if (agent.status === "frozen") return `${agent.name} is frozen. Unfreeze it first to approve this.`;
+  return null;
 }
 
 export function useStore(): Store {

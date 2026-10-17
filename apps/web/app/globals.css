@@ -23,6 +23,8 @@
   --guard-tint: #e7f4eb;
   --hold: #b45309;
   --hold-tint: #fcf1df;
+  /* Bars and rules only: a true yellow. --hold stays darker so amber text is readable. */
+  --hold-bar: #f5b400;
   --stop: #dc2626;
   --stop-ink: #ffffff;
   --stop-tint: #fdeaea;
@@ -84,6 +86,7 @@
     --guard-tint: #0e2617;
     --hold: #fbbf24;
     --hold-tint: #2b2008;
+    --hold-bar: #fbbf24;
     --stop: #f87171;
     --stop-ink: #1f0606;
     --stop-tint: #2c1111;
@@ -117,6 +120,7 @@
   --guard-tint: #0e2617;
   --hold: #fbbf24;
   --hold-tint: #2b2008;
+  --hold-bar: #fbbf24;
   --stop: #f87171;
   --stop-ink: #1f0606;
   --stop-tint: #2c1111;
@@ -487,6 +491,8 @@ svg {
 .page {
   width: 100%;
   max-width: 1440px;
+  /* Next scrolls a new page into view on navigation; land below the sticky bar, not under it. */
+  scroll-margin-top: calc(var(--bar-h) + 32px);
 }
 .page--narrow {
   max-width: 720px;
@@ -747,7 +753,7 @@ svg {
   box-shadow: inset 0 4px 0 var(--ink);
 }
 .kpi--hold {
-  box-shadow: inset 0 4px 0 var(--hold);
+  box-shadow: inset 0 4px 0 var(--hold-bar);
 }
 .kpi--stop {
   box-shadow: inset 0 4px 0 var(--stop);
@@ -778,7 +784,7 @@ svg {
   background: var(--stop);
 }
 .kpi__seg--hold {
-  background: var(--hold);
+  background: var(--hold-bar);
 }
 /* Clickable tiles: the label's link covers the tile, so the whole module is the target. */
 .kpi--link {
@@ -880,6 +886,10 @@ svg {
 }
 .ledger__aside {
   font-size: var(--t-sm);
+}
+/* Panels linked by #id clear the sticky bar when jumped to. */
+.ledger[id] {
+  scroll-margin-top: calc(var(--bar-h) + var(--gap));
 }
 /* The receipts sit on a grey tray so the paper reads as paper. */
 .ledger--tray {
@@ -1083,6 +1093,118 @@ svg {
 .table tbody tr.table__day:hover > * {
   background: none;
 }
+/* Rows that open to show their receipt underneath. */
+.table tr.is-toggle {
+  cursor: pointer;
+}
+.table tr.is-open > * {
+  border-bottom-color: transparent;
+  background: var(--sunk);
+}
+.rowtoggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.rowtoggle + .t-sub {
+  padding-left: 24px;
+}
+.rowtoggle:hover {
+  color: var(--accent);
+}
+.rowtoggle__chev {
+  color: var(--ink-3);
+  transition: transform 200ms ease;
+}
+.is-open .rowtoggle__chev {
+  transform: rotate(180deg);
+}
+.table tr.table__expand > td {
+  --notch: var(--sunk);
+  padding: 8px 16px 28px;
+  background: var(--sunk);
+}
+.table tbody tr.table__expand:hover > * {
+  background: var(--sunk);
+}
+/* Open row: details, the receipt, and the decision side by side. */
+.expand {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 380px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.expand__box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 20px 20px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: inset 0 4px 0 var(--ink);
+  font-size: var(--t-sm);
+  animation: slip-out 260ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+.expand__title {
+  padding-top: 20px;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.expand__box .facts__row {
+  grid-template-columns: 72px minmax(0, 1fr);
+  font-size: var(--t-sm);
+}
+.expand__box .stub__link {
+  color: var(--ink-2);
+}
+.expand__box .stub__link:hover {
+  color: var(--accent);
+}
+.expand__box .decision--confirm {
+  background: var(--sunk);
+}
+@media (max-width: 1100px) {
+  .expand {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .expand__slip {
+    grid-row: span 2;
+  }
+}
+@media (max-width: 720px) {
+  .expand {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .expand__slip {
+    grid-row: auto;
+    max-width: 400px;
+  }
+}
+.expand__slip {
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.12)) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.08));
+  animation: slip-out 260ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+@keyframes slip-out {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+.stub__locked {
+  color: var(--ink-3);
+}
+.receipt__stub .stub__locked {
+  color: var(--slip-faint);
+}
+
 .table--log td a {
   text-decoration: none;
 }
@@ -1157,6 +1279,10 @@ svg {
     padding-top: 18px;
     text-align: left;
     border-bottom: 1px solid var(--line-strong);
+  }
+  .table--stack tr.table__expand > td {
+    display: block;
+    padding: 8px 12px 20px;
   }
   .table--stack .meter--inline {
     flex: 1;
@@ -1663,7 +1789,7 @@ svg {
   background: var(--guard);
 }
 .meter__fill--hold {
-  background: var(--hold);
+  background: var(--hold-bar);
 }
 .meter__fill--stop {
   background: var(--stop);

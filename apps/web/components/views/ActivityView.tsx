@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Pill } from "@/components/bits";
-import { auditLabel, auditTone, clockTime, dayLabel } from "@/lib/format";
+import { useEffect, useState } from "react";
+import { Ago, LedgerHead, Pill } from "@/components/bits";
+import { auditLabel, auditTone, clockTime, dayLabel, money } from "@/lib/format";
 import { useNow, useStore } from "@/lib/store";
 import type { AuditEvent, AuditType } from "@/lib/types";
 
@@ -14,6 +15,8 @@ const FILTERS: { id: string; label: string; types: AuditType[] | null }[] = [
     label: "Decisions",
     types: ["request_denied", "request_pending", "request_auto_approved", "approved", "denied"],
   },
+  // Not an event filter: shows the purchases themselves, from store.autoBuys.
+  { id: "auto", label: "Automated purchases", types: null },
   {
     id: "money",
     label: "Cards and charges",
@@ -31,6 +34,21 @@ export function ActivityView() {
   const agentId = params.get("agent") ?? "all";
   const typeId = params.get("type") ?? "all";
   const filter = FILTERS.find((f) => f.id === typeId) ?? FILTERS[0];
+
+  // Only opening the Automated purchases tab counts as checking them. Keep the
+  // previous mark while the tab is open so new ones stay flagged until you leave it.
+  const onAuto = filter.id === "auto";
+  const [seenBefore, setSeenBefore] = useState(store.autoSeenAt);
+  useEffect(() => {
+    if (!onAuto) return;
+    setSeenBefore(store.autoSeenAt);
+    store.markAutoSeen();
+    // Runs on entering the tab only; the store object changes on every update.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onAuto]);
+  const autoBuys = store.autoBuys.filter((r) => agentId === "all" || r.agentId === agentId);
+  const fresh = autoBuys.filter((r) => r.createdAt > seenBefore);
+  const freshTotal = fresh.reduce((n, r) => n + r.total, 0);
 
   const setParam = (k: string, v: string) => {
     const next = new URLSearchParams(params.toString());
@@ -88,7 +106,60 @@ export function ActivityView() {
         </div>
       </div>
 
-      {groups.length === 0 ? (
+      {onAuto ? (
+        <section className="ledger" aria-labelledby="auto-title">
+          <LedgerHead
+            id="auto-title"
+            title="Automated purchases"
+            aside={
+              <span className="muted">
+                {fresh.length
+                  ? `${fresh.length} new since you last checked, ${money(freshTotal)}`
+                  : "Nothing new since you last checked"}
+              </span>
+            }
+          />
+          {autoBuys.length === 0 ? (
+            <p className="empty">Purchases your rules allowed outright, with no approval step, show up here.</p>
+          ) : (
+            <div className="table-wrap">
+              <table className="table table--stack">
+                <thead>
+                  <tr>
+                    <th scope="col">Purchase</th>
+                    <th scope="col">Agent</th>
+                    <th scope="col" className="t-num">
+                      Charged
+                    </th>
+                    <th scope="col" className="t-end">
+                      When
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {autoBuys.map((r) => (
+                    <tr key={r.id}>
+                      <th scope="row" data-label="Purchase">
+                        <Link href={`/approvals/${r.id}`} className="t-link">
+                          {r.merchantName}
+                        </Link>
+                        <span className="t-sub">{r.items.map((i) => i.name).join("; ")}</span>
+                      </th>
+                      <td data-label="Agent">{store.agent(r.agentId)?.name}</td>
+                      <td data-label="Charged" className="t-num">
+                        {money(r.total)}
+                      </td>
+                      <td data-label="When" className="t-end muted">
+                        {r.createdAt > seenBefore && <Pill tone="hold">New</Pill>} <Ago ts={r.createdAt} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      ) : groups.length === 0 ? (
         <p className="ledger empty">
           Nothing matches these filters.{" "}
           <button className="linkbtn" onClick={() => router.replace("/activity")}>

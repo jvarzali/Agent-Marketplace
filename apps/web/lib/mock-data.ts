@@ -10,6 +10,8 @@ export interface Snapshot {
   requests: PurchaseRequest[];
   events: AuditEvent[];
   suggestions: TrustSuggestion[];
+  /** When the user last looked at purchases agents made without asking. */
+  autoSeenAt: number;
 }
 
 const MIN = 60_000;
@@ -378,9 +380,117 @@ export function seed(now: number): Snapshot {
       decidedAt: now - 2 * DAY + 3 * MIN,
       credential: { last4: "9052", amountLimit: 22.99, expiresAt: now - 2 * DAY + 33 * MIN, status: "used" },
     },
+    {
+      id: "req_8d41",
+      agentId: "agt_pantry",
+      merchantDomain: "instacart.com",
+      merchantName: "Instacart",
+      items: [
+        {
+          name: "Organic bananas, 2 lb",
+          category: "groceries",
+          categoryConfidence: 0.99,
+          unitPrice: 1.79,
+          quantity: 1,
+          url: "https://www.instacart.com/products/organic-bananas",
+        },
+        {
+          name: "Chobani Greek yogurt, 32 oz",
+          category: "groceries",
+          categoryConfidence: 0.98,
+          unitPrice: 6.49,
+          quantity: 2,
+          url: "https://www.instacart.com/products/chobani-greek-32oz",
+        },
+      ],
+      subtotal: 14.77,
+      tax: 0,
+      shipping: 3.99,
+      total: 18.76,
+      currency: "USD",
+      reasoning: "Weekly breakfast restock.",
+      cartHash: "3fd0a8b6c41e97d2a5",
+      status: "completed",
+      checks: [
+        { rule: "Every rule", outcome: "pass", detail: "Under $30.00 at a store on your list. Bought without asking." },
+      ],
+      createdAt: now - 2 * DAY - 5 * HOUR,
+      decidedAt: now - 2 * DAY - 5 * HOUR,
+      credential: { last4: "6620", amountLimit: 18.76, expiresAt: now - 2 * DAY - 5 * HOUR + 30 * MIN, status: "used" },
+    },
+    {
+      id: "req_8c12",
+      agentId: "agt_pantry",
+      merchantDomain: "target.com",
+      merchantName: "Target",
+      items: [
+        {
+          name: "Dawn dish soap, 19.4 oz",
+          category: "household",
+          categoryConfidence: 0.97,
+          unitPrice: 3.99,
+          quantity: 2,
+          url: "https://www.target.com/p/dawn-dish-soap",
+        },
+        {
+          name: "Glad tall kitchen bags, 80 ct",
+          category: "household",
+          categoryConfidence: 0.96,
+          unitPrice: 14.29,
+          quantity: 1,
+          url: "https://www.target.com/p/glad-kitchen-bags",
+        },
+      ],
+      subtotal: 22.27,
+      tax: 1.84,
+      shipping: 0,
+      total: 24.11,
+      currency: "USD",
+      reasoning: "Running low on dish soap and trash bags.",
+      cartHash: "c27e9a1b05df48e3b6",
+      status: "completed",
+      checks: [
+        { rule: "Every rule", outcome: "pass", detail: "Under $30.00 at a store on your list. Bought without asking." },
+      ],
+      createdAt: now - 4 * DAY,
+      decidedAt: now - 4 * DAY,
+      credential: { last4: "1185", amountLimit: 24.11, expiresAt: now - 4 * DAY + 30 * MIN, status: "used" },
+    },
   ];
 
   const events: AuditEvent[] = [
+    {
+      id: "evt_a4",
+      agentId: "agt_pantry",
+      type: "transaction",
+      summary: "Instacart charged $18.76 on card ending 6620. Card closed after use.",
+      requestId: "req_8d41",
+      createdAt: now - 2 * DAY - 5 * HOUR + 2 * MIN,
+    },
+    {
+      id: "evt_a3",
+      agentId: "agt_pantry",
+      type: "request_auto_approved",
+      summary: "Bought $18.76 at Instacart without asking. Under $30.00 at a store on your list.",
+      requestId: "req_8d41",
+      createdAt: now - 2 * DAY - 5 * HOUR,
+    },
+    {
+      id: "evt_a2",
+      agentId: "agt_pantry",
+      type: "transaction",
+      summary: "Target charged $24.11 on card ending 1185. Card closed after use.",
+      requestId: "req_8c12",
+      createdAt: now - 4 * DAY + 2 * MIN,
+    },
+    {
+      id: "evt_a1",
+      agentId: "agt_pantry",
+      type: "request_auto_approved",
+      summary: "Bought $24.11 at Target without asking. Under $30.00 at a store on your list.",
+      requestId: "req_8c12",
+      createdAt: now - 4 * DAY,
+    },
     {
       id: "evt_14",
       agentId: "agt_errand",
@@ -510,5 +620,7 @@ export function seed(now: number): Snapshot {
     },
   ];
 
-  return { userEmail: "demo@agentmart.dev", agents, requests, events, suggestions };
+  events.sort((a, b) => b.createdAt - a.createdAt);
+  // Last looked three days ago, so the two newest automatic buys show as new.
+  return { userEmail: "demo@agentmart.dev", agents, requests, events, suggestions, autoSeenAt: now - 3 * DAY };
 }
