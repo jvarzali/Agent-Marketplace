@@ -53,7 +53,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="shell">
       <aside className="side" aria-label="Sidebar">
         <Link href="/" className="brand">
-          <span className="brand__mark" aria-hidden="true" />
           AgentMart
         </Link>
 
@@ -115,7 +114,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="frame">
         <header className="bar">
           <Link href="/" className="brand brand--bar">
-            <span className="brand__mark" aria-hidden="true" />
             AgentMart
           </Link>
           <div className="bar__where">

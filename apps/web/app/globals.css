@@ -293,26 +293,6 @@ svg {
   border-bottom: 1px solid var(--side-line);
 }
 
-/* A card with its chip: the thing we hand agents, one at a time. */
-.brand__mark {
-  position: relative;
-  width: 26px;
-  height: 18px;
-  background: var(--ink);
-}
-.side .brand__mark {
-  background: var(--side-ink);
-}
-.brand__mark::after {
-  content: "";
-  position: absolute;
-  left: 5px;
-  top: 5px;
-  width: 7px;
-  height: 6px;
-  background: var(--accent);
-}
-
 .side__label {
   padding: 0 20px 8px;
   color: var(--side-ink-2);
