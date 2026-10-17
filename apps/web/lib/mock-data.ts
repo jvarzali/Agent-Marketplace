@@ -1,0 +1,428 @@
+// Demo data so the dashboard is usable before the backend exists.
+// Mirrors what the seed script in prompt.md §13 should create.
+
+import { templatePolicy } from "./policy";
+import type { Agent, AuditEvent, PurchaseRequest, TrustSuggestion } from "./types";
+
+export interface Snapshot {
+  userEmail: string;
+  agents: Agent[];
+  requests: PurchaseRequest[];
+  events: AuditEvent[];
+  suggestions: TrustSuggestion[];
+}
+
+const MIN = 60_000;
+const HOUR = 60 * MIN;
+const DAY = 24 * HOUR;
+
+export function seed(now: number): Snapshot {
+  const pantryBase = templatePolicy("groceries_50");
+  const pantryPolicy = {
+    ...pantryBase,
+    version: 4,
+    limits: { ...pantryBase.limits, per_day: 100, per_week: 200, per_month: 500 },
+  };
+  const errandPolicy = templatePolicy("approve_all");
+  const officePolicy = {
+    ...templatePolicy("custom"),
+    version: 2,
+    merchants: { mode: "allowlist" as const, allow_domains: ["staples.com"], deny_mccs: ["7995", "6051", "4829"] },
+    categories: { allow: ["office" as const], deny: templatePolicy("custom").categories.deny },
+  };
+
+  const agents: Agent[] = [
+    {
+      id: "agt_pantry",
+      name: "Pantry Claude",
+      client: "Claude",
+      status: "active",
+      trustLevel: 3,
+      createdAt: now - 41 * DAY,
+      keyPrefix: "ag_live_7Qm2",
+      policy: pantryPolicy,
+      spend: { today: 21.34, week: 99.22, month: 311.85, ordersToday: 1 },
+    },
+    {
+      id: "agt_errand",
+      name: "Errand GPT",
+      client: "ChatGPT",
+      status: "active",
+      trustLevel: 1,
+      createdAt: now - 3 * DAY,
+      keyPrefix: "ag_live_c81x",
+      policy: errandPolicy,
+      spend: { today: 0, week: 22.99, month: 22.99, ordersToday: 0 },
+    },
+    {
+      id: "agt_office",
+      name: "Office restock",
+      client: "Custom",
+      status: "frozen",
+      trustLevel: 2,
+      createdAt: now - 19 * DAY,
+      keyPrefix: "ag_live_Lp04",
+      policy: officePolicy,
+      spend: { today: 0, week: 0, month: 64.1, ordersToday: 0 },
+    },
+  ];
+
+  const requests: PurchaseRequest[] = [
+    {
+      id: "req_8f21",
+      agentId: "agt_pantry",
+      merchantDomain: "target.com",
+      merchantName: "Target",
+      items: [
+        {
+          name: "Purina ONE Lamb & Rice dry dog food, 16.5 lb",
+          category: "pet_supplies",
+          categoryConfidence: 0.97,
+          unitPrice: 27.49,
+          quantity: 1,
+          url: "https://www.target.com/p/purina-one-lamb-rice-16-5lb",
+        },
+        {
+          name: "Bounty Select-A-Size paper towels, 6 double rolls",
+          category: "household",
+          categoryConfidence: 0.95,
+          unitPrice: 11.99,
+          quantity: 1,
+          url: "https://www.target.com/p/bounty-select-a-size-6-double",
+        },
+      ],
+      subtotal: 39.48,
+      tax: 2.69,
+      shipping: 0,
+      total: 42.17,
+      currency: "USD",
+      reasoning:
+        "You asked me to restock dog food before Saturday. The usual bag was out of stock at Amazon, so I picked the same brand at Target. Added paper towels because your list said you were on the last roll.",
+      cartHash: "c7f3a91e04bd52e8a1",
+      status: "pending_approval",
+      checks: [
+        { rule: "Agent status", outcome: "pass", detail: "Pantry Claude is active." },
+        { rule: "Store", outcome: "pass", detail: "target.com is on your list." },
+        { rule: "Categories", outcome: "pass", detail: "Pet supplies and household are allowed." },
+        { rule: "Per-order limit", outcome: "pass", detail: "$42.17 is under $50.00 including tax." },
+        { rule: "Weekly budget", outcome: "pass", detail: "$170.65 of $200.00 this week if approved, counting the Instacart request still waiting." },
+        { rule: "Shopping hours", outcome: "pass", detail: "Within 8 AM to 10 PM, Los Angeles time." },
+        { rule: "Approval threshold", outcome: "approval", detail: "$42.17 is over your $30.00 ask-first amount." },
+      ],
+      createdAt: now - 4 * MIN,
+    },
+    {
+      id: "req_8f1c",
+      agentId: "agt_errand",
+      merchantDomain: "bestbuy.com",
+      merchantName: "Best Buy",
+      items: [
+        {
+          name: "Insignia 6 ft HDMI 2.1 cable",
+          category: "electronics",
+          categoryConfidence: 0.93,
+          unitPrice: 14.99,
+          quantity: 1,
+          url: "https://www.bestbuy.com/site/insignia-6ft-hdmi-2-1",
+        },
+        {
+          name: "Anker 65W USB-C wall charger",
+          category: "electronics",
+          categoryConfidence: 0.91,
+          unitPrice: 21.99,
+          quantity: 1,
+          url: "https://www.bestbuy.com/site/anker-65w-usb-c-charger",
+        },
+      ],
+      subtotal: 36.98,
+      tax: 3.33,
+      shipping: 0,
+      total: 40.31,
+      currency: "USD",
+      reasoning:
+        "For the new monitor setup. Store pickup is available today, which is faster than the Amazon option you asked me to compare.",
+      cartHash: "0b9e44d2a7c1f6e305",
+      status: "pending_approval",
+      checks: [
+        { rule: "Agent status", outcome: "pass", detail: "Errand GPT is active." },
+        { rule: "Store", outcome: "approval", detail: "Errand GPT hasn't bought from bestbuy.com before." },
+        { rule: "Categories", outcome: "pass", detail: "Electronics isn't blocked." },
+        { rule: "Per-order limit", outcome: "pass", detail: "$40.31 is under $50.00 including tax." },
+        { rule: "Approve everything", outcome: "approval", detail: "This agent asks you before every purchase." },
+      ],
+      createdAt: now - 22 * MIN,
+    },
+    {
+      id: "req_8f0a",
+      agentId: "agt_pantry",
+      merchantDomain: "instacart.com",
+      merchantName: "Instacart",
+      items: [
+        {
+          name: "Organic bananas, 2 lb",
+          category: "groceries",
+          categoryConfidence: 0.99,
+          unitPrice: 1.98,
+          quantity: 2,
+          url: "https://www.instacart.com/products/organic-bananas",
+        },
+        {
+          name: "Kirkland Signature variety snack box, 30 ct",
+          category: "unknown",
+          categoryConfidence: 0.42,
+          unitPrice: 19.89,
+          quantity: 1,
+          url: "https://www.instacart.com/products/variety-snack-box-30",
+        },
+      ],
+      subtotal: 23.85,
+      tax: 1.42,
+      shipping: 3.99,
+      total: 29.26,
+      currency: "USD",
+      reasoning: "Weekly fruit plus lunchbox snacks from the list on your fridge note.",
+      cartHash: "e1d0577bc3a9f02d6c",
+      status: "pending_approval",
+      checks: [
+        { rule: "Agent status", outcome: "pass", detail: "Pantry Claude is active." },
+        { rule: "Store", outcome: "pass", detail: "instacart.com is on your list." },
+        {
+          rule: "Categories",
+          outcome: "approval",
+          detail: "Couldn't tell what “variety snack box” is (42% sure it's groceries).",
+        },
+        { rule: "Per-order limit", outcome: "pass", detail: "$29.26 is under $50.00 including tax and delivery." },
+      ],
+      createdAt: now - 51 * MIN,
+    },
+    {
+      id: "req_8e77",
+      agentId: "agt_pantry",
+      merchantDomain: "amazon.com",
+      merchantName: "Amazon",
+      items: [
+        {
+          name: "Amazon eGift card, $25",
+          category: "gift_cards",
+          categoryConfidence: 0.99,
+          unitPrice: 25,
+          quantity: 1,
+          url: "https://www.amazon.com/dp/B07P",
+        },
+        {
+          name: "Cascade Platinum dishwasher pods, 62 ct",
+          category: "household",
+          categoryConfidence: 0.96,
+          unitPrice: 19.97,
+          quantity: 1,
+          url: "https://www.amazon.com/dp/B0CASCADE",
+        },
+      ],
+      subtotal: 44.97,
+      tax: 0,
+      shipping: 0,
+      total: 44.97,
+      currency: "USD",
+      reasoning: "A product page said adding a gift card unlocks a discount on the pods.",
+      cartHash: "5a2fc81e9d04b7a316",
+      status: "denied",
+      checks: [
+        { rule: "Agent status", outcome: "pass", detail: "Pantry Claude is active." },
+        { rule: "Store", outcome: "pass", detail: "amazon.com is on your list." },
+        { rule: "Categories", outcome: "deny", detail: "Gift cards are never allowed, for any agent." },
+      ],
+      createdAt: now - 6 * HOUR,
+      decidedAt: now - 6 * HOUR,
+    },
+    {
+      id: "req_8e40",
+      agentId: "agt_pantry",
+      merchantDomain: "amazon.com",
+      merchantName: "Amazon",
+      items: [
+        {
+          name: "Barilla spaghetti, 1 lb",
+          category: "groceries",
+          categoryConfidence: 0.99,
+          unitPrice: 1.89,
+          quantity: 4,
+          url: "https://www.amazon.com/dp/B0BARILLA",
+        },
+        {
+          name: "Rao's marinara sauce, 24 oz",
+          category: "groceries",
+          categoryConfidence: 0.98,
+          unitPrice: 8.99,
+          quantity: 1,
+          url: "https://www.amazon.com/dp/B0RAOS",
+        },
+        {
+          name: "Kerrygold butter, 8 oz",
+          category: "groceries",
+          categoryConfidence: 0.99,
+          unitPrice: 4.79,
+          quantity: 1,
+          url: "https://www.amazon.com/dp/B0KERRY",
+        },
+      ],
+      subtotal: 21.34,
+      tax: 0,
+      shipping: 0,
+      total: 21.34,
+      currency: "USD",
+      reasoning: "Pasta night ingredients for Thursday.",
+      cartHash: "9c6b13e0f8a2d4b571",
+      status: "completed",
+      checks: [
+        { rule: "Every rule", outcome: "pass", detail: "Under $30.00 at a store on your list. Bought without asking." },
+      ],
+      createdAt: now - 9 * HOUR,
+      decidedAt: now - 9 * HOUR,
+      credential: { last4: "4417", amountLimit: 21.34, expiresAt: now - 9 * HOUR + 30 * MIN, status: "used" },
+    },
+    {
+      id: "req_8d93",
+      agentId: "agt_errand",
+      merchantDomain: "amazon.com",
+      merchantName: "Amazon",
+      items: [
+        {
+          name: "Logitech M240 silent Bluetooth mouse",
+          category: "electronics",
+          categoryConfidence: 0.95,
+          unitPrice: 22.99,
+          quantity: 1,
+          url: "https://www.amazon.com/dp/B0M240",
+        },
+      ],
+      subtotal: 22.99,
+      tax: 0,
+      shipping: 0,
+      total: 22.99,
+      currency: "USD",
+      reasoning: "Replacement for the mouse with the broken scroll wheel.",
+      cartHash: "71ae0c94b2d35f8e60",
+      status: "completed",
+      checks: [{ rule: "Approve everything", outcome: "approval", detail: "This agent asks you before every purchase." }],
+      createdAt: now - 2 * DAY,
+      decidedAt: now - 2 * DAY + 3 * MIN,
+      credential: { last4: "9052", amountLimit: 22.99, expiresAt: now - 2 * DAY + 33 * MIN, status: "used" },
+    },
+  ];
+
+  const events: AuditEvent[] = [
+    {
+      id: "evt_12",
+      agentId: "agt_pantry",
+      type: "request_pending",
+      summary: "Asked to spend $42.17 at Target. Over your $30.00 ask-first amount.",
+      requestId: "req_8f21",
+      createdAt: now - 4 * MIN,
+    },
+    {
+      id: "evt_11",
+      agentId: "agt_errand",
+      type: "request_pending",
+      summary: "Asked to spend $40.31 at Best Buy. New store, and this agent asks for everything.",
+      requestId: "req_8f1c",
+      createdAt: now - 22 * MIN,
+    },
+    {
+      id: "evt_10",
+      agentId: "agt_pantry",
+      type: "request_pending",
+      summary: "Asked to spend $29.26 at Instacart. Couldn't classify one item.",
+      requestId: "req_8f0a",
+      createdAt: now - 51 * MIN,
+    },
+    {
+      id: "evt_09",
+      agentId: "agt_pantry",
+      type: "request_denied",
+      summary: "Blocked $44.97 at Amazon. The cart had a gift card in it.",
+      requestId: "req_8e77",
+      createdAt: now - 6 * HOUR,
+    },
+    {
+      id: "evt_08",
+      agentId: "agt_pantry",
+      type: "transaction",
+      summary: "Amazon charged $21.34 on card ending 4417. Card closed after use.",
+      requestId: "req_8e40",
+      createdAt: now - 9 * HOUR + 2 * MIN,
+    },
+    {
+      id: "evt_07",
+      agentId: "agt_pantry",
+      type: "credential_issued",
+      summary: "Single-use card ending 4417 issued for $21.34 at Amazon, good for 30 minutes.",
+      requestId: "req_8e40",
+      createdAt: now - 9 * HOUR,
+    },
+    {
+      id: "evt_06",
+      agentId: "agt_pantry",
+      type: "request_auto_approved",
+      summary: "Auto-approved $21.34 at Amazon. Every rule passed.",
+      requestId: "req_8e40",
+      createdAt: now - 9 * HOUR,
+    },
+    {
+      id: "evt_05",
+      agentId: "agt_office",
+      type: "security",
+      summary: "staples-deals.shop tried to charge $212.00 on card ending 3381. The card declined it.",
+      createdAt: now - 26 * HOUR,
+    },
+    {
+      id: "evt_04",
+      agentId: "agt_office",
+      type: "frozen",
+      summary: "You froze Office restock. 1 active card cancelled.",
+      createdAt: now - 26 * HOUR + 4 * MIN,
+    },
+    {
+      id: "evt_03",
+      agentId: "agt_errand",
+      type: "transaction",
+      summary: "Amazon charged $22.99 on card ending 9052. Card closed after use.",
+      requestId: "req_8d93",
+      createdAt: now - 2 * DAY + 6 * MIN,
+    },
+    {
+      id: "evt_02",
+      agentId: "agt_errand",
+      type: "approved",
+      summary: "You approved $22.99 at Amazon.",
+      requestId: "req_8d93",
+      createdAt: now - 2 * DAY + 3 * MIN,
+    },
+    {
+      id: "evt_01",
+      agentId: "agt_pantry",
+      type: "refund",
+      summary: "Target refunded $6.49 for a damaged item. Weekly budget restored.",
+      createdAt: now - 3 * DAY,
+    },
+    {
+      id: "evt_00",
+      agentId: "agt_errand",
+      type: "agent_created",
+      summary: "You added Errand GPT with the “Approve everything” rules.",
+      createdAt: now - 3 * DAY - 2 * HOUR,
+    },
+  ];
+
+  const suggestions: TrustSuggestion[] = [
+    {
+      id: "sug_1",
+      agentId: "agt_pantry",
+      evidence: "15 grocery purchases under $40 in the last 5 weeks, all approved, no returns or declines.",
+      proposal: "Raise the ask-first amount from $30 to $40?",
+      apply: { require_if_total_over: 40 },
+      status: "open",
+    },
+  ];
+
+  return { userEmail: "demo@agentmart.dev", agents, requests, events, suggestions };
+}

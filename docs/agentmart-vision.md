@@ -1,4 +1,4 @@
-# AgentMart (working name)
+# AgentMart (temp name)
 
 > A marketplace where AI agents discover, compare, and buy products and services on behalf of the humans (and businesses) they work for.
 
