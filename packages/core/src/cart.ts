@@ -81,10 +81,7 @@ export function normalizeDomain(input: string): string | null {
   return host;
 }
 
-/** True if `domain` equals `base` or is a subdomain of it. */
-export function domainMatches(domain: string, base: string): boolean {
-  return domain === base || domain.endsWith(`.${base}`);
-}
+export { domainMatches } from "./domain";
 
 export function normalizeCart(input: z.output<typeof purchaseRequestInputSchema>): NormalizedCart {
   const merchantDomain = normalizeDomain(input.merchant_domain);

@@ -12,11 +12,22 @@ import type { PurchaseRequest } from "@/lib/types";
  * decision; a second, explicit tap commits it. Rendered on the receipt's
  * tear-off stub.
  */
-export function Decision({ request: r }: { request: PurchaseRequest }) {
+export function Decision({ request: r, intent = null }: { request: PurchaseRequest; intent?: "approve" | "deny" | null }) {
   const store = useStore();
   const agent = store.agent(r.agentId);
-  const [choice, setChoice] = useState<"approve" | "deny" | null>(null);
+  // `intent` (from an email or push link) only preselects; committing still takes a tap.
+  const [choice, setChoice] = useState<"approve" | "deny" | null>(intent);
+  const [busy, setBusy] = useState(false);
   const now = useNow(1000);
+  const commit = async (fn: (id: string) => Promise<void>) => {
+    setBusy(true);
+    try {
+      await fn(r.id);
+    } finally {
+      setBusy(false);
+      setChoice(null);
+    }
+  };
 
   if (r.status !== "pending_approval") {
     return <DecisionResult request={r} now={now} />;
@@ -29,7 +40,7 @@ export function Decision({ request: r }: { request: PurchaseRequest }) {
           {agent.name} is frozen, so this can&rsquo;t be approved. <Link href={`/agents/${agent.id}`}>Review the agent</Link>
         </p>
         <div className="decision__actions">
-          <button className="btn" onClick={() => store.deny(r.id)}>
+          <button className="btn" disabled={busy} onClick={() => commit(store.deny)}>
             <X size={18} aria-hidden="true" />
             Deny
           </button>
@@ -48,15 +59,17 @@ export function Decision({ request: r }: { request: PurchaseRequest }) {
             : `${agent?.name ?? "The agent"} is told no and gets nothing it can spend.`}
         </p>
         <div className="decision__actions">
-          <button className="btn" onClick={() => setChoice(null)}>
+          <button className="btn" disabled={busy} onClick={() => setChoice(null)}>
             Go back
           </button>
           <button
             className={approving ? "btn btn--go" : "btn btn--stop"}
             autoFocus
-            onClick={() => (approving ? store.approve(r.id) : store.deny(r.id))}
+            disabled={busy}
+            aria-busy={busy || undefined}
+            onClick={() => commit(approving ? store.approve : store.deny)}
           >
-            {approving ? `Yes, approve ${money(r.total)}` : "Yes, deny"}
+            {busy ? "Saving…" : approving ? `Yes, approve ${money(r.total)}` : "Yes, deny"}
           </button>
         </div>
       </div>
@@ -91,6 +104,7 @@ function DecisionResult({ request: r, now }: { request: PurchaseRequest; now: nu
     );
   }
   const text: Partial<Record<PurchaseRequest["status"], string>> = {
+    approved: "Approved. The agent gets its single-use card the next time it checks in.",
     denied: "The agent was told no and got nothing it can spend.",
     cancelled: "Any card for this cart no longer works.",
     completed: "The card was used once and closed.",
@@ -104,7 +118,15 @@ function DecisionResult({ request: r, now }: { request: PurchaseRequest; now: nu
 }
 
 /** The stub printed under a pending receipt: why it needs you, then the decision. */
-export function ApprovalStub({ request: r, detailsLink = true }: { request: PurchaseRequest; detailsLink?: boolean }) {
+export function ApprovalStub({
+  request: r,
+  detailsLink = true,
+  intent = null,
+}: {
+  request: PurchaseRequest;
+  detailsLink?: boolean;
+  intent?: "approve" | "deny" | null;
+}) {
   const reasons = r.checks.filter((c) => c.outcome === "approval" || c.outcome === "deny");
   return (
     <>
@@ -115,7 +137,7 @@ export function ApprovalStub({ request: r, detailsLink = true }: { request: Purc
           ))}
         </ul>
       )}
-      <Decision request={r} />
+      <Decision request={r} intent={intent} />
       {detailsLink && (
         <Link href={`/approvals/${r.id}`} className="stub__link">
           Reasoning, rules and history

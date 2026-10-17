@@ -1,8 +1,25 @@
 # Frontend integration guide
 
-For whoever builds `apps/web` (the Next.js dashboard). The backend is done; the web app should
-be a **thin layer**: authenticate the human, call `@agent-wallet/core`, render. No business
-rules in components or route handlers.
+For whoever works on `apps/web` (the Next.js dashboard). The web app is a **thin layer**:
+authenticate the human, call `@agent-wallet/core`, render. No business rules in components or
+route handlers.
+
+> **Status: wired.** Everything below is implemented in `apps/web`. Where to find it:
+>
+> | Piece | File |
+> |---|---|
+> | Auth.js (email magic link, Prisma adapter, database sessions) | `apps/web/auth.ts`, `app/api/auth/[...nextauth]/route.ts` |
+> | Agent REST / MCP / webhooks / cron | `app/api/[...path]/route.ts` |
+> | Sign-in gate | `middleware.ts` (cookie check) + `app/(dashboard)/layout.tsx` (real session check) |
+> | First render | `app/(dashboard)/layout.tsx` → `wallet.owner.getDashboardSnapshot(userId)` |
+> | Core → view-model mapping (cents → dollars, rule labels, event sentences) | `lib/server/snapshot.ts` |
+> | Every mutation (Server Actions, POST only, user id from the session) | `lib/actions.ts` |
+> | Client store used by every view; polls every 15 s | `lib/store.tsx` |
+> | Web push opt-in + service worker | `components/PushToggle.tsx`, `public/sw.js` |
+> | Root `.env` loading for the Next server | `instrumentation.ts` |
+>
+> Check `WalletError` with `WalletError.is(e)`, not `instanceof`: Next bundles the package into
+> several layers, and the process-wide wallet may come from a different copy of the class.
 
 ## 1. Add the workspace packages
 
@@ -87,7 +104,7 @@ Zod issues in `.details` for per-field form errors.
 |---|---|
 | Sign up / sign in | Auth.js |
 | Pick a starter template | `policyTemplates(timezone)` from `@agent-wallet/core/pure` → `{ id, name, description, rules }` |
-| Create first agent | `wallet.owner.createAgent(userId, { name, template })` → `{ agent, apiKey }`. **Show `apiKey` once**, with a copy button. It can't be retrieved again. |
+| Create first agent | `wallet.owner.createAgent(userId, { name, client, template })` (`client`: `claude` \| `chatgpt` \| `custom`) → `{ agent, apiKey }`. **Show `apiKey` once**, with a copy button. It can't be retrieved again. |
 | Connection instructions | Show the MCP config snippets from the README (§ Connecting an agent) with the key and your `APP_URL` filled in. |
 
 ### Agents list
@@ -102,6 +119,7 @@ Zod issues in `.details` for per-field form errors.
 | Rotate key (shows new key once) | `wallet.owner.rotateApiKey(userId, agentId)` → `{ apiKey, prefix }` |
 | Revoke key | `wallet.owner.revokeApiKey(userId, agentId)` |
 | Home summary | `wallet.owner.getDashboardSummary(userId)` → agents, pending count, weekly spend, recent security events |
+| Everything at once | `wallet.owner.getDashboardSnapshot(userId)` → user, agents (+ rules, budget), recent purchases (+ checks, latest card), activity, open suggestions |
 
 ### Policy editor (form UI, not raw JSON)
 

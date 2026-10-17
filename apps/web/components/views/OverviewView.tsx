@@ -5,7 +5,7 @@ import Link from "next/link";
 import { AgentsTable } from "@/components/AgentsTable";
 import { Ago, Kpi, LedgerHead, Pill } from "@/components/bits";
 import { SlipQueue } from "@/components/SlipQueue";
-import { auditLabel, auditTone, money } from "@/lib/format";
+import { auditLabel, auditTone, money, sumLimits } from "@/lib/format";
 import { useStore } from "@/lib/store";
 
 const count = (n: number) => Math.round(n).toString();
@@ -17,11 +17,13 @@ export function OverviewView() {
   const waitingTotal = pending.reduce((n, r) => n + r.total, 0);
   const oldest = pending.reduce((t, r) => Math.min(t, r.createdAt), Infinity);
   const weekTotal = agents.reduce((n, a) => n + a.spend.week, 0);
-  const weekLimit = agents.reduce((n, a) => n + a.policy.limits.per_week, 0);
+  const weekLimit = sumLimits(agents.map((a) => a.policy.limits.per_week));
   const monthTotal = agents.reduce((n, a) => n + a.spend.month, 0);
-  const monthLimit = agents.reduce((n, a) => n + a.policy.limits.per_month, 0);
+  const monthLimit = sumLimits(agents.map((a) => a.policy.limits.per_month));
   const active = agents.filter((a) => a.status === "active").length;
   const pct = (used: number, limit: number) => (limit > 0 ? Math.round((used / limit) * 100) : 0);
+  const budgetNote = (used: number, limit: number | null, period: string) =>
+    limit === null ? `At least one agent has no ${period} limit` : `${pct(used, limit)}% of ${money(limit)} ${period} budgets`;
 
   return (
     <div className="page">
@@ -54,14 +56,14 @@ export function OverviewView() {
         <Kpi
           label="Spent this week"
           value={weekTotal}
-          note={`${pct(weekTotal, weekLimit)}% of ${money(weekLimit)} weekly budgets`}
-          meter={{ used: weekTotal, limit: weekLimit }}
+          note={budgetNote(weekTotal, weekLimit, "weekly")}
+          meter={weekLimit === null ? undefined : { used: weekTotal, limit: weekLimit }}
         />
         <Kpi
           label="Spent this month"
           value={monthTotal}
-          note={`${pct(monthTotal, monthLimit)}% of ${money(monthLimit)} monthly budgets`}
-          meter={{ used: monthTotal, limit: monthLimit }}
+          note={budgetNote(monthTotal, monthLimit, "monthly")}
+          meter={monthLimit === null ? undefined : { used: monthTotal, limit: monthLimit }}
         />
         <Kpi
           label="Agents active"
@@ -80,7 +82,7 @@ export function OverviewView() {
         <div className="alertrow" role="alert">
           <ShieldAlert size={20} aria-hidden="true" />
           <p>
-            <strong>A card blocked a charge it wasn&rsquo;t issued for.</strong> {security.summary}
+            <strong>Security check.</strong> {security.summary}
           </p>
           <Link href="/activity?type=security" className="textlink">
             Security events

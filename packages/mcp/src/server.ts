@@ -35,7 +35,7 @@ function ok(data: unknown, summary: string) {
 }
 
 function fail(e: unknown) {
-  const msg = e instanceof WalletError ? e.message : "Internal error. Try again shortly; do not resubmit purchases blindly.";
+  const msg = WalletError.is(e) ? e.message : "Internal error. Try again shortly; do not resubmit purchases blindly.";
   return { isError: true, content: [{ type: "text" as const, text: msg }] };
 }
 

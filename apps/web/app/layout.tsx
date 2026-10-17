@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Spline_Sans_Mono } from "next/font/google";
-import { AppShell } from "@/components/AppShell";
-import { StoreProvider } from "@/lib/store";
 import "./globals.css";
 
 const sans = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
@@ -29,9 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a href="#main" className="skip">
           Skip to content
         </a>
-        <StoreProvider>
-          <AppShell>{children}</AppShell>
-        </StoreProvider>
+        {children}
       </body>
     </html>
   );

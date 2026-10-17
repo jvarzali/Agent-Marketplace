@@ -3,30 +3,35 @@
 import Link from "next/link";
 import { useState } from "react";
 import { CopyField } from "@/components/bits";
+import { clientLabel } from "@/lib/format";
 import { TEMPLATES, type TemplateId } from "@/lib/policy";
 import { useStore } from "@/lib/store";
-import type { Agent, AgentClient } from "@/lib/types";
+import type { AgentClient } from "@/lib/types";
 
-const CLIENTS: AgentClient[] = ["Claude", "ChatGPT", "Custom"];
+const CLIENTS: AgentClient[] = ["claude", "chatgpt", "custom"];
 const STEPS = ["Name it", "Pick starting rules", "Connect it"];
 
 export function NewAgentView() {
   const store = useStore();
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
-  const [client, setClient] = useState<AgentClient>("Claude");
-  const [template, setTemplate] = useState<TemplateId>("approve_all");
-  const [created, setCreated] = useState<{ agent: Agent; apiKey: string } | null>(null);
+  const [client, setClient] = useState<AgentClient>("claude");
+  const [template, setTemplate] = useState<TemplateId>("approve_everything");
+  const [created, setCreated] = useState<{ agentId: string; apiKey: string } | null>(null);
+  const [creating, setCreating] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  // Only read once the agent exists, which is always after hydration.
+  const origin = created ? window.location.origin : "";
+  const mcpUrl = `${origin}/api/mcp`;
   const mcpConfig = created
     ? JSON.stringify(
         {
           mcpServers: {
             agentmart: {
-              command: "npx",
-              args: ["-y", "@agentmart/mcp"],
-              env: { AGENTMART_API_KEY: created.apiKey },
+              type: "http",
+              url: mcpUrl,
+              headers: { Authorization: `Bearer ${created.apiKey}` },
             },
           },
         },
@@ -80,7 +85,7 @@ export function NewAgentView() {
               {CLIENTS.map((c) => (
                 <label key={c} className="radio">
                   <input type="radio" name="client" checked={client === c} onChange={() => setClient(c)} />
-                  {c === "Custom" ? "My own agent" : c}
+                  {c === "custom" ? "My own agent" : clientLabel[c]}
                 </label>
               ))}
             </div>
@@ -117,12 +122,18 @@ export function NewAgentView() {
             </button>
             <button
               className="btn btn--primary"
-              onClick={() => {
-                setCreated(store.createAgent(name.trim(), client, template));
-                setStep(2);
+              disabled={creating}
+              onClick={async () => {
+                setCreating(true);
+                const res = await store.createAgent(name.trim(), client, template);
+                setCreating(false);
+                if (res) {
+                  setCreated(res);
+                  setStep(2);
+                }
               }}
             >
-              Create {name.trim()}
+              {creating ? "Creating…" : `Create ${name.trim()}`}
             </button>
           </div>
         </div>
@@ -135,22 +146,35 @@ export function NewAgentView() {
           </div>
           <CopyField label="API key" value={created.apiKey} />
 
-          {client === "Custom" ? (
+          {client === "custom" ? (
             <>
-              <p>Send the key as a bearer token to the REST API:</p>
+              <p>Send the key as a bearer token to the REST API. Start by reading the rules, then submit a cart:</p>
               <CopyField
-                label="Example request"
+                label="Example requests"
                 multiline
-                value={`curl https://api.agentmart.dev/v1/purchases \\\n  -H "Authorization: Bearer ${created.apiKey}" \\\n  -H "Content-Type: application/json" \\\n  -d @cart.json`}
+                value={`curl ${origin}/api/v1/agent/policy \\\n  -H "Authorization: Bearer ${created.apiKey}"\n\ncurl ${origin}/api/v1/purchases \\\n  -H "Authorization: Bearer ${created.apiKey}" \\\n  -H "Content-Type: application/json" \\\n  -d @cart.json`}
               />
+              <p className="fine">It can also connect over MCP at {mcpUrl} with the same bearer token.</p>
+            </>
+          ) : client === "claude" ? (
+            <>
+              <p>In Claude Code, run:</p>
+              <CopyField
+                label="Claude Code"
+                multiline
+                value={`claude mcp add --transport http agentmart ${mcpUrl} \\\n  --header "Authorization: Bearer ${created.apiKey}"`}
+              />
+              <p>For Claude Desktop or another client that takes a JSON config, add this and restart it:</p>
+              <CopyField label="MCP server config" value={mcpConfig} multiline />
             </>
           ) : (
             <>
               <p>
-                Add AgentMart as an MCP server in {client === "Claude" ? "Claude" : "your MCP-capable client"}, then
-                restart it:
+                Add AgentMart as a remote MCP server at <code>{mcpUrl}</code>, sending the key as a bearer token. In a
+                client that takes a JSON config:
               </p>
               <CopyField label="MCP server config" value={mcpConfig} multiline />
+              <p className="fine">If your client can&rsquo;t send an Authorization header, use the REST API with the same key.</p>
             </>
           )}
 
@@ -166,7 +190,7 @@ export function NewAgentView() {
           <div className="stack__actions">
             {template === "custom" ? (
               <Link
-                href={`/agents/${created.agent.id}/policy`}
+                href={`/agents/${created.agentId}/policy`}
                 className="btn btn--primary"
                 aria-disabled={!saved}
                 onClick={(e) => !saved && e.preventDefault()}
@@ -175,12 +199,12 @@ export function NewAgentView() {
               </Link>
             ) : (
               <Link
-                href={`/agents/${created.agent.id}`}
+                href={`/agents/${created.agentId}`}
                 className="btn btn--primary"
                 aria-disabled={!saved}
                 onClick={(e) => !saved && e.preventDefault()}
               >
-                Go to {created.agent.name}
+                Go to {name.trim()}
               </Link>
             )}
           </div>

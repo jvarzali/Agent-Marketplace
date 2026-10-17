@@ -1,9 +1,16 @@
-import type { AuditType, Category, RequestStatus, Tone } from "./types";
+import type { AgentClient, AuditType, Category, RequestStatus, Tone } from "./types";
 
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
 export function money(n: number): string {
   return usd.format(n);
+}
+
+export const clientLabel: Record<AgentClient, string> = { claude: "Claude", chatgpt: "ChatGPT", custom: "Own agent" };
+
+/** Sum of limits, or null if any of them is unlimited. */
+export function sumLimits(limits: (number | null)[]): number | null {
+  return limits.some((l) => l === null) ? null : (limits as number[]).reduce((n, l) => n + l, 0);
 }
 
 export function relTime(ts: number, now: number): string {
@@ -46,7 +53,8 @@ export function clockTime(ts: number): string {
  * Agent-supplied URLs are untrusted. Only http(s) links are ever rendered as links;
  * anything else is shown as inert text.
  */
-export function safeLink(url: string): { href: string | null; domain: string } {
+export function safeLink(url: string | null): { href: string | null; domain: string } {
+  if (!url) return { href: null, domain: "no link" };
   try {
     const u = new URL(url);
     if (u.protocol !== "https:" && u.protocol !== "http:") return { href: null, domain: "unsupported link" };
@@ -56,20 +64,32 @@ export function safeLink(url: string): { href: string | null; domain: string } {
   }
 }
 
-export const categoryLabel: Record<Category, string> = {
+export const categoryLabel: Record<string, string> = {
   groceries: "Groceries",
   household: "Household",
   pet_supplies: "Pet supplies",
   personal_care: "Personal care",
+  baby: "Baby",
+  pharmacy: "Pharmacy",
+  apparel: "Clothing",
   electronics: "Electronics",
   office: "Office supplies",
   gift_cards: "Gift cards",
   stored_value: "Stored value",
   subscriptions: "Subscriptions",
   alcohol: "Alcohol",
+  tobacco: "Tobacco",
   firearms: "Firearms",
   unknown: "Unclassified",
 };
+
+/** Label for any category id, including ones the UI doesn't know yet. */
+export function categoryName(c: Category): string {
+  const known = categoryLabel[c];
+  if (known) return known;
+  const words = c.replace(/_/g, " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
 
 export const statusLabel: Record<RequestStatus, string> = {
   denied: "Denied",
@@ -106,6 +126,7 @@ export const auditTone: Record<AuditType, Tone> = {
   frozen: "stop",
   unfrozen: "info",
   agent_created: "info",
+  other: "info",
 };
 
 export const auditLabel: Record<AuditType, string> = {
@@ -123,4 +144,5 @@ export const auditLabel: Record<AuditType, string> = {
   frozen: "Frozen",
   unfrozen: "Unfrozen",
   agent_created: "Agent added",
+  other: "Note",
 };

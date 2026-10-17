@@ -1,4 +1,5 @@
-import { domainMatches, type NormalizedCart } from "../cart";
+import type { NormalizedCart } from "../cart";
+import { domainMatches } from "../domain";
 import type { ItemClassification } from "../classifier/types";
 import { formatMoney, toCents } from "../money";
 import { ALWAYS_DENIED_CATEGORIES, ALWAYS_DENIED_MCCS, DEFAULT_DENIED_CATEGORIES, type PolicyRules } from "./schema";

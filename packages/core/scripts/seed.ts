@@ -6,7 +6,7 @@
  *
  *   npm run db:seed            (uses DATABASE_URL)
  */
-import "dotenv/config";
+import { config as loadEnv } from "dotenv";
 import { createDb } from "@agent-wallet/db";
 import { MockCardIssuer } from "../src/issuer/mock";
 import { silentLogger } from "../src/logger";
@@ -15,6 +15,9 @@ import { parsePolicy } from "../src/policy/schema";
 import { templateRules } from "../src/policy/templates";
 import { MemoryRateLimiter } from "../src/security";
 import { createWallet, type AuthedAgent } from "../src/wallet/index";
+
+// The monorepo keeps one .env at its root; a package-local .env (if any) wins.
+loadEnv({ path: [".env", new URL("../../../.env", import.meta.url).pathname], quiet: true });
 
 const DEMO_EMAIL = process.env["SEED_EMAIL"] ?? "demo@agentwallet.dev";
 const DAY = 86_400_000;
@@ -50,8 +53,9 @@ async function main() {
   const user = await wallet.owner.ensureUser(DEMO_EMAIL, { name: "Demo User", timezone: "America/Los_Angeles" });
 
   const groceryRules = templateRules("groceries_under_50", "America/Los_Angeles");
-  const grocery = await wallet.owner.createAgent(user.id, { name: "Grocery Bot (Claude)", rules: groceryRules });
+  const grocery = await wallet.owner.createAgent(user.id, { name: "Grocery Bot (Claude)", client: "claude", rules: groceryRules });
   const office = await wallet.owner.createAgent(user.id, {
+    client: "custom",
     name: "Office Supplies Agent",
     rules: parsePolicy({
       merchants: { mode: "blocklist", deny_domains: ["temu.com"] },

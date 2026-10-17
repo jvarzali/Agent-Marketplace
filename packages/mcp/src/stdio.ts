@@ -4,10 +4,13 @@
  * Env: AGENT_WALLET_API_KEY (the agent's key), DATABASE_URL, plus the same provider env as the web app.
  * Logs go to stderr; stdout is reserved for the MCP protocol.
  */
-import "dotenv/config";
+import { config as loadEnv } from "dotenv";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { createWalletFromEnv, type Logger } from "@agent-wallet/core";
 import { createMcpServer } from "./server";
+
+// The monorepo keeps one .env at its root; a package-local .env (if any) wins.
+loadEnv({ path: [".env", new URL("../../../.env", import.meta.url).pathname], quiet: true });
 
 const stderrLogger: Logger = {
   info: (m, d) => process.stderr.write(`${JSON.stringify({ level: "info", m, d })}\n`),

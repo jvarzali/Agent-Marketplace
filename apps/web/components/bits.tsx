@@ -48,13 +48,26 @@ export function Meter({
 }: {
   label?: string;
   used: number;
-  limit: number;
+  /** null = no limit set. */
+  limit: number | null;
   inline?: boolean;
   /** Bar and percentage only, for tables that already show the amounts. */
   bare?: boolean;
 }) {
-  const pct = limit > 0 ? Math.min(100, (used / limit) * 100) : 100;
+  const pct = limit === null ? 0 : limit > 0 ? Math.min(100, (used / limit) * 100) : 100;
   const tone = pct >= 90 ? "stop" : pct >= 70 ? "hold" : "good";
+  if (limit === null) {
+    return (
+      <div className={`meter${inline ? " meter--inline" : ""}${bare ? " meter--bare" : ""}`}>
+        <div className="meter__row">
+          {label && <span>{label}</span>}
+          <span className="num">
+            {bare ? "No limit" : <>{money(used)} <span className="muted">no limit</span></>}
+          </span>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className={`meter${inline ? " meter--inline" : ""}${bare ? " meter--bare" : ""}`}>
       <div className="meter__row">
@@ -166,7 +179,7 @@ export function Facts({ rows }: { rows: { label: string; text: React.ReactNode }
 
 export function Trust({ level }: { level: number }) {
   return (
-    <span className="trust" aria-label={`Trust level ${level} of 5`} title={`Trust level ${level} of 5`}>
+    <span className="trust" aria-label={`Trust level ${level} of 5`} title={level ? `Trust level ${level} of 5` : "New: no clean purchases yet"}>
       {[1, 2, 3, 4, 5].map((i) => (
         <span key={i} className={i <= level ? "trust__pip trust__pip--on" : "trust__pip"} />
       ))}

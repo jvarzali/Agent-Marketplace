@@ -61,16 +61,28 @@ const STATUS: Record<WalletErrorCode, number> = {
   issuer_error: 502,
 };
 
+const WALLET_ERROR: unique symbol = Symbol.for("agent-wallet.WalletError");
+
 /** Errors with messages written for whoever called (agent or human): what happened and what to do next. */
 export class WalletError extends Error {
   readonly status: number;
+  readonly [WALLET_ERROR] = true;
   constructor(
     readonly code: WalletErrorCode,
     message: string,
     readonly details?: unknown,
   ) {
     super(message);
+    this.name = "WalletError";
     this.status = STATUS[code];
+  }
+
+  /**
+   * Use instead of `instanceof`: bundlers (e.g. Next.js layers) can load this module more than
+   * once, and an error thrown by one copy isn't an instance of the other copy's class.
+   */
+  static is(e: unknown): e is WalletError {
+    return typeof e === "object" && e !== null && (e as Record<symbol, unknown>)[WALLET_ERROR] === true;
   }
 }
 

@@ -97,6 +97,8 @@ model Agent {
   id               String      @id @default(cuid())
   userId           String      @map("user_id")
   name             String
+  // Which assistant the user connected: "claude" | "chatgpt" | "custom". Display + setup hints only.
+  client           String      @default("custom")
   // sha256(api key). The raw key is shown once at creation/rotation and never stored.
   apiKeyHash       String      @unique @map("api_key_hash")
   // First characters of the key, for display ("aw_k3f9…").

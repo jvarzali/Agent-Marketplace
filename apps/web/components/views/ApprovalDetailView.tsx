@@ -7,7 +7,7 @@ import { Receipt } from "@/components/Receipt";
 import { money, statusLabel, statusTone } from "@/lib/format";
 import { useStore } from "@/lib/store";
 
-export function ApprovalDetailView({ id }: { id: string }) {
+export function ApprovalDetailView({ id, intent = null }: { id: string; intent?: "approve" | "deny" | null }) {
   const store = useStore();
   const r = store.request(id);
 
@@ -47,7 +47,7 @@ export function ApprovalDetailView({ id }: { id: string }) {
       <div className="detail">
         <div className="detail__slip">
           <Receipt request={r} agent={agent}>
-            <ApprovalStub request={r} detailsLink={false} />
+            <ApprovalStub request={r} detailsLink={false} intent={intent} />
           </Receipt>
         </div>
 

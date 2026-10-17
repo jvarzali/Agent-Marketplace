@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { AgentStatus, Meter, Trust } from "@/components/bits";
 import { FreezeControl } from "@/components/FreezeControl";
-import { money } from "@/lib/format";
+import { clientLabel, money, sumLimits } from "@/lib/format";
 import type { Agent } from "@/lib/types";
 
 /** The full agents list, or with `budget` a budget-vs-actual statement for this week with a totals row. */
@@ -35,7 +35,7 @@ export function AgentsTable({ agents, budget = false }: { agents: Agent[]; budge
                 <Link href={`/agents/${a.id}`} className="t-link">
                   {a.name}
                 </Link>
-                <span className="t-sub">{a.client === "Custom" ? "Own agent" : a.client}</span>
+                <span className="t-sub">{clientLabel[a.client]}</span>
               </th>
               <td data-label="Status">
                 <AgentStatus agent={a} />
@@ -62,7 +62,8 @@ export function AgentsTable({ agents, budget = false }: { agents: Agent[]; budge
 
 function BudgetTable({ agents }: { agents: Agent[] }) {
   const spent = agents.reduce((n, a) => n + a.spend.week, 0);
-  const limit = agents.reduce((n, a) => n + a.policy.limits.per_week, 0);
+  const limit = sumLimits(agents.map((a) => a.policy.limits.per_week));
+  const fmt = (n: number | null) => (n === null ? "No limit" : money(n));
   return (
     <div className="table-wrap">
       <table className="table table--stack table--figures">
@@ -89,7 +90,7 @@ function BudgetTable({ agents }: { agents: Agent[] }) {
         <tbody>
           {agents.map((a) => {
             const cap = a.policy.limits.per_week;
-            const left = cap - a.spend.week;
+            const left = cap === null ? null : cap - a.spend.week;
             return (
               <tr key={a.id} className={a.status === "frozen" ? "is-frozen" : undefined}>
                 <th scope="row" data-label="Agent">
@@ -104,10 +105,10 @@ function BudgetTable({ agents }: { agents: Agent[] }) {
                   {money(a.spend.week)}
                 </td>
                 <td data-label="Budget" className="t-num muted">
-                  {money(cap)}
+                  {fmt(cap)}
                 </td>
-                <td data-label="Left" className={`t-num${left < 0 ? " t-neg" : ""}`}>
-                  {money(left)}
+                <td data-label="Left" className={`t-num${left !== null && left < 0 ? " t-neg" : ""}`}>
+                  {left === null ? "—" : money(left)}
                 </td>
                 <td data-label="Used" className="t-meter">
                   <Meter used={a.spend.week} limit={cap} inline bare />
@@ -126,10 +127,10 @@ function BudgetTable({ agents }: { agents: Agent[] }) {
               {money(spent)}
             </td>
             <td data-label="Budget" className="t-num">
-              {money(limit)}
+              {fmt(limit)}
             </td>
-            <td data-label="Left" className={`t-num${limit - spent < 0 ? " t-neg" : ""}`}>
-              {money(limit - spent)}
+            <td data-label="Left" className={`t-num${limit !== null && limit - spent < 0 ? " t-neg" : ""}`}>
+              {limit === null ? "—" : money(limit - spent)}
             </td>
             <td data-label="Used" className="t-meter">
               <Meter used={spent} limit={limit} inline bare />

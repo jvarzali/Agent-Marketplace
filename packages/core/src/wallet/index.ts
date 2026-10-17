@@ -125,7 +125,8 @@ export function getWallet(): Wallet {
 
 export { WalletError, type AuthedAgent, type WalletConfig, type WalletDeps } from "./context";
 export type { AgentPurchaseView, AgentCredential, ReportResultInput } from "./purchases";
-export type { AgentSummary, ApprovalContext, ActivityQuery } from "./owner";
+export type { AgentSummary, ApprovalContext, ActivityQuery, AgentClient, DashboardSnapshot } from "./owner";
+export { AGENT_CLIENTS } from "./owner";
 export { PurchaseService } from "./purchases";
 export { OwnerService } from "./owner";
 export { TrustService } from "./trust";
