@@ -248,6 +248,24 @@ export function PolicyEditorView({ id }: { id: string }) {
                 </label>
               ))}
             </div>
+            <label className="field">
+              <span className="field__label">Card allowance over the approved total</span>
+              <span className="field__money">
+                <input
+                  className="input input--short num"
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  max={50}
+                  step={0.5}
+                  value={p.credential_buffer}
+                  onChange={(e) => set((x) => void (x.credential_buffer = e.target.value === "" ? 0 : Number(e.target.value)))}
+                />
+              </span>
+              <span className="fine">
+                Covers small tax or shipping changes at checkout. Leave at 0 so the card only works for exactly what you approved.
+              </span>
+            </label>
             <p className="fine">Leave a box empty for no limit. Order limits include tax and shipping. Budgets count requests still waiting on you, so an agent can&rsquo;t stack requests past them.</p>
           </fieldset>
 

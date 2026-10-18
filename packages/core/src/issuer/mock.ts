@@ -8,8 +8,11 @@ import {
   type IssuedCard,
   type IssuerEvent,
   type IssuerMerchant,
+  type TestChargeParams,
+  type TestChargeResult,
   type WebhookResponse,
 } from "./types";
+import { TEST_SHOPPER } from "../wallet/shopper";
 
 interface MockCard {
   id: string;
@@ -48,9 +51,15 @@ export const MOCK_SIGNATURE_HEADER = "x-mock-issuer-signature";
  */
 export class MockCardIssuer implements CardIssuer {
   readonly provider = "mock";
+  readonly supportsTestCharges = true;
   private readonly cards = new Map<string, MockCard>();
 
-  constructor(private readonly webhookSecret: string = "mock_webhook_secret", private readonly now: () => Date = () => new Date()) {}
+  constructor(
+    private readonly webhookSecret: string = "mock_webhook_secret",
+    private readonly now: () => Date = () => new Date(),
+    /** Name and billing address on the cards; the made-up test shopper by default. */
+    private readonly holder: { name: string; address: CardSecrets["billingAddress"] & object } = TEST_SHOPPER,
+  ) {}
 
   async createCard(params: CreateCardParams): Promise<IssuedCard> {
     const id = `mock_card_${randomUUID()}`;
@@ -68,8 +77,9 @@ export class MockCardIssuer implements CardIssuer {
       expMonth: exp.getUTCMonth() + 1,
       expYear: exp.getUTCFullYear() + 1, // network expiry is coarse; real lifetime is enforced by cancellation
       last4: card.number.slice(-4),
-      cardholderName: "Agent Wallet Test",
-      billingAddress: { line1: "123 Test Street", city: "San Francisco", state: "CA", postalCode: "94111", country: "US" },
+      // Same made-up person as the test shipping profile, so checkouts look consistent.
+      cardholderName: this.holder.name,
+      billingAddress: { ...this.holder.address },
     };
   }
 
@@ -148,6 +158,14 @@ export class MockCardIssuer implements CardIssuer {
       });
     }
     return { approved: true, declinedBy: null, reason: null, authorizationId };
+  }
+
+  /** Charge a card by its number, as the demo store does. */
+  async testCharge(p: TestChargeParams): Promise<TestChargeResult> {
+    const card = [...this.cards.values()].find((c) => c.number === p.card.number.replace(/\D/g, "") && c.cvc === p.card.cvc.trim());
+    if (!card) return { approved: false, reason: "card_not_found", authorizationId: null };
+    const r = await this.simulateCharge({ providerCardId: card.id, amountCents: p.amountCents, currency: p.currency, merchant: p.merchant, deliver: p.deliver });
+    return { approved: r.approved, reason: r.reason, authorizationId: r.authorizationId };
   }
 
   /** Simulate a merchant refund on a previously used card. */

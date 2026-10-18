@@ -1,0 +1,35 @@
+# Merge into ~/.config/goose/config.yaml (macOS/Linux). See agents/goose/README.md.
+# Free model: Gemini via a Google AI Studio key. The key itself is NOT stored here; run
+# `goose configure` and pick Google Gemini, or export GOOGLE_API_KEY before starting goose.
+active_provider: google
+providers:
+  google:
+    enabled: true
+    model: gemini-2.5-flash
+    configured: true
+
+# Ask before running tools it hasn't used yet. Purchases still need your approval in the dashboard.
+GOOSE_MODE: "smart_approve"
+
+extensions:
+  # Agent Wallet: the guardrail. The agent's only way to pay.
+  agentwallet:
+    type: streamable_http
+    name: agentwallet
+    enabled: true
+    uri: http://localhost:3000/api/mcp
+    headers:
+      Authorization: "Bearer aw_REPLACE_WITH_THIS_AGENTS_KEY"
+    timeout: 300
+
+  # The shopping browser the agent drives: Chrome started by agents/browser/start-chrome.sh.
+  # The wallet connects to the same browser to type approved cards into checkout pages.
+  playwright:
+    type: stdio
+    name: playwright
+    enabled: true
+    cmd: npx
+    args: ["-y", "@playwright/mcp@latest", "--cdp-endpoint", "http://127.0.0.1:9222"]
+    envs: {}
+    env_keys: []
+    timeout: 300

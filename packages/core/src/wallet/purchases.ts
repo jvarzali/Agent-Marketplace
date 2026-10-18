@@ -1,5 +1,6 @@
 import type { PurchaseRequest } from "@agent-wallet/db";
 import { z } from "zod";
+import { CardFillError } from "../checkout/browser-fill";
 import { cartHash, CartValidationError, normalizeCart, purchaseRequestInputSchema, type CartItem } from "../cart";
 import type { CardSecrets } from "../issuer/types";
 import { formatMoney, toCents } from "../money";
@@ -11,6 +12,7 @@ import { ALWAYS_DENIED_MCCS, type PolicyRules } from "../policy/schema";
 import { audit, json, lockAgent, minutes, WalletError, type AuthedAgent, type Tx, type WalletDeps } from "./context";
 import { cartFromRow, classificationsFromRow, loadActivePolicy, loadHistory, loadKnownMerchants } from "./history";
 import { Notifications } from "./notifications";
+import { TEST_SHOPPER, type ShopperProfile } from "./shopper";
 
 export type AgentPurchaseStatus =
   | "denied"
@@ -53,6 +55,19 @@ export interface AgentCredential {
   single_use: true;
   instructions: string;
 }
+
+/** What fill_payment_details returns: never the card number, only what to do next. */
+export interface FillPaymentView extends AgentPurchaseView {
+  filled_fields: string[];
+  page_url: string;
+  card_last4: string;
+  /** Billing details for any address fields the store asks for (not secret). */
+  cardholder_name: string;
+  billing_address: CardSecrets["billingAddress"];
+}
+
+/** Fills allowed per card, so a confused agent can't keep re-entering it. */
+const MAX_FILLS_PER_CARD = 5;
 
 export const reportResultSchema = z.object({
   success: z.boolean(),
@@ -191,6 +206,23 @@ export class PurchaseService {
     return this.view(row);
   }
 
+  // ───────────── agent: checkout details ─────────────
+
+  /** Name, email, phone and shipping address to enter at checkout. Never card details. */
+  async getShippingDetails(agent: AuthedAgent): Promise<Omit<ShopperProfile, "test"> & { next_step: string }> {
+    const a = await this.deps.db.agent.findUniqueOrThrow({ where: { id: agent.id }, select: { status: true } });
+    if (a.status === "frozen") throw new WalletError("forbidden", "This agent is frozen by its owner. Stop and tell the user.");
+    const configured = this.deps.config.shopper;
+    const profile = configured ?? (configured === undefined && this.deps.issuer.supportsTestCharges ? (this.deps.config.testShopper ?? TEST_SHOPPER) : null);
+    if (!profile) {
+      throw new WalletError("not_found", "The owner hasn't set shipping details for this wallet. Ask the user for the name, email, phone and address to use; don't make them up.");
+    }
+    await audit(this.deps.db, { userId: agent.userId, agentId: agent.id, type: "shopper.details_shared", payload: { test_profile: profile.test } }, this.deps.now());
+    // Same answer either way: the agent isn't told whether these are test details.
+    const { test: _test, ...details } = profile;
+    return { ...details, next_step: "Use these exactly for the contact and shipping fields at checkout. Don't change them or use other saved addresses." };
+  }
+
   // ───────────── agent: status & credential delivery ─────────────
 
   async getPurchaseStatus(agent: AuthedAgent, id: string, opts: { cart?: unknown } = {}): Promise<AgentPurchaseView> {
@@ -218,10 +250,82 @@ export class PurchaseService {
       }
     }
 
-    if (row.status === "approved" || (row.status === "credential_issued" && !(await this.delivered(row.id)))) {
-      return this.issueAndDeliver(agent, row.id);
+    const reveal = this.deps.config.cardDelivery === "agent";
+    if (row.status === "approved" || (reveal && row.status === "credential_issued" && !(await this.delivered(row.id)))) {
+      return this.issueAndDeliver(agent, row.id, reveal);
     }
     return this.view(row);
+  }
+
+  /**
+   * Wait (up to `seconds`, max 120) for the owner to decide a pending request, then return its
+   * status like get_purchase_status. Lets agents wait for approval without asking the user.
+   */
+  async waitForDecision(agent: AuthedAgent, id: string, seconds = 60, pollMs = 1_000): Promise<AgentPurchaseView> {
+    const deadline = Date.now() + Math.min(120, Math.max(1, seconds)) * 1_000;
+    await this.ownRequest(agent, id);
+    for (;;) {
+      const row = await this.deps.db.purchaseRequest.findUniqueOrThrow({ where: { id }, select: { status: true, pendingExpiresAt: true } });
+      const lapsed = row.pendingExpiresAt !== null && row.pendingExpiresAt <= this.deps.now();
+      if (row.status !== "pending_approval" || lapsed || Date.now() >= deadline) break;
+      await new Promise((r) => setTimeout(r, pollMs));
+    }
+    const v = await this.getPurchaseStatus(agent, id);
+    if (v.status === "pending_approval") {
+      return { ...v, next_step: "Still waiting for the owner. Call wait_for_decision again right away; don't ask the user anything or end your turn, and don't submit the purchase again." };
+    }
+    return v;
+  }
+
+  /**
+   * Type the issued card into the agent's checkout page (browser delivery). The wallet checks
+   * the tab is on the approved store and shows the approved total; the agent never sees the
+   * number. Issues the card first if the request was just approved.
+   */
+  async fillPaymentDetails(agent: AuthedAgent, id: string): Promise<FillPaymentView> {
+    let row = await this.ownRequest(agent, id);
+    if (row.status === "approved") {
+      await this.issueAndDeliver(agent, id, false);
+      row = await this.ownRequest(agent, id);
+    }
+    if (row.status !== "credential_issued") {
+      throw new WalletError("invalid_state", `This request is ${row.status}, so there's no card to enter. ${nextStep(row, this.deps.config.cardDelivery)}`);
+    }
+    const filler = this.deps.cardFiller;
+    if (!filler) throw new WalletError("invalid_state", "This wallet isn't set up to enter cards in the browser. Tell the user; don't enter card details yourself.");
+    const now = this.deps.now();
+    const [a, cred] = await Promise.all([
+      this.deps.db.agent.findUniqueOrThrow({ where: { id: agent.id }, select: { status: true } }),
+      this.deps.db.issuedCredential.findFirst({ where: { purchaseRequestId: id, status: "active" }, orderBy: { createdAt: "desc" } }),
+    ]);
+    if (a.status === "frozen") throw new WalletError("forbidden", "This agent is frozen by its owner. Stop and tell the user.");
+    if (!cred || cred.expiresAt <= now) throw new WalletError("invalid_state", "The card for this request has expired or was closed. Submit a new request if the user still wants this.");
+    const fills = await this.deps.db.auditEvent.count({ where: { purchaseRequestId: id, type: "credential.filled" } });
+    if (fills >= MAX_FILLS_PER_CARD) throw new WalletError("rate_limited", `The card was already entered ${fills} times. Stop and tell the user; cancel_purchase if checkout can't be completed.`);
+
+    const secrets = await this.deps.issuer.getCardSecrets(cred.providerCardId);
+    let result;
+    try {
+      result = await filler.fill({ merchantDomain: cred.merchantDomain, totalCents: row.totalCents, currency: row.currency, secrets });
+    } catch (e) {
+      const message = e instanceof CardFillError ? e.message : "Couldn't enter the card in the browser. Tell the user; don't enter card details yourself.";
+      await audit(this.deps.db, { userId: agent.userId, agentId: agent.id, purchaseRequestId: id, type: "credential.fill_failed", severity: "warning", payload: { last4: cred.last4, reason: message } }, now);
+      if (!(e instanceof CardFillError)) this.deps.logger.error("card fill failed", { requestId: id, error: e instanceof Error ? e.message : String(e) });
+      throw new WalletError("invalid_state", message);
+    }
+    await this.deps.db.$transaction(async (tx) => {
+      if (!cred.deliveredAt) await tx.issuedCredential.update({ where: { id: cred.id }, data: { deliveredAt: now } });
+      await audit(tx, { userId: agent.userId, agentId: agent.id, purchaseRequestId: id, type: "credential.filled", payload: { last4: cred.last4, page: result.pageUrl.split("?")[0], fields: result.filled } }, now);
+    });
+    return {
+      ...this.view(row),
+      filled_fields: result.filled,
+      page_url: result.pageUrl,
+      card_last4: cred.last4,
+      cardholder_name: secrets.cardholderName,
+      billing_address: secrets.billingAddress,
+      next_step: `The card ending ${cred.last4} is entered (${result.filled.join(", ")}). If the page still asks for a billing name or address, use the details here. Then place the order and call report_purchase_result with the order number. Do not change the cart.`,
+    };
   }
 
   /**
@@ -229,7 +333,7 @@ export class PurchaseService {
    * Runs under the agent lock so concurrent polls can't receive the card twice. All
    * policy deny-rules are re-checked at issuance (freeze, tightened limits, etc.).
    */
-  private async issueAndDeliver(agent: AuthedAgent, id: string): Promise<AgentPurchaseView> {
+  private async issueAndDeliver(agent: AuthedAgent, id: string, reveal: boolean): Promise<AgentPurchaseView> {
     let createdCardId = null as string | null;
     try {
       const out = await this.deps.db.$transaction(
@@ -242,7 +346,7 @@ export class PurchaseService {
           // Crash recovery: card was created but never delivered.
           if (row.status === "credential_issued") {
             const cred = await tx.issuedCredential.findFirst({ where: { purchaseRequestId: id, status: "active", deliveredAt: null } });
-            if (!cred) return { row, secrets: null, cred: null };
+            if (!cred || !reveal) return { row, secrets: null, cred: null };
             if (a.status === "frozen" || cred.expiresAt <= now) return { row, secrets: null, cred: null };
             const secrets = await this.deps.issuer.getCardSecrets(cred.providerCardId);
             await tx.issuedCredential.update({ where: { id: cred.id }, data: { deliveredAt: now } });
@@ -297,7 +401,7 @@ export class PurchaseService {
             expiresAt,
           });
           createdCardId = card.providerCardId;
-          const secrets = await this.deps.issuer.getCardSecrets(card.providerCardId);
+          const secrets = reveal ? await this.deps.issuer.getCardSecrets(card.providerCardId) : null;
           const cred = await tx.issuedCredential.create({
             data: {
               purchaseRequestId: id,
@@ -309,7 +413,7 @@ export class PurchaseService {
               allowedMccs: row.mcc ? [row.mcc] : [],
               merchantDomain: row.merchantDomain,
               expiresAt,
-              deliveredAt: now,
+              deliveredAt: reveal ? now : null,
               createdAt: now,
             },
           });
@@ -348,7 +452,7 @@ export class PurchaseService {
             `Use this card once, only at ${out.cred.merchantDomain}, for at most ${formatMoney(out.cred.amountLimitCents, out.cred.currency)}, before ${out.cred.expiresAt.toISOString()}. ` +
             "Do not save, log, or repeat these details anywhere else. They will not be shown again. After checkout, call report_purchase_result.",
         };
-        v.next_step = "Complete checkout now with this single-use card, then call report_purchase_result.";
+        v.next_step = "Complete checkout now: enter this as a NEW card (not a saved one) with the billing details shown, place the order, then call report_purchase_result with the order number.";
       }
       return v;
     } catch (e) {
@@ -461,7 +565,7 @@ export class PurchaseService {
       currency: row.currency,
       cart_hash: row.cartHash,
       reasons,
-      next_step: nextStep(row),
+      next_step: nextStep(row, this.deps.config.cardDelivery),
       created_at: row.createdAt.toISOString(),
     };
   }
@@ -478,15 +582,20 @@ export async function cancelCredentials(deps: WalletDeps, tx: Tx, requestId: str
   return creds.length;
 }
 
-function nextStep(row: PurchaseRequest): string {
+function nextStep(row: PurchaseRequest, delivery: "agent" | "browser"): string {
   switch (row.status) {
     case "denied":
-      return "Denied by the owner's rules (see reasons). Do not retry the same purchase, and do not split it into smaller orders. Change the cart so it fits the policy (get_my_policy, get_budget) or tell the user why it can't be bought.";
+      return "Denied by the owner's rules (see reasons). Do not retry the same purchase, and do not split it into smaller orders. If a different choice fits the rules (a cheaper item, an allowed store; check get_my_policy and get_budget), pick the best one yourself and request that. Only if nothing fits, tell the user why it can't be bought.";
     case "pending_approval":
-      return "Waiting for the owner to approve. Poll get_purchase_status every 30-60 seconds (or tell the user it's awaiting their approval). Do not submit the same purchase again.";
+      return "Waiting for the owner to approve. Call wait_for_decision now and keep calling it until the status changes; don't ask the user anything meanwhile. Stay on the checkout page; do not submit the same purchase again or pay any other way.";
     case "approved":
-      return "Approved. Call get_purchase_status to receive the single-use card.";
+      return delivery === "browser"
+        ? `Approved. Stay on the checkout page at ${row.merchantDomain} and call fill_payment_details: the wallet enters the single-use card into the page for you.`
+        : "Approved. Call get_purchase_status to receive the single-use card.";
     case "credential_issued":
+      if (delivery === "browser") {
+        return `Approved, and a single-use card is ready. With the payment step showing on ${row.merchantDomain}, call fill_payment_details: the wallet types the card into the page (you never see the number). Then place the order and call report_purchase_result.`;
+      }
       return "A single-use card was already issued and delivered for this request. It is not shown again. If you lost it, call cancel_purchase and submit a new request.";
     case "completed":
       return "Payment completed. Call report_purchase_result with the order confirmation if you haven't.";

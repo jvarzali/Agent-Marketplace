@@ -112,7 +112,10 @@ export function describePolicy(p: Policy): PolicyLine[] {
     text: [
       l.per_order_total !== null ? `${money(l.per_order_total)} an order with tax and shipping.` : "No per-order limit.",
       windows.length ? `${cap(list(windows))}.` : "No daily, weekly or monthly budget.",
-    ].join(" "),
+      p.credential_buffer > 0 ? `Each card allows ${money(p.credential_buffer)} over the approved total.` : "",
+    ]
+      .filter(Boolean)
+      .join(" "),
   });
   out.push({
     label: "Orders",
@@ -166,6 +169,7 @@ export function policyWarnings(p: Policy): string[] {
   if (over(l.per_week, l.per_month)) w.push("The weekly limit is higher than the monthly limit.");
   const nums = [l.per_order_total, l.per_day, l.per_week, l.per_month, l.max_quantity_per_item, l.max_orders_per_day];
   if (nums.some((n) => n !== null && (!Number.isFinite(n) || n < 0))) w.push("Limits must be zero or more.");
+  if (p.credential_buffer > 50) w.push("The card allowance is over $50. Keep it small: it's money the agent can spend beyond what you approved.");
   if ([l.max_quantity_per_item, l.max_orders_per_day].some((n) => n !== null && (n < 1 || !Number.isInteger(n))))
     w.push("Order and quantity limits must be whole numbers of 1 or more. Leave them empty for no limit.");
   return w;

@@ -79,6 +79,21 @@ export class IssuerEventService {
     }
   }
 
+  /** Why a charge doesn't match the card it was made on, or null if it does. */
+  private violation(cred: CredWithRequest, e: { amountCents: number; currency: string; merchant: IssuerMerchant }, now: Date): string | null {
+    const r = cred.purchaseRequest;
+    if (cred.status !== "active") return `card is ${cred.status}`;
+    if (cred.expiresAt <= now) return "card expired";
+    if (r.agent.status === "frozen") return "agent is frozen";
+    if (r.status !== "credential_issued") return `purchase is ${r.status}`;
+    if (e.currency.toUpperCase() !== cred.currency) return `currency ${e.currency} does not match ${cred.currency}`;
+    if (e.amountCents > cred.amountLimitCents) return `amount ${formatMoney(e.amountCents, e.currency)} is over the approved ${formatMoney(cred.amountLimitCents, cred.currency)}`;
+    if (e.merchant.mcc && (ALWAYS_DENIED_MCCS as readonly string[]).includes(e.merchant.mcc)) return `merchant category ${e.merchant.mcc} is blocked`;
+    if (cred.allowedMccs.length && e.merchant.mcc && !cred.allowedMccs.includes(e.merchant.mcc)) return `merchant category ${e.merchant.mcc} is not the approved one`;
+    if (!merchantMatches(cred, r.merchantName, e.merchant)) return `merchant "${e.merchant.name}" is not ${cred.merchantDomain}`;
+    return null;
+  }
+
   /** Real-time decision. Default deny: anything that doesn't match the issued card exactly is declined. */
   private async authorize(e: Extract<IssuerEvent, { type: "authorization.request" }>): Promise<AuthorizationDecision> {
     const now = this.deps.now();
@@ -89,19 +104,33 @@ export class IssuerEventService {
       return { approved: false, reason };
     };
     if (!cred) return decline("unknown card");
+    const bad = this.violation(cred, e, now);
+    if (bad) return decline(bad);
     const r = cred.purchaseRequest;
-    if (cred.status !== "active") return decline(`card is ${cred.status}`);
-    if (cred.expiresAt <= now) return decline("card expired");
-    if (r.agent.status === "frozen") return decline("agent is frozen");
-    if (r.status !== "credential_issued") return decline(`purchase is ${r.status}`);
-    if (e.currency.toUpperCase() !== cred.currency) return decline(`currency ${e.currency} does not match ${cred.currency}`);
-    if (e.amountCents > cred.amountLimitCents) return decline(`amount ${formatMoney(e.amountCents, e.currency)} is over the approved ${formatMoney(cred.amountLimitCents, cred.currency)}`);
-    if (e.merchant.mcc && (ALWAYS_DENIED_MCCS as readonly string[]).includes(e.merchant.mcc)) return decline(`merchant category ${e.merchant.mcc} is blocked`);
-    if (cred.allowedMccs.length && e.merchant.mcc && !cred.allowedMccs.includes(e.merchant.mcc)) return decline(`merchant category ${e.merchant.mcc} is not the approved one`);
-    if (!merchantMatches(cred, r.merchantName, e.merchant)) return decline(`merchant "${e.merchant.name}" is not ${cred.merchantDomain}`);
-
     await audit(this.deps.db, { userId: r.agent.userId, agentId: r.agentId, purchaseRequestId: r.id, type: "authorization.approved", payload: summary(e) }, now);
     return { approved: true, reason: "matches approved purchase" };
+  }
+
+  /**
+   * For issuers without real-time authorization: the charge already went through, so check it
+   * now. A mismatch closes the card immediately (no second charge) and alerts the user.
+   */
+  private async checkAfterTheFact(cred: CredWithRequest, e: Extract<IssuerEvent, { type: "authorization.created" }>) {
+    const now = this.deps.now();
+    const r = cred.purchaseRequest;
+    const bad = this.violation(cred, e, now);
+    if (!bad) {
+      await audit(this.deps.db, { userId: r.agent.userId, agentId: r.agentId, purchaseRequestId: r.id, type: "authorization.approved", payload: summary(e) }, now);
+      return;
+    }
+    await this.deps.issuer.cancelCard(cred.providerCardId).catch((err) => this.deps.logger.error("closing card after mismatched charge failed", { error: String(err) }));
+    await this.deps.db.issuedCredential.update({ where: { id: cred.id }, data: { status: "cancelled" } });
+    await this.securityEvent(
+      cred,
+      "security.authorization_mismatch",
+      `A ${formatMoney(e.amountCents, e.currency)} charge from "${e.merchant.name}" went through but doesn't match what you approved: ${bad}. The card is now closed. Consider disputing the charge.`,
+      { ...summary(e), reason: bad },
+    );
   }
 
   private async authorizationCreated(e: Extract<IssuerEvent, { type: "authorization.created" }>) {
@@ -116,6 +145,7 @@ export class IssuerEventService {
       raw: e.raw ?? e,
     });
     if (!inserted || !cred) return;
+    if (e.approved && this.deps.issuer.realtimeAuthorization === false) return this.checkAfterTheFact(cred, e);
     // Declines by our own real-time webhook were already logged as security events in authorize().
     if (!e.approved && e.declineReason !== "webhook_declined") {
       // Declined by the issuer's own spending controls: the card network enforced the limit.

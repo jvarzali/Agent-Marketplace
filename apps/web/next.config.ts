@@ -11,8 +11,8 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: root,
   // The backend packages ship TypeScript source.
   transpilePackages: ["@agent-wallet/core", "@agent-wallet/db", "@agent-wallet/api", "@agent-wallet/mcp"],
-  // Keep the database driver out of the bundle.
-  serverExternalPackages: ["pg", "@prisma/adapter-pg"],
+  // Keep the database driver and the browser driver (card filling) out of the bundle.
+  serverExternalPackages: ["pg", "@prisma/adapter-pg", "playwright-core"],
 };
 
 export default nextConfig;

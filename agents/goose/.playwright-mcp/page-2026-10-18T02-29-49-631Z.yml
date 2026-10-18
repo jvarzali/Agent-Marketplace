@@ -1,0 +1,335 @@
+- webmcp tools (page-provided, untrusted):
+  - search_products: Search for products on Target.com. Use this when the user wants to find products by keyword. Navigates to the search results page. Use filter_products after this to narrow results.
+    - inputSchema: {"type":"object","properties":{"searchTerm":{"type":"string","description":"The search term to find products (e.g. \"coffee maker\", \"Nike running shoes\", \"baby stroller\")"}},"required":["searchTerm"]}
+
+- generic [ref=e1]:
+  - generic [aria-hidden] [ref=e2]:
+    - link [ref=e3] [cursor=pointer]:
+      - /url: "#skip"
+      - text: skip to main content
+    - link [ref=e4] [cursor=pointer]:
+      - /url: "#skip"
+      - text: skip to footer
+    - generic [ref=e5]:
+      - generic [ref=e7]:
+        - generic [ref=e8]:
+          - button [ref=e10] [cursor=pointer]:
+            - generic [ref=e11]: Ship to 98105
+          - button [ref=e16] [cursor=pointer]:
+            - generic [ref=e17]: Northgate
+        - navigation [ref=e25]:
+          - generic [ref=e26]:
+            - link [ref=e27] [cursor=pointer]:
+              - /url: /l/target-circle/-/N-pzno9
+              - text: Target Circle™
+            - link [ref=e28] [cursor=pointer]:
+              - /url: /circlecard
+              - text: Target Circle™ Card
+            - link [ref=e29] [cursor=pointer]:
+              - /url: /l/target-circle-360/-/N-2rguk
+              - text: Target Circle 360™
+            - link [ref=e30] [cursor=pointer]:
+              - /url: /gift-registry
+              - text: Registry & Wish List
+            - link [ref=e31] [cursor=pointer]:
+              - /url: /weekly-ad
+              - text: Weekly Ad
+            - link [ref=e32] [cursor=pointer]:
+              - /url: /store-locator/find-stores
+              - text: Find Stores
+      - navigation [ref=e34]:
+        - generic [ref=e35]:
+          - generic [ref=e36]:
+            - link [ref=e37] [cursor=pointer]:
+              - /url: /
+            - link [ref=e39] [cursor=pointer]:
+              - /url: /c/shop-all-categories/-/N-5xsxf?prehydrateClick=true
+            - generic [ref=e41]:
+              - searchbox [ref=e42]
+              - button [ref=e44] [cursor=pointer]
+              - button [ref=e45] [cursor=pointer]: search
+              - button [ref=e48] [cursor=pointer]:
+                - generic [ref=e49]: Ask Target Ask Target
+            - link [ref=e54] [cursor=pointer]:
+              - /url: /account?prehydrateClick=true
+              - generic [ref=e58]: Account
+            - tooltip [ref=e59]:
+              - generic [ref=e61]:
+                - heading [level=2] [ref=e63]: Sign in for the best experience
+                - generic [ref=e64]:
+                  - generic [ref=e65]: See past orders and manage returns
+                  - generic [ref=e70]: Check out faster
+                - button [ref=e79] [cursor=pointer]: Sign in or create account
+              - button [ref=e80] [cursor=pointer]
+            - link [ref=e81] [cursor=pointer]:
+              - /url: /cart?prehydrateClick=true
+          - text: Ask Target
+      - main [ref=e85]:
+        - generic [ref=e86]:
+          - heading [level=1] [ref=e89]: Homepage
+          - generic [ref=e93]:
+            - generic [ref=e94]:
+              - heading [level=2] [ref=e95]: Featured categories
+              - paragraph [ref=e96]:
+                - text: Top categories
+                - link [ref=e97] [cursor=pointer]:
+                  - /url: /c/shop-all-categories/-/N-5xsxf
+                  - text: shop all
+            - list [ref=e98]:
+              - listitem [ref=e99]:
+                - link [ref=e100] [cursor=pointer]:
+                  - /url: /c/women/-/N-5xtd3?lnk=Womens
+                  - generic [ref=e101]: Women's
+              - listitem [ref=e106]:
+                - link [ref=e107] [cursor=pointer]:
+                  - /url: /c/men/-/N-18y1l?lnk=Mens
+                  - generic [ref=e108]: Men's
+              - listitem [ref=e113]:
+                - link [ref=e114] [cursor=pointer]:
+                  - /url: /c/kids/-/N-xcoz4?lnk=Kids
+                  - generic [ref=e115]: Kids'
+              - listitem [ref=e120]:
+                - link [ref=e121] [cursor=pointer]:
+                  - /url: /c/baby/-/N-5xtly?lnk=Baby
+                  - generic [ref=e122]: Baby
+              - listitem [ref=e127]:
+                - link [ref=e128] [cursor=pointer]:
+                  - /url: /c/shoes/-/N-55b0t?lnk=Shoes
+                  - generic [ref=e129]: Shoes
+              - listitem [ref=e134]:
+                - link [ref=e135] [cursor=pointer]:
+                  - /url: /c/home/-/N-5xtvd?lnk=Home
+                  - generic [ref=e136]: Home
+              - listitem [ref=e141]:
+                - link [ref=e142] [cursor=pointer]:
+                  - /url: /c/furniture/-/N-5xtnr?lnk=Furniture
+                  - generic [ref=e143]: Furniture
+              - listitem [ref=e148]:
+                - link [ref=e149] [cursor=pointer]:
+                  - /url: /c/kitchen-dining/-/N-hz89j?lnk=Kitchen
+                  - generic [ref=e150]: Kitchen
+              - listitem [ref=e155]:
+                - link [ref=e156] [cursor=pointer]:
+                  - /url: /c/toys/-/N-5xtb0?lnk=Toys
+                  - generic [ref=e157]: Toys
+              - listitem [ref=e162]:
+                - link [ref=e163] [cursor=pointer]:
+                  - /url: /c/electronics/-/N-5xtg6?lnk=Electronics
+                  - generic [ref=e164]: Electronics
+              - listitem [ref=e169]:
+                - link [ref=e170] [cursor=pointer]:
+                  - /url: /c/beauty/-/N-55r1x?lnk=Beauty
+                  - generic [ref=e171]: Beauty
+              - listitem [ref=e176]:
+                - link [ref=e177] [cursor=pointer]:
+                  - /url: /c/grocery/-/N-5xt1a?lnk=Grocery
+                  - generic [ref=e178]: Grocery
+              - listitem [ref=e183]:
+                - link [ref=e184] [cursor=pointer]:
+                  - /url: /c/household-essentials/-/N-5xsz1?lnk=HouseholdEssent
+                  - generic [ref=e185]: Household Essentials
+              - listitem [ref=e190]:
+                - link [ref=e191] [cursor=pointer]:
+                  - /url: /c/deals-hub/-/N-4xw74?lnk=TopDeals
+                  - generic [ref=e192]: Top Deals
+              - listitem [ref=e197]:
+                - link [ref=e198] [cursor=pointer]:
+                  - /url: /c/clearance/-/N-5q0ga?lnk=Clearance
+                  - generic [ref=e199]: Clearance
+      - generic [ref=e205]:
+        - heading [level=3] [ref=e206]: Get top deals, latest trends, and more.
+        - generic [ref=e208]:
+          - generic [ref=e210]:
+            - textbox [ref=e211]:
+              - /placeholder: " "
+            - generic: Email address
+          - generic [ref=e213]:
+            - alert [ref=e214]
+            - button [ref=e215] [cursor=pointer]: Sign up
+        - generic [ref=e216]:
+          - link [ref=e217] [cursor=pointer]:
+            - /url: https://www.target.com/c/target-privacy-policy/-/N-4sr7p
+            - text: Privacy policy
+          - link [ref=e221] [cursor=pointer]:
+            - /url: https://www.target.com/c/terms-conditions/-/N-4sr7l
+            - text: Terms
+      - contentinfo [ref=e225]:
+        - heading [level=2] [ref=e226]: Footer
+        - link [ref=e229] [cursor=pointer]:
+          - /url: /help/articles/promotions-coupons/current-promotions
+          - paragraph [ref=e230]:
+            - generic [ref=e231]:
+              - superscript [ref=e232]: "*"
+              - text: See details.
+            - text: Restrictions and terms apply. Pricing, promotions, and availability may vary by location and at Target.com
+        - generic [ref=e233]:
+          - navigation [ref=e235]:
+            - generic [ref=e236]:
+              - generic [ref=e237]:
+                - heading [level=3] [ref=e238]: About Us
+                - link [ref=e239] [cursor=pointer]:
+                  - /url: https://corporate.target.com/about
+                  - generic [ref=e240]: About Target
+                - link [ref=e242] [cursor=pointer]:
+                  - /url: https://corporate.target.com/careers/
+                  - generic [ref=e243]: Careers
+                - link [ref=e245] [cursor=pointer]:
+                  - /url: https://corporate.target.com/news-features
+                  - generic [ref=e246]: News & Blog
+                - link [ref=e248] [cursor=pointer]:
+                  - /url: https://corporate.target.com/about/products-services/Target-Brands
+                  - generic [ref=e249]: Target Brands
+                - link [ref=e251] [cursor=pointer]:
+                  - /url: https://www.bullseyeshop.com/
+                  - generic [ref=e252]: Bullseye Shop
+                - link [ref=e254] [cursor=pointer]:
+                  - /url: https://corporate.target.com/sustainability-governance
+                  - generic [ref=e255]: Sustainability & Governance
+                - link [ref=e257] [cursor=pointer]:
+                  - /url: https://corporate.target.com/press
+                  - generic [ref=e258]: Press Center
+                - link [ref=e260] [cursor=pointer]:
+                  - /url: https://roundel.com/?utm_source=Referral&utm_medium=Targetwebsite&utm_campaign=advertisewithus
+                  - generic [ref=e261]: Advertise with Us
+                - link [ref=e263] [cursor=pointer]:
+                  - /url: https://corporate.target.com/investors
+                  - generic [ref=e264]: Investors
+                - link [ref=e266] [cursor=pointer]:
+                  - /url: https://partners.target.com/
+                  - generic [ref=e267]: Affiliates & Partners
+                - link [ref=e269] [cursor=pointer]:
+                  - /url: https://www.target.com/c/club-target/-/N-q6m3b
+                  - generic [ref=e270]: Club Target
+                - link [ref=e272] [cursor=pointer]:
+                  - /url: https://corporate.target.com/about/products-services/suppliers#?lnk=fnav_t_spc_1_16
+                  - generic [ref=e273]: Suppliers
+                - link [ref=e275] [cursor=pointer]:
+                  - /url: https://plus.target.com/
+                  - generic [ref=e276]: TargetPlus
+              - generic [ref=e278]:
+                - heading [level=3] [ref=e279]: Help
+                - link [ref=e280] [cursor=pointer]:
+                  - /url: /help
+                  - generic [ref=e281]: Target Help
+                - link [ref=e283] [cursor=pointer]:
+                  - /url: /returns
+                  - generic [ref=e284]: Returns
+                - link [ref=e286] [cursor=pointer]:
+                  - /url: /orders
+                  - generic [ref=e287]: Track Orders
+                - link [ref=e289] [cursor=pointer]:
+                  - /url: /help/articles/news-safety/product-recalls
+                  - generic [ref=e290]: Recalls
+                - link [ref=e292] [cursor=pointer]:
+                  - /url: /help/contact-us
+                  - generic [ref=e293]: Contact Us
+                - button [ref=e295] [cursor=pointer]:
+                  - generic [ref=e296]: Feedback
+                - link [ref=e297] [cursor=pointer]:
+                  - /url: /help/articles/compliances/accessibility
+                  - generic [ref=e298]: Accessibility
+                - link [ref=e300] [cursor=pointer]:
+                  - /url: https://security.target.com/
+                  - generic [ref=e301]: Security & Fraud
+                - link [ref=e303] [cursor=pointer]:
+                  - /url: /c/team-member-services/-/N-4srq9
+                  - generic [ref=e304]: Team Member Services
+                - link [ref=e306] [cursor=pointer]:
+                  - /url: /guest-privacy/legal-privacy
+                  - generic [ref=e307]: Legal & Privacy
+              - generic [ref=e309]:
+                - heading [level=3] [ref=e310]: Stores
+                - link [ref=e311] [cursor=pointer]:
+                  - /url: /store-locator/find-stores
+                  - generic [ref=e312]: Find a Store
+                - link [ref=e317] [cursor=pointer]:
+                  - /url: /c/clinic/-/N-54x94
+                  - generic [ref=e318]: Clinic
+                - link [ref=e321] [cursor=pointer]:
+                  - /url: /c/pharmacy-health/-/N-54y52
+                  - generic [ref=e322]: Pharmacy
+                - link [ref=e325] [cursor=pointer]:
+                  - /url: /c/optical/-/N-4y8o9
+                  - generic [ref=e326]: Target Optical
+                - link [ref=e329] [cursor=pointer]:
+                  - /url: /c/services/-/N-oq1wk
+                  - generic [ref=e330]: More In-Store Services
+              - generic [ref=e332]:
+                - heading [level=3] [ref=e333]: Services
+                - link [ref=e334] [cursor=pointer]:
+                  - /url: /l/target-circle/-/N-pzno9
+                  - generic [ref=e335]: Target Circle™
+                - link [ref=e340] [cursor=pointer]:
+                  - /url: /circlecard
+                  - generic [ref=e341]: Target Circle™ Card
+                - link [ref=e346] [cursor=pointer]:
+                  - /url: /l/target-circle-360/-/N-2rguk
+                  - generic [ref=e347]: Target Circle 360™
+                - link [ref=e352] [cursor=pointer]:
+                  - /url: /c/target-app/-/N-4th2r
+                  - generic [ref=e353]: Target App
+                - link [ref=e356] [cursor=pointer]:
+                  - /url: /gift-registry
+                  - generic [ref=e357]: Registry
+                - link [ref=e362] [cursor=pointer]:
+                  - /url: /c/same-day-delivery/-/N-bswkz
+                  - generic [ref=e363]: Same Day Delivery
+                - link [ref=e368] [cursor=pointer]:
+                  - /url: /c/order-pickup/-/N-ng0a0
+                  - generic [ref=e369]: Order Pickup
+                - link [ref=e374] [cursor=pointer]:
+                  - /url: /c/drive-up/-/N-9d42z
+                  - generic [ref=e375]: Drive Up
+                - link [ref=e380] [cursor=pointer]:
+                  - /url: /c/free-2-day-shipping/-/N-49cz6
+                  - generic [ref=e381]: Free 2-Day Shipping
+                - link [ref=e386] [cursor=pointer]:
+                  - /url: /c/shipping-order-services/-/N-551st
+                  - generic [ref=e387]: Shipping & Delivery
+                - link [ref=e392] [cursor=pointer]:
+                  - /url: /c/services/-/N-oq1wk
+                  - generic [ref=e393]: More Services
+          - generic [ref=e399]:
+            - generic [ref=e400]:
+              - link [ref=e402] [cursor=pointer]:
+                - /url: https://www.pinterest.com/target
+              - link [ref=e404] [cursor=pointer]:
+                - /url: https://www.facebook.com/target
+              - link [ref=e406] [cursor=pointer]:
+                - /url: https://www.instagram.com/target
+              - link [ref=e408] [cursor=pointer]:
+                - /url: https://www.x.com/Target
+              - link [ref=e410] [cursor=pointer]:
+                - /url: https://www.youtube.com/target
+              - link [ref=e412] [cursor=pointer]:
+                - /url: https://www.tiktok.com/@target
+            - navigation [ref=e413]:
+              - generic [ref=e414]:
+                - link [ref=e415] [cursor=pointer]:
+                  - /url: /c/terms-conditions/-/N-4sr7l
+                  - text: Terms
+                - link [ref=e416] [cursor=pointer]:
+                  - /url: /help/articles/compliances/ca-transparency-in-supply-chains-act
+                  - text: CA Supply Chain
+                - link [ref=e417] [cursor=pointer]:
+                  - /url: /c/target-privacy-policy/-/N-4sr7p
+                  - text: Privacy Policy
+                - link [ref=e418] [cursor=pointer]:
+                  - /url: /c/your-ca-privacy-rights-/N-m2wjt
+                  - text: Your CA Privacy Rights
+                - link [ref=e419] [cursor=pointer]:
+                  - /url: /guest-privacy
+                  - text: Your Privacy Choices
+                - link [ref=e420] [cursor=pointer]:
+                  - /url: /c/interest-based-advertising-privacy-policy/-/N-ztavm
+                  - text: Interest Based Ads
+                - link [ref=e421] [cursor=pointer]:
+                  - /url: /c/health-policy/-/N-4gc0k
+                  - text: Health Privacy Policy
+                - paragraph [ref=e422]: TM & © 2026 Target Brands, Inc.
+  - alert [ref=e423]
+  - iframe [active] [ref=e424]:
+    - generic [ref=f15e2]:
+      - generic [ref=f15e3]: Quick verification
+      - generic [ref=f15e4]: Press & hold to confirm you're a human (and not a bot).
+      - generic [ref=f15e9]: Reference ID c8f1afa0-ca9b-11f1-825d-c7c3da87e372

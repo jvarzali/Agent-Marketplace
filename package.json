@@ -18,7 +18,8 @@
     "mcp:stdio": "npm run start:stdio -w @agent-wallet/mcp",
     "db:reset": "npm run reset -w @agent-wallet/db",
     "db:up": "./scripts/local-db.sh start",
-    "db:down": "./scripts/local-db.sh stop"
+    "db:down": "./scripts/local-db.sh stop",
+    "stripe:setup": "npm run stripe:setup -w @agent-wallet/core"
   },
   "engines": {
     "node": ">=20.19"

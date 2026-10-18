@@ -105,6 +105,12 @@ export interface WebhookResponse {
 
 export interface CardIssuer {
   readonly provider: string;
+  /**
+   * False when the provider can't ask us before approving a charge (advice-only webhooks).
+   * Then every approved authorization is checked as soon as it's reported, and a mismatch
+   * closes the card at once. Default true.
+   */
+  readonly realtimeAuthorization?: boolean;
   createCard(params: CreateCardParams): Promise<IssuedCard>;
   /** Fetch full card details from the provider for one-time delivery to the agent. */
   getCardSecrets(providerCardId: string): Promise<CardSecrets>;
@@ -114,6 +120,29 @@ export interface CardIssuer {
   parseWebhook(rawBody: string, headers: Headers): Promise<IssuerEvent>;
   /** Build the HTTP response for a webhook, including real-time authorization answers. */
   webhookResponse(event: IssuerEvent, decision: AuthorizationDecision | null): WebhookResponse;
+  /** True when this issuer is in test mode and can run test charges (see testCharge). */
+  readonly supportsTestCharges?: boolean;
+  /**
+   * Test mode only: charge a card the way a store would, by its number. The charge goes
+   * through the provider and our webhook like a real one. Used by the demo store.
+   */
+  testCharge?(params: TestChargeParams): Promise<TestChargeResult>;
+}
+
+export interface TestChargeParams {
+  card: { number: string; expMonth: number; expYear: number; cvc: string };
+  amountCents: number;
+  currency: string;
+  merchant: IssuerMerchant & { city?: string; state?: string; postalCode?: string };
+  /** Hands a signed webhook to our service (for issuers that don't call it themselves). */
+  deliver: (rawBody: string, headers: Headers) => Promise<{ status: number; body: string }>;
+}
+
+export interface TestChargeResult {
+  approved: boolean;
+  /** Why it was declined, e.g. "webhook_declined" (our rules), "card_not_found", "spending_controls". */
+  reason: string | null;
+  authorizationId: string | null;
 }
 
 export class WebhookSignatureError extends Error {}

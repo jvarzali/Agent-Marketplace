@@ -1,0 +1,1114 @@
+- webmcp tools (page-provided, untrusted):
+  - filter_products: Applies search filters and sorting to the current Target.com product listing page. Overwrites all active filters—any omitted parameter will clear that filter from the page. To preserve existing filters, include them in the call.
+    - inputSchema: {"type":"object","properties":{"keyword":{"type":"string","description":"Search term to navigate to (if not already on a search page)"},"brand":{"type":"string","description":"Brand name to filter by (e.g. 'KitchenAid', 'Keurig')"},"category":{"type":"string","description":"Category to filter by (e.g. 'Coffee Makers', 'Single Serve')"},"minPrice":{"type":"number","description":"Minimum price in dollars"},"maxPrice":{"type":"number","description":"Maximum price in dollars"},"rating":{"type":"number","description":"Minimum guest rating from 1 to 5."},"sortBy":{"type":"string","enum":["relevance","PriceLow","PriceHigh","RatingHigh","newest"],"description":"Sort order for the product results ('relevance': Most relevant, 'PriceLow': Price low to high, 'PriceHigh': Price high to low, 'RatingHigh': Highest rated, 'newest': Newest)."},"availability":{"type":"string","enum":["ship","pickup","delivery","store"],"description":"Fulfillment option to filter by ('ship': Shipping, 'pickup': Buy online pick up in store, 'delivery': Same-day delivery, 'store': Shop in store)."}}}
+  - search_products: Search for products on Target.com. Use this when the user wants to find products by keyword. Navigates to the search results page. Use filter_products after this to narrow results.
+    - inputSchema: {"type":"object","properties":{"searchTerm":{"type":"string","description":"The search term to find products (e.g. \"coffee maker\", \"Nike running shoes\", \"baby stroller\")"}},"required":["searchTerm"]}
+
+- generic [ref=f36e1]:
+  - generic [ref=f36e2]:
+    - generic:
+      - link "skip to main content" [ref=f36e3] [cursor=pointer]:
+        - /url: "#skip"
+      - link "skip to footer" [ref=f36e4] [cursor=pointer]:
+        - /url: "#skip"
+    - generic [ref=f36e5]:
+      - generic [ref=f36e7]:
+        - generic [ref=f36e8]:
+          - 'button "Ship to location: 98105" [ref=f36e10] [cursor=pointer]':
+            - generic [ref=f36e11]: Ship to 98105
+          - 'button "Store: Northgate" [ref=f36e16] [cursor=pointer]':
+            - generic [ref=f36e17]: Northgate
+        - navigation "Utility" [ref=f36e25]:
+          - generic [ref=f36e26]:
+            - link "Target Circle™" [ref=f36e27] [cursor=pointer]:
+              - /url: /l/target-circle/-/N-pzno9
+            - link "Target Circle™ Card" [ref=f36e28] [cursor=pointer]:
+              - /url: /circlecard
+            - link "Target Circle 360™" [ref=f36e29] [cursor=pointer]:
+              - /url: /l/target-circle-360/-/N-2rguk
+            - link "Registry & Wish List" [ref=f36e30] [cursor=pointer]:
+              - /url: /gift-registry
+            - link "Weekly Ad" [ref=f36e31] [cursor=pointer]:
+              - /url: /weekly-ad
+            - link "Find Stores" [ref=f36e32] [cursor=pointer]:
+              - /url: /store-locator/find-stores
+      - navigation "Primary" [ref=f36e34]:
+        - generic [ref=f36e36]:
+          - link "Target home" [ref=f36e37] [cursor=pointer]:
+            - /url: /
+          - link "Main menu" [ref=f36e39] [cursor=pointer]:
+            - /url: /c/shop-all-categories/-/N-5xsxf?prehydrateClick=true
+          - generic [ref=f36e41]:
+            - searchbox "What can we help you find? suggestions appear below" [ref=f36e42]: printer paper
+            - button "search by voice" [ref=f36e44] [cursor=pointer]
+            - button "reset" [ref=f36e1046] [cursor=pointer]
+            - button "search" [ref=f36e45] [cursor=pointer]
+          - link "Account, sign in" [ref=f36e46] [cursor=pointer]:
+            - /url: /account?prehydrateClick=true
+            - generic [ref=f36e50]: Account
+          - link "cart 0 items" [ref=f36e73] [cursor=pointer]:
+            - /url: /cart?prehydrateClick=true
+      - main [ref=f36e77]:
+        - generic [ref=f36e1047]:
+          - generic [ref=f36e1051]:
+            - heading "printer paper" [active] [level=1] [ref=f36e1054]
+            - generic [ref=f36e1056]:
+              - region "Carousel" [ref=f36e1062]:
+                - list [ref=f36e1063]:
+                  - listitem [ref=f36e1064]:
+                    - button "Filters Menu. 0 applied" [ref=f36e1066] [cursor=pointer]: Filter
+                  - listitem [ref=f36e1067]:
+                    - button "Sort" [ref=f36e1069] [cursor=pointer]
+                  - listitem [ref=f36e1071]:
+                    - button "Pickup" [ref=f36e1072] [cursor=pointer]
+                  - listitem [ref=f36e1078]:
+                    - button "Same-day Delivery" [ref=f36e1079] [cursor=pointer]
+                  - listitem [ref=f36e1085]:
+                    - button "Shipping" [ref=f36e1086] [cursor=pointer]
+                  - listitem [ref=f36e1092]:
+                    - button "Shop in store" [ref=f36e1093] [cursor=pointer]
+                  - listitem [ref=f36e1099]:
+                    - button "Deals" [ref=f36e1100] [cursor=pointer]
+                  - listitem [ref=f36e1101]:
+                    - button "Paper Size" [ref=f36e1102] [cursor=pointer]
+                  - listitem [ref=f36e1103]:
+                    - button "Price" [ref=f36e1104] [cursor=pointer]
+                  - listitem [ref=f36e1105]:
+                    - button "Brand" [ref=f36e1106] [cursor=pointer]
+                - button "Next Page" [ref=f36e1107] [cursor=pointer]
+              - generic [ref=f36e1109]:
+                - heading "Popular filters" [level=2] [ref=f36e1110]
+                - list [ref=f36e1114]:
+                  - listitem [ref=f36e1115]:
+                    - link "HP Inc." [ref=f36e1116] [cursor=pointer]:
+                      - /url: /s?searchTerm=printer+paper&newSearch=false&Nao=0&facetedValue=p6y7m
+                  - listitem [ref=f36e1122]:
+                    - link "8.5 X 11 inches (letter)" [ref=f36e1123] [cursor=pointer]:
+                      - /url: /s?searchTerm=printer+paper&newSearch=false&Nao=0&facetedValue=tb8ia75xkv0
+                  - listitem [ref=f36e1129]:
+                    - link "Bulk paper" [ref=f36e1130] [cursor=pointer]:
+                      - /url: /s?searchTerm=bulk+paper&newSearch=false&sortBy=relevance&facetedValue=l0bajZ16exoZal25lfr3gzkZofv4yZdo9rwZal25lfroisuZmsw49Z8rtnhZal25lfanrssZxx6klZal25lfgcjtvZ373xvZmnld9ZvbxvbZsfpbtZqv1dlZew20c
+              - generic [ref=f36e1136]: 271 results for “printer paper”
+              - generic [ref=f36e1145]:
+                - generic [ref=f36e1146]:
+                  - link "HP Sprocket 3.5x4.25\" Zink Sticky-Backed Photo Paper (20-Pack) for HP Sprocket 3x4 Photo Printer Sponsored" [ref=f36e1148] [cursor=pointer]:
+                    - /url: /p/hp-sprocket-3-5-x-4-25-zink-sticky-backed-photo-paper-20-pack-compatible-with-hp-sprocket-3x4-photo-printer/-/A-86461577
+                  - link "$19.99 reg $29.99 Sale HP Inc. HP Sprocket 3.5x4.25\" Zink Sticky-Backed Photo Paper (20-Pack) for HP Sprocket 3x4 Photo Printer Average customer rating is 5.0 out of 5 stars with 1 review. Shipping arrives Tue, Oct 27 Ships free - exclusions apply Sponsored" [ref=f36e1158] [cursor=pointer]:
+                    - /url: /p/hp-sprocket-3-5-x-4-25-zink-sticky-backed-photo-paper-20-pack-compatible-with-hp-sprocket-3x4-photo-printer/-/A-86461577
+                    - generic [ref=f36e1159]:
+                      - generic [ref=f36e1160]:
+                        - generic [ref=f36e1161]: $19.99 reg $29.99
+                        - generic [ref=f36e1162]: Sale
+                      - heading "HP Inc. HP Sprocket 3.5x4.25\" Zink Sticky-Backed Photo Paper (20-Pack) for HP Sprocket 3x4 Photo Printer" [level=3] [ref=f36e1165]
+                      - generic "Average customer rating is 5.0 out of 5 stars with 1 review." [ref=f36e1168]:
+                        - generic [ref=f36e1169]: "5.0"
+                        - generic [ref=f36e1170]: 5 out of 5 stars
+                        - generic [ref=f36e1174]: (1)
+                      - generic [ref=f36e1177]:
+                        - generic [ref=f36e1178]: Shipping arrives Tue, Oct 27
+                        - generic [ref=f36e1180]: Ships free - exclusions apply
+                      - generic [ref=f36e1182]: Sponsored
+                  - generic [ref=f36e1185]:
+                    - button "Add HP Sprocket 3.5x4.25\" Zink Sticky-Backed Photo Paper (20-Pack) for HP Sprocket 3x4 Photo Printer to cart" [ref=f36e1187] [cursor=pointer]: Add to cart
+                    - button "sign in to favorite HP Sprocket 3.5x4.25\" Zink Sticky-Backed Photo Paper (20-Pack) for HP Sprocket 3x4 Photo Printer to keep tabs on it" [ref=f36e1190] [cursor=pointer]
+                - generic [ref=f36e1191]:
+                  - link "HP Sprocket 2x3\" Premium Zink Sticky Back Photo Paper (100 Sheets) Compatible with HP Sprocket Photo Printers. Sponsored" [ref=f36e1193] [cursor=pointer]:
+                    - /url: /p/hp-sprocket-2x3-premium-zink-sticky-back-photo-paper-100-sheets-compatible-with-hp-sprocket-photo-printers/-/A-83694974
+                  - link "$44.99 HP Papers HP Sprocket 2x3\" Premium Zink Sticky Back Photo Paper (100 Sheets) Compatible with HP Sprocket Photo Printers. Average customer rating is 5.0 out of 5 stars with 22 reviews. Shipping arrives Tue, Oct 27 Ships free - exclusions apply Sponsored" [ref=f36e1203] [cursor=pointer]:
+                    - /url: /p/hp-sprocket-2x3-premium-zink-sticky-back-photo-paper-100-sheets-compatible-with-hp-sprocket-photo-printers/-/A-83694974
+                    - generic [ref=f36e1204]:
+                      - generic [ref=f36e1205]: $44.99
+                      - heading "HP Papers HP Sprocket 2x3\" Premium Zink Sticky Back Photo Paper (100 Sheets) Compatible with HP Sprocket Photo Printers." [level=3] [ref=f36e1208]
+                      - generic "Average customer rating is 5.0 out of 5 stars with 22 reviews." [ref=f36e1211]:
+                        - generic [ref=f36e1212]: "5.0"
+                        - generic [ref=f36e1213]: 4.96 out of 5 stars
+                        - generic [ref=f36e1217]: (22)
+                      - generic [ref=f36e1220]:
+                        - generic [ref=f36e1221]: Shipping arrives Tue, Oct 27
+                        - generic [ref=f36e1223]: Ships free - exclusions apply
+                      - generic [ref=f36e1225]: Sponsored
+                  - generic [ref=f36e1228]:
+                    - button "Add HP Sprocket 2x3\" Premium Zink Sticky Back Photo Paper (100 Sheets) Compatible with HP Sprocket Photo Printers. to cart" [ref=f36e1230] [cursor=pointer]: Add to cart
+                    - button "sign in to favorite HP Sprocket 2x3\" Premium Zink Sticky Back Photo Paper (100 Sheets) Compatible with HP Sprocket Photo Printers. to keep tabs on it" [ref=f36e1233] [cursor=pointer]
+                - generic [ref=f36e1234]:
+                  - link "HP Sprocket 3.5 x 4.25\" Zink Sticky-backed Photo Paper Compatible with HP Sprocket 3x4 Photo Printer Sponsored" [ref=f36e1236] [cursor=pointer]:
+                    - /url: /p/hp-sprocket-3-5-x-4-25-zink-sticky-backed-photo-paper-compatible-with-hp-sprocket-3x4-photo-printer/-/A-86461578?preselect=1004843043
+                  - link "$39.99 - $79.99 HP Inc. HP Sprocket 3.5 x 4.25\" Zink Sticky-backed Photo Paper Compatible with HP Sprocket 3x4 Photo Printer Average customer rating is 3.0 out of 5 stars with 6 reviews. Shipping arrives Tue, Oct 27 Shipping dates may vary Sponsored" [ref=f36e1246] [cursor=pointer]:
+                    - /url: /p/hp-sprocket-3-5-x-4-25-zink-sticky-backed-photo-paper-compatible-with-hp-sprocket-3x4-photo-printer/-/A-86461578?preselect=1004843043
+                    - generic [ref=f36e1247]:
+                      - generic [ref=f36e1248]: $39.99 - $79.99
+                      - heading "HP Inc. HP Sprocket 3.5 x 4.25\" Zink Sticky-backed Photo Paper Compatible with HP Sprocket 3x4 Photo Printer" [level=3] [ref=f36e1251]
+                      - generic "Average customer rating is 3.0 out of 5 stars with 6 reviews." [ref=f36e1254]:
+                        - generic [ref=f36e1255]: "3.0"
+                        - generic [ref=f36e1256]: 3 out of 5 stars
+                        - generic [ref=f36e1260]: (6)
+                      - generic [ref=f36e1263]:
+                        - generic [ref=f36e1264]: Shipping arrives Tue, Oct 27
+                        - generic [ref=f36e1266]: Shipping dates may vary
+                      - generic [ref=f36e1268]: Sponsored
+                  - generic [ref=f36e1271]:
+                    - button "Add HP Sprocket 3.5x4.25” Zink Sticky-Backed Photo Paper (100-Pack) for HP Sprocket 3x4 Photo Printer & Photobooth to cart" [ref=f36e1273] [cursor=pointer]: Add to cart
+                    - button "sign in to favorite HP Sprocket 3.5 x 4.25\" Zink Sticky-backed Photo Paper Compatible with HP Sprocket 3x4 Photo Printer to keep tabs on it" [ref=f36e1276] [cursor=pointer]
+                - generic [ref=f36e1277]:
+                  - 'link "500ct Letter Printer Paper White - up&up™: 8.5x11 Inches, 20 lb, 92 Brightness, Ideal for Printing Letters" [ref=f36e1279] [cursor=pointer]':
+                    - /url: /p/500ct-letter-printer-paper-white-up-38-up-8482/-/A-75001545
+                    - generic [ref=f36e1280]:
+                      - img "Three sheets of white colored paper fanned out on a light orange surface." [ref=f36e1285]
+                      - img "A package of letter-sized printer paper with 500 sheets, labeled as 20# weight and 92 brightness, in a purple and orange design." [ref=f36e1290]
+                  - 'link "Bestseller $5.79 Rarely returned up&up 500ct Letter Printer Paper White - up&up™: 8.5x11 Inches, 20 lb, 92 Brightness, Ideal for Printing Letters Average customer rating is 4.7 out of 5 stars with 6944 reviews. Pickup ready within 2 hours Shipping arrives Wed, Oct 21 Ships free - exclusions apply" [ref=f36e1291] [cursor=pointer]':
+                    - /url: /p/500ct-letter-printer-paper-white-up-38-up-8482/-/A-75001545
+                    - generic [ref=f36e1292]:
+                      - generic [ref=f36e1293]: Bestseller
+                      - generic [ref=f36e1299]: $5.79
+                      - generic [ref=f36e1301]: Rarely returned
+                      - 'heading "up&up 500ct Letter Printer Paper White - up&up™: 8.5x11 Inches, 20 lb, 92 Brightness, Ideal for Printing Letters" [level=3] [ref=f36e1307]'
+                      - generic "Average customer rating is 4.7 out of 5 stars with 6944 reviews." [ref=f36e1310]:
+                        - generic [ref=f36e1311]: "4.7"
+                        - generic [ref=f36e1312]: 4.68 out of 5 stars
+                        - generic [ref=f36e1316]: (6,944)
+                      - generic [ref=f36e1319]:
+                        - generic [ref=f36e1320]: Pickup ready within 2 hours
+                        - generic [ref=f36e1322]: Shipping arrives Wed, Oct 21
+                        - generic [ref=f36e1324]: Ships free - exclusions apply
+                  - generic [ref=f36e1326]:
+                    - 'button "Add 500ct Letter Printer Paper White - up&up™: 8.5x11 Inches, 20 lb, 92 Brightness, Ideal for Printing Letters to cart" [ref=f36e1328] [cursor=pointer]': Add to cart
+                    - 'button "sign in to favorite 500ct Letter Printer Paper White - up&up™: 8.5x11 Inches, 20 lb, 92 Brightness, Ideal for Printing Letters to keep tabs on it" [ref=f36e1331] [cursor=pointer]'
+                - generic [ref=f36e1336]:
+                  - 'link "750 Sheets Letter Printer Paper White - up&up™: 8.5x11 Inch, 20 lb, 92 Brightness, Stationery, Office Supplies" [ref=f36e1338] [cursor=pointer]':
+                    - /url: /p/750-sheets-letter-printer-paper-white-up-38-up-8482/-/A-14471281
+                    - generic [ref=f36e1339]:
+                      - img "Three sheets of white colored paper overlapping on a light orange surface." [ref=f36e1344]
+                      - img "A package of letter-sized printer paper with 750 sheets, 20# weight, and 92 brightness, featuring a purple and orange design." [ref=f36e1349]
+                  - 'link "Highly rated $8.29 Rarely returned up&up 750 Sheets Letter Printer Paper White - up&up™: 8.5x11 Inch, 20 lb, 92 Brightness, Stationery, Office Supplies Average customer rating is 4.6 out of 5 stars with 2443 reviews. Pickup ready within 2 hours Shipping arrives Wed, Oct 21 Ships free - exclusions apply" [ref=f36e1350] [cursor=pointer]':
+                    - /url: /p/750-sheets-letter-printer-paper-white-up-38-up-8482/-/A-14471281
+                    - generic [ref=f36e1351]:
+                      - generic [ref=f36e1352]: Highly rated
+                      - generic [ref=f36e1358]: $8.29
+                      - generic [ref=f36e1360]: Rarely returned
+                      - 'heading "up&up 750 Sheets Letter Printer Paper White - up&up™: 8.5x11 Inch, 20 lb, 92 Brightness, Stationery, Office Supplies" [level=3] [ref=f36e1366]'
+                      - generic "Average customer rating is 4.6 out of 5 stars with 2443 reviews." [ref=f36e1369]:
+                        - generic [ref=f36e1370]: "4.6"
+                        - generic [ref=f36e1371]: 4.64 out of 5 stars
+                        - generic [ref=f36e1375]: (2,443)
+                      - generic [ref=f36e1378]:
+                        - generic [ref=f36e1379]: Pickup ready within 2 hours
+                        - generic [ref=f36e1381]: Shipping arrives Wed, Oct 21
+                        - generic [ref=f36e1383]: Ships free - exclusions apply
+                  - generic [ref=f36e1385]:
+                    - 'button "Add 750 Sheets Letter Printer Paper White - up&up™: 8.5x11 Inch, 20 lb, 92 Brightness, Stationery, Office Supplies to cart" [ref=f36e1387] [cursor=pointer]': Add to cart
+                    - 'button "sign in to favorite 750 Sheets Letter Printer Paper White - up&up™: 8.5x11 Inch, 20 lb, 92 Brightness, Stationery, Office Supplies to keep tabs on it" [ref=f36e1390] [cursor=pointer]'
+                - generic [ref=f36e1391]:
+                  - 'link "Recycled Printer Paper Letter Size 20lb 500ct White - up&up™: 30% Recycled, 8.5x11 Inches, 92 Brightness, 500 Sheets" [ref=f36e1393] [cursor=pointer]':
+                    - /url: /p/recycled-printer-paper-letter-size-20lb-500ct-white-up-38-up-8482/-/A-14471166
+                    - generic [ref=f36e1394]:
+                      - img "A ream of 30% recycled letter printer paper with 500 sheets, featuring a green colored packaging with white text and recycling symbols." [ref=f36e1399]
+                      - img "A package of 30% recycled letter printer paper with 500 sheets, measuring 8 1/2 inches by 11 inches, in a green colored wrapper." [ref=f36e1404]
+                  - 'link "Highly rated $5.79 Rarely returned up&up Recycled Printer Paper Letter Size 20lb 500ct White - up&up™: 30% Recycled, 8.5x11 Inches, 92 Brightness, 500 Sheets Average customer rating is 4.5 out of 5 stars with 1559 reviews. Pickup ready within 2 hours Shipping arrives Wed, Oct 21 Ships free - exclusions apply" [ref=f36e1405] [cursor=pointer]':
+                    - /url: /p/recycled-printer-paper-letter-size-20lb-500ct-white-up-38-up-8482/-/A-14471166
+                    - generic [ref=f36e1406]:
+                      - generic [ref=f36e1407]: Highly rated
+                      - generic [ref=f36e1413]: $5.79
+                      - generic [ref=f36e1415]: Rarely returned
+                      - 'heading "up&up Recycled Printer Paper Letter Size 20lb 500ct White - up&up™: 30% Recycled, 8.5x11 Inches, 92 Brightness, 500 Sheets" [level=3] [ref=f36e1421]'
+                      - generic "Average customer rating is 4.5 out of 5 stars with 1559 reviews." [ref=f36e1424]:
+                        - generic [ref=f36e1425]: "4.5"
+                        - generic [ref=f36e1426]: 4.5 out of 5 stars
+                        - generic [ref=f36e1430]: (1,559)
+                      - generic [ref=f36e1433]:
+                        - generic [ref=f36e1434]: Pickup ready within 2 hours
+                        - generic [ref=f36e1436]: Shipping arrives Wed, Oct 21
+                        - generic [ref=f36e1438]: Ships free - exclusions apply
+                  - generic [ref=f36e1440]:
+                    - 'button "Add Recycled Printer Paper Letter Size 20lb 500ct White - up&up™: 30% Recycled, 8.5x11 Inches, 92 Brightness, 500 Sheets to cart" [ref=f36e1442] [cursor=pointer]': Add to cart
+                    - 'button "sign in to favorite Recycled Printer Paper Letter Size 20lb 500ct White - up&up™: 30% Recycled, 8.5x11 Inches, 92 Brightness, 500 Sheets to keep tabs on it" [ref=f36e1445] [cursor=pointer]'
+                - generic [ref=f36e1446]:
+                  - link "HP DeskJet 2955 Wireless All-in-One Color Printer Scanner Copier (A24HJA) Sponsored" [ref=f36e1448] [cursor=pointer]:
+                    - /url: /p/hp-deskjet-2955-wireless-all-in-one-color-printer-scanner-copier-a24hja/-/A-95148458
+                  - link "Bestseller $49.99 reg $89.99 Sale HP Inc. HP DeskJet 2955 Wireless All-in-One Color Printer Scanner Copier (A24HJA) Average customer rating is 4.0 out of 5 stars with 2450 reviews. Pickup ready within 2 hours Shipping arrives Wed, Oct 21 Ships free - exclusions apply Sponsored" [ref=f36e1458] [cursor=pointer]:
+                    - /url: /p/hp-deskjet-2955-wireless-all-in-one-color-printer-scanner-copier-a24hja/-/A-95148458
+                    - generic [ref=f36e1459]:
+                      - generic [ref=f36e1460]: Bestseller
+                      - generic [ref=f36e1466]:
+                        - generic [ref=f36e1467]: $49.99 reg $89.99
+                        - generic [ref=f36e1468]: Sale
+                      - heading "HP Inc. HP DeskJet 2955 Wireless All-in-One Color Printer Scanner Copier (A24HJA)" [level=3] [ref=f36e1471]
+                      - generic "Average customer rating is 4.0 out of 5 stars with 2450 reviews." [ref=f36e1474]:
+                        - generic [ref=f36e1475]: "4.0"
+                        - generic [ref=f36e1476]: 4.01 out of 5 stars
+                        - generic [ref=f36e1480]: (2,450)
+                      - generic [ref=f36e1483]:
+                        - generic [ref=f36e1484]: Pickup ready within 2 hours
+                        - generic [ref=f36e1486]: Shipping arrives Wed, Oct 21
+                        - generic [ref=f36e1488]: Ships free - exclusions apply
+                      - generic [ref=f36e1490]: Sponsored
+                  - generic [ref=f36e1493]:
+                    - button "Add HP DeskJet 2955 Wireless All-in-One Color Printer Scanner Copier (A24HJA) to cart" [ref=f36e1495] [cursor=pointer]: Add to cart
+                    - button "sign in to favorite HP DeskJet 2955 Wireless All-in-One Color Printer Scanner Copier (A24HJA) to keep tabs on it" [ref=f36e1498] [cursor=pointer]
+                - generic [ref=f36e1499]:
+                  - link "HP DeskJet 2925 Wireless All-iin-One Color Printer Scanner Copier (B18JXA) Sponsored" [ref=f36e1501] [cursor=pointer]:
+                    - /url: /p/hp-deskjet-2925-wireless-all-iin-one-color-printer-scanner-copier-b18jxa/-/A-95148457
+                  - link "Bestseller $59.99 reg $99.99 Sale HP Inc. HP DeskJet 2925 Wireless All-iin-One Color Printer Scanner Copier (B18JXA) Average customer rating is 4.0 out of 5 stars with 2432 reviews. Only 1 left at Northgate Pickup ready within 2 hours Shipping arrives Tue, Oct 20 Ships free - exclusions apply Sponsored" [ref=f36e1511] [cursor=pointer]:
+                    - /url: /p/hp-deskjet-2925-wireless-all-iin-one-color-printer-scanner-copier-b18jxa/-/A-95148457
+                    - generic [ref=f36e1512]:
+                      - generic [ref=f36e1513]: Bestseller
+                      - generic [ref=f36e1519]:
+                        - generic [ref=f36e1520]: $59.99 reg $99.99
+                        - generic [ref=f36e1521]: Sale
+                      - heading "HP Inc. HP DeskJet 2925 Wireless All-iin-One Color Printer Scanner Copier (B18JXA)" [level=3] [ref=f36e1524]
+                      - generic "Average customer rating is 4.0 out of 5 stars with 2432 reviews." [ref=f36e1527]:
+                        - generic [ref=f36e1528]: "4.0"
+                        - generic [ref=f36e1529]: 4.01 out of 5 stars
+                        - generic [ref=f36e1533]: (2,432)
+                      - generic [ref=f36e1535]: Only 1 left at Northgate
+                      - generic [ref=f36e1539]:
+                        - generic [ref=f36e1540]: Pickup ready within 2 hours
+                        - generic [ref=f36e1542]: Shipping arrives Tue, Oct 20
+                        - generic [ref=f36e1544]: Ships free - exclusions apply
+                      - generic [ref=f36e1546]: Sponsored
+                  - generic [ref=f36e1549]:
+                    - button "Add HP DeskJet 2925 Wireless All-iin-One Color Printer Scanner Copier (B18JXA) to cart" [ref=f36e1551] [cursor=pointer]: Add to cart
+                    - button "sign in to favorite HP DeskJet 2925 Wireless All-iin-One Color Printer Scanner Copier (B18JXA) to keep tabs on it" [ref=f36e1554] [cursor=pointer]
+                - generic [ref=f36e1555]:
+                  - link "SWIFINT Portable Thermal Printer, Compatible with IOS Android Laptop, Pocket-Sized Mobile Printer for Office Home School Sponsored" [ref=f36e1557] [cursor=pointer]:
+                    - /url: /p/swifint-portable-thermal-printer-compatible-with-ios-android-laptop-pocket-sized-mobile-printer-for-office-home-school/-/A-1011128625?preselect=1011128626
+                  - link "$49.99 reg $83.32 Sale SWIFINT Portable Thermal Printer, Compatible with IOS Android Laptop, Pocket-Sized Mobile Printer for Office Home School Average customer rating is 5.0 out of 5 stars with 2 reviews. Available in 2 colors Shipping arrives Sat, Oct 24 Shipping dates may vary Sponsored" [ref=f36e1567] [cursor=pointer]:
+                    - /url: /p/swifint-portable-thermal-printer-compatible-with-ios-android-laptop-pocket-sized-mobile-printer-for-office-home-school/-/A-1011128625?preselect=1011128626
+                    - generic [ref=f36e1568]:
+                      - generic [ref=f36e1569]:
+                        - generic [ref=f36e1570]: $49.99 reg $83.32
+                        - generic [ref=f36e1571]: Sale
+                      - heading "SWIFINT Portable Thermal Printer, Compatible with IOS Android Laptop, Pocket-Sized Mobile Printer for Office Home School" [level=3] [ref=f36e1574]
+                      - generic "Average customer rating is 5.0 out of 5 stars with 2 reviews." [ref=f36e1577]:
+                        - generic [ref=f36e1578]: "5.0"
+                        - generic [ref=f36e1579]: 5 out of 5 stars
+                        - generic [ref=f36e1583]: (2)
+                      - generic "Available in 2 colors" [ref=f36e1586]
+                      - generic [ref=f36e1598]:
+                        - generic [ref=f36e1599]: Shipping arrives Sat, Oct 24
+                        - generic [ref=f36e1601]: Shipping dates may vary
+                      - generic [ref=f36e1603]: Sponsored
+                  - generic [ref=f36e1606]:
+                    - button "Add A10a Thermal Printer for Phone Laptop Inkless, 8.5'' X 11'' & A4 Thermal Paper include 10 sheet paper, Black to cart" [ref=f36e1608] [cursor=pointer]: Add to cart
+                    - button "sign in to favorite SWIFINT Portable Thermal Printer, Compatible with IOS Android Laptop, Pocket-Sized Mobile Printer for Office Home School to keep tabs on it" [ref=f36e1611] [cursor=pointer]
+                - generic [ref=f36e1612]:
+                  - 'link "HP Office Paper 500-ct.: 8.5x11 Inch Letter Size, 92 Brightness, 20 lb Printer Paper" [ref=f36e1614] [cursor=pointer]':
+                    - /url: /p/hp-office-paper-500-ct/-/A-13721142
+                    - generic [ref=f36e1615]:
+                      - img "A ream of HP Office20 paper with details including 20 lb, 92 brightness, 155 whiteness, 8.5 x 11 inches, and 500 sheets, featuring ColorLok technology." [ref=f36e1620]
+                      - img "A ream of HP Office20 paper with 500 sheets, 8.5 x 11 inches, featuring ColorLok technology and FSC certification." [ref=f36e1625]
+                  - 'link "Highly rated $7.99 Rarely returned HP Inc. HP Office Paper 500-ct.: 8.5x11 Inch Letter Size, 92 Brightness, 20 lb Printer Paper Average customer rating is 4.6 out of 5 stars with 585 reviews. Only 4 left at Northgate Pickup ready within 2 hours Shipping arrives Wed, Oct 21 Ships free - exclusions apply" [ref=f36e1626] [cursor=pointer]':
+                    - /url: /p/hp-office-paper-500-ct/-/A-13721142
+                    - generic [ref=f36e1627]:
+                      - generic [ref=f36e1628]: Highly rated
+                      - generic [ref=f36e1634]: $7.99
+                      - generic [ref=f36e1636]: Rarely returned
+                      - 'heading "HP Inc. HP Office Paper 500-ct.: 8.5x11 Inch Letter Size, 92 Brightness, 20 lb Printer Paper" [level=3] [ref=f36e1642]'
+                      - generic "Average customer rating is 4.6 out of 5 stars with 585 reviews." [ref=f36e1645]:
+                        - generic [ref=f36e1646]: "4.6"
+                        - generic [ref=f36e1647]: 4.61 out of 5 stars
+                        - generic [ref=f36e1651]: (585)
+                      - generic [ref=f36e1653]: Only 4 left at Northgate
+                      - generic [ref=f36e1657]:
+                        - generic [ref=f36e1658]: Pickup ready within 2 hours
+                        - generic [ref=f36e1660]: Shipping arrives Wed, Oct 21
+                        - generic [ref=f36e1662]: Ships free - exclusions apply
+                  - generic [ref=f36e1664]:
+                    - 'button "Add HP Office Paper 500-ct.: 8.5x11 Inch Letter Size, 92 Brightness, 20 lb Printer Paper to cart" [ref=f36e1666] [cursor=pointer]': Add to cart
+                    - 'button "sign in to favorite HP Office Paper 500-ct.: 8.5x11 Inch Letter Size, 92 Brightness, 20 lb Printer Paper to keep tabs on it" [ref=f36e1669] [cursor=pointer]'
+                - generic [ref=f36e1670]:
+                  - link "8.5\"x11\" 300-Sheet Premium Inkjet & Laser Printer Paper White - Astrobrights" [ref=f36e1672] [cursor=pointer]:
+                    - /url: /p/8-5-34-x11-34-300-sheet-premium-inkjet-38-laser-printer-paper-white-astrobrights/-/A-80421337
+                  - link "$4.99 Astrobrights 8.5\"x11\" 300-Sheet Premium Inkjet & Laser Printer Paper White Average customer rating is 4.5 out of 5 stars with 174 reviews. Shipping arrives Tue, Oct 20 Ships free - exclusions apply" [ref=f36e1682] [cursor=pointer]:
+                    - /url: /p/8-5-34-x11-34-300-sheet-premium-inkjet-38-laser-printer-paper-white-astrobrights/-/A-80421337
+                    - generic [ref=f36e1683]:
+                      - generic [ref=f36e1684]: $4.99
+                      - heading "Astrobrights 8.5\"x11\" 300-Sheet Premium Inkjet & Laser Printer Paper White" [level=3] [ref=f36e1687]
+                      - generic "Average customer rating is 4.5 out of 5 stars with 174 reviews." [ref=f36e1690]:
+                        - generic [ref=f36e1691]: "4.5"
+                        - generic [ref=f36e1692]: 4.49 out of 5 stars
+                        - generic [ref=f36e1696]: (174)
+                      - generic [ref=f36e1699]:
+                        - generic [ref=f36e1700]: Shipping arrives Tue, Oct 20
+                        - generic [ref=f36e1702]: Ships free - exclusions apply
+                  - generic [ref=f36e1704]:
+                    - button "Add 8.5\"x11\" 300-Sheet Premium Inkjet & Laser Printer Paper White - Astrobrights to cart" [ref=f36e1706] [cursor=pointer]: Add to cart
+                    - button "sign in to favorite 8.5\"x11\" 300-Sheet Premium Inkjet & Laser Printer Paper White - Astrobrights to keep tabs on it" [ref=f36e1709] [cursor=pointer]
+                - generic [ref=f36e1710]:
+                  - 'link "Astrobrights Neenah Cardstock 8.5\" x 11\" 65lb 75ct Bright White: Printer Paper, 96 Brightness, 75 Sheets" [ref=f36e1712] [cursor=pointer]':
+                    - /url: /p/astrobrights-neenah-cardstock-8-5-34-x-11-34-65lb-75ct-bright-white/-/A-13317553
+                  - 'link "Highly rated $5.79 Astrobrights Neenah Cardstock 8.5\" x 11\" 65lb 75ct Bright White: Printer Paper, 96 Brightness, 75 Sheets Average customer rating is 4.8 out of 5 stars with 493 reviews. Shipping arrives Tue, Oct 20 Ships free - exclusions apply" [ref=f36e1722] [cursor=pointer]':
+                    - /url: /p/astrobrights-neenah-cardstock-8-5-34-x-11-34-65lb-75ct-bright-white/-/A-13317553
+                    - generic [ref=f36e1723]:
+                      - generic [ref=f36e1724]: Highly rated
+                      - generic [ref=f36e1730]: $5.79
+                      - 'heading "Astrobrights Neenah Cardstock 8.5\" x 11\" 65lb 75ct Bright White: Printer Paper, 96 Brightness, 75 Sheets" [level=3] [ref=f36e1733]'
+                      - generic "Average customer rating is 4.8 out of 5 stars with 493 reviews." [ref=f36e1736]:
+                        - generic [ref=f36e1737]: "4.8"
+                        - generic [ref=f36e1738]: 4.76 out of 5 stars
+                        - generic [ref=f36e1742]: (493)
+                      - generic [ref=f36e1745]:
+                        - generic [ref=f36e1746]: Shipping arrives Tue, Oct 20
+                        - generic [ref=f36e1748]: Ships free - exclusions apply
+                  - generic [ref=f36e1750]:
+                    - 'button "Add Astrobrights Neenah Cardstock 8.5\" x 11\" 65lb 75ct Bright White: Printer Paper, 96 Brightness, 75 Sheets to cart" [ref=f36e1752] [cursor=pointer]': Add to cart
+                    - 'button "sign in to favorite Astrobrights Neenah Cardstock 8.5\" x 11\" 65lb 75ct Bright White: Printer Paper, 96 Brightness, 75 Sheets to keep tabs on it" [ref=f36e1755] [cursor=pointer]'
+                - generic [ref=f36e1761]:
+                  - iframe
+                - generic [ref=f36e1762]:
+                  - 'link "Astrobrights 8.5\" x 11\" Printer & Copy Paper, 300 Sheets, 28lb - Astro White: 97 Brightness, Uncoated" [ref=f36e1764] [cursor=pointer]':
+                    - /url: /p/astrobrights-8-5-34-x-11-34-printer-38-copy-paper-300-sheets-28lb-astro-white/-/A-78015957
+                  - 'link "$6.99 Astrobrights 8.5\" x 11\" Printer & Copy Paper, 300 Sheets, 28lb - Astro White: 97 Brightness, Uncoated Average customer rating is 4.7 out of 5 stars with 185 reviews. Shipping arrives Tue, Oct 20 Ships free - exclusions apply" [ref=f36e1774] [cursor=pointer]':
+                    - /url: /p/astrobrights-8-5-34-x-11-34-printer-38-copy-paper-300-sheets-28lb-astro-white/-/A-78015957
+                    - generic [ref=f36e1775]:
+                      - generic [ref=f36e1776]: $6.99
+                      - 'heading "Astrobrights 8.5\" x 11\" Printer & Copy Paper, 300 Sheets, 28lb - Astro White: 97 Brightness, Uncoated" [level=3] [ref=f36e1779]'
+                      - generic "Average customer rating is 4.7 out of 5 stars with 185 reviews." [ref=f36e1782]:
+                        - generic [ref=f36e1783]: "4.7"
+                        - generic [ref=f36e1784]: 4.72 out of 5 stars
+                        - generic [ref=f36e1788]: (185)
+                      - generic [ref=f36e1791]:
+                        - generic [ref=f36e1792]: Shipping arrives Tue, Oct 20
+                        - generic [ref=f36e1794]: Ships free - exclusions apply
+                  - generic [ref=f36e1796]:
+                    - 'button "Add Astrobrights 8.5\" x 11\" Printer & Copy Paper, 300 Sheets, 28lb - Astro White: 97 Brightness, Uncoated to cart" [ref=f36e1798] [cursor=pointer]': Add to cart
+                    - 'button "sign in to favorite Astrobrights 8.5\" x 11\" Printer & Copy Paper, 300 Sheets, 28lb - Astro White: 97 Brightness, Uncoated to keep tabs on it" [ref=f36e1801] [cursor=pointer]'
+                - generic [ref=f36e1802]:
+                  - 'link "Epson Bright White Printer Paper - S041586: 500 Sheets, Letter Size, 24 lb, 96 Brightness" [ref=f36e1804] [cursor=pointer]':
+                    - /url: /p/epson-bright-white-printer-paper-s041586/-/A-14248590
+                  - 'link "$14.29 Rarely returned Epson Bright White Printer Paper - S041586: 500 Sheets, Letter Size, 24 lb, 96 Brightness Average customer rating is 4.7 out of 5 stars with 365 reviews. Only 2 left at Northgate Pickup ready within 2 hours Shipping arrives Tue, Oct 20 Ships free - exclusions apply" [ref=f36e1814] [cursor=pointer]':
+                    - /url: /p/epson-bright-white-printer-paper-s041586/-/A-14248590
+                    - generic [ref=f36e1815]:
+                      - generic [ref=f36e1816]: $14.29
+                      - generic [ref=f36e1818]: Rarely returned
+                      - 'heading "Epson Bright White Printer Paper - S041586: 500 Sheets, Letter Size, 24 lb, 96 Brightness" [level=3] [ref=f36e1824]'
+                      - generic "Average customer rating is 4.7 out of 5 stars with 365 reviews." [ref=f36e1827]:
+                        - generic [ref=f36e1828]: "4.7"
+                        - generic [ref=f36e1829]: 4.74 out of 5 stars
+                        - generic [ref=f36e1833]: (365)
+                      - generic [ref=f36e1835]: Only 2 left at Northgate
+                      - generic [ref=f36e1839]:
+                        - generic [ref=f36e1840]: Pickup ready within 2 hours
+                        - generic [ref=f36e1842]: Shipping arrives Tue, Oct 20
+                        - generic [ref=f36e1844]: Ships free - exclusions apply
+                  - generic [ref=f36e1846]:
+                    - 'button "Add Epson Bright White Printer Paper - S041586: 500 Sheets, Letter Size, 24 lb, 96 Brightness to cart" [ref=f36e1848] [cursor=pointer]': Add to cart
+                    - 'button "sign in to favorite Epson Bright White Printer Paper - S041586: 500 Sheets, Letter Size, 24 lb, 96 Brightness to keep tabs on it" [ref=f36e1851] [cursor=pointer]'
+                - generic [ref=f36e1852]:
+                  - 'link "500ct 100% Recycled Letter Printer Paper White - up&up™: 8.5x11 Inches, 20 lb, 92 Brightness, Recyclable Printing" [ref=f36e1854] [cursor=pointer]':
+                    - /url: /p/500ct-100-recycled-letter-printer-paper-white-up-38-up-8482/-/A-78015942
+                    - generic [ref=f36e1855]:
+                      - img "Three sheets of white colored paper overlapping on a light orange surface." [ref=f36e1860]
+                      - img "A package of 100% recycled letter printer paper with 500 sheets, labeled as 20# weight and 92 brightness, measuring 8.5 x 11 inches." [ref=f36e1865]
+                  - 'link "$7.99 Rarely returned up&up 500ct 100% Recycled Letter Printer Paper White - up&up™: 8.5x11 Inches, 20 lb, 92 Brightness, Recyclable Printing Average customer rating is 4.6 out of 5 stars with 396 reviews. Only 5 left at Northgate Pickup ready within 2 hours Shipping arrives Wed, Oct 21 Ships free - exclusions apply" [ref=f36e1866] [cursor=pointer]':
+                    - /url: /p/500ct-100-recycled-letter-printer-paper-white-up-38-up-8482/-/A-78015942
+                    - generic [ref=f36e1867]:
+                      - generic [ref=f36e1868]: $7.99
+                      - generic [ref=f36e1870]: Rarely returned
+                      - 'heading "up&up 500ct 100% Recycled Letter Printer Paper White - up&up™: 8.5x11 Inches, 20 lb, 92 Brightness, Recyclable Printing" [level=3] [ref=f36e1876]'
+                      - generic "Average customer rating is 4.6 out of 5 stars with 396 reviews." [ref=f36e1879]:
+                        - generic [ref=f36e1880]: "4.6"
+                        - generic [ref=f36e1881]: 4.61 out of 5 stars
+                        - generic [ref=f36e1885]: (396)
+                      - generic [ref=f36e1887]: Only 5 left at Northgate
+                      - generic [ref=f36e1891]:
+                        - generic [ref=f36e1892]: Pickup ready within 2 hours
+                        - generic [ref=f36e1894]: Shipping arrives Wed, Oct 21
+                        - generic [ref=f36e1896]: Ships free - exclusions apply
+                  - generic [ref=f36e1898]:
+                    - 'button "Add 500ct 100% Recycled Letter Printer Paper White - up&up™: 8.5x11 Inches, 20 lb, 92 Brightness, Recyclable Printing to cart" [ref=f36e1900] [cursor=pointer]': Add to cart
+                    - 'button "sign in to favorite 500ct 100% Recycled Letter Printer Paper White - up&up™: 8.5x11 Inches, 20 lb, 92 Brightness, Recyclable Printing to keep tabs on it" [ref=f36e1903] [cursor=pointer]'
+                - generic [ref=f36e1904]:
+                  - link "Astrodesigns 8pk 8.5\"x11\" Sticker Printer Paper" [ref=f36e1906] [cursor=pointer]:
+                    - /url: /p/astrodesigns-8pk-8-5-34-x11-34-sticker-printer-paper/-/A-94761076
+                  - link "Highly rated $4.99 Astrodesigns 8pk 8.5\"x11\" Sticker Printer Paper Average customer rating is 4.6 out of 5 stars with 44 reviews. Shipping arrives Tue, Oct 20 Ships free - exclusions apply" [ref=f36e1916] [cursor=pointer]:
+                    - /url: /p/astrodesigns-8pk-8-5-34-x11-34-sticker-printer-paper/-/A-94761076
+                    - generic [ref=f36e1917]:
+                      - generic [ref=f36e1918]: Highly rated
+                      - generic [ref=f36e1924]: $4.99
+                      - heading "Astrodesigns 8pk 8.5\"x11\" Sticker Printer Paper" [level=3] [ref=f36e1927]
+                      - generic "Average customer rating is 4.6 out of 5 stars with 44 reviews." [ref=f36e1930]:
+                        - generic [ref=f36e1931]: "4.6"
+                        - generic [ref=f36e1932]: 4.6 out of 5 stars
+                        - generic [ref=f36e1936]: (44)
+                      - generic [ref=f36e1939]:
+                        - generic [ref=f36e1940]: Shipping arrives Tue, Oct 20
+                        - generic [ref=f36e1942]: Ships free - exclusions apply
+                  - generic [ref=f36e1944]:
+                    - button "Add Astrodesigns 8pk 8.5\"x11\" Sticker Printer Paper to cart" [ref=f36e1946] [cursor=pointer]: Add to cart
+                    - button "sign in to favorite Astrodesigns 8pk 8.5\"x11\" Sticker Printer Paper to keep tabs on it" [ref=f36e1949] [cursor=pointer]
+                - generic [ref=f36e1950]:
+                  - 'link "Astrobrights 150ct Colored Printer Paper - Spectrum: 8.5x11\", Multicolor, 24 lb, 100 Brightness, Art & Stationery" [ref=f36e1952] [cursor=pointer]':
+                    - /url: /p/astrobrights-150ct-colored-printer-paper-spectrum/-/A-75001454
+                  - 'link "$8.19 When purchased online Astrobrights 150ct Colored Printer Paper - Spectrum: 8.5x11\", Multicolor, 24 lb, 100 Brightness, Art & Stationery Average customer rating is 4.8 out of 5 stars with 215 reviews. Shipping arrives Wed, Oct 21 Ships free - exclusions apply" [ref=f36e1962] [cursor=pointer]':
+                    - /url: /p/astrobrights-150ct-colored-printer-paper-spectrum/-/A-75001454
+                    - generic [ref=f36e1963]:
+                      - generic [ref=f36e1964]:
+                        - generic [ref=f36e1965]: $8.19
+                        - generic [ref=f36e1966]: When purchased online
+                      - 'heading "Astrobrights 150ct Colored Printer Paper - Spectrum: 8.5x11\", Multicolor, 24 lb, 100 Brightness, Art & Stationery" [level=3] [ref=f36e1968]'
+                      - generic "Average customer rating is 4.8 out of 5 stars with 215 reviews." [ref=f36e1971]:
+                        - generic [ref=f36e1972]: "4.8"
+                        - generic [ref=f36e1973]: 4.82 out of 5 stars
+                        - generic [ref=f36e1977]: (215)
+                      - generic [ref=f36e1980]:
+                        - generic [ref=f36e1981]: Shipping arrives Wed, Oct 21
+                        - generic [ref=f36e1983]: Ships free - exclusions apply
+                  - generic [ref=f36e1985]:
+                    - 'button "Add Astrobrights 150ct Colored Printer Paper - Spectrum: 8.5x11\", Multicolor, 24 lb, 100 Brightness, Art & Stationery to cart" [ref=f36e1987] [cursor=pointer]': Add to cart
+                    - 'button "sign in to favorite Astrobrights 150ct Colored Printer Paper - Spectrum: 8.5x11\", Multicolor, 24 lb, 100 Brightness, Art & Stationery to keep tabs on it" [ref=f36e1990] [cursor=pointer]'
+                - generic [ref=f36e1991]:
+                  - 'link "Astrobrights 50ct Printer Paper 8.5\"x11\" Naturals Assortment: Brown Cardstock, 176 GSM, 100 Brightness" [ref=f36e1993] [cursor=pointer]':
+                    - /url: /p/astrobrights-50ct-printer-paper-8-5-34-x11-34-naturals-assortment/-/A-54155908
+                  - 'link "$5.59 Astrobrights 50ct Printer Paper 8.5\"x11\" Naturals Assortment: Brown Cardstock, 176 GSM, 100 Brightness Average customer rating is 4.8 out of 5 stars with 159 reviews. Shipping arrives Tue, Oct 20 Ships free - exclusions apply" [ref=f36e2003] [cursor=pointer]':
+                    - /url: /p/astrobrights-50ct-printer-paper-8-5-34-x11-34-naturals-assortment/-/A-54155908
+                    - generic [ref=f36e2004]:
+                      - generic [ref=f36e2005]: $5.59
+                      - 'heading "Astrobrights 50ct Printer Paper 8.5\"x11\" Naturals Assortment: Brown Cardstock, 176 GSM, 100 Brightness" [level=3] [ref=f36e2008]'
+                      - generic "Average customer rating is 4.8 out of 5 stars with 159 reviews." [ref=f36e2011]:
+                        - generic [ref=f36e2012]: "4.8"
+                        - generic [ref=f36e2013]: 4.82 out of 5 stars
+                        - generic [ref=f36e2017]: (159)
+                      - generic [ref=f36e2020]:
+                        - generic [ref=f36e2021]: Shipping arrives Tue, Oct 20
+                        - generic [ref=f36e2023]: Ships free - exclusions apply
+                  - generic [ref=f36e2025]:
+                    - 'button "Add Astrobrights 50ct Printer Paper 8.5\"x11\" Naturals Assortment: Brown Cardstock, 176 GSM, 100 Brightness to cart" [ref=f36e2027] [cursor=pointer]': Add to cart
+                    - 'button "sign in to favorite Astrobrights 50ct Printer Paper 8.5\"x11\" Naturals Assortment: Brown Cardstock, 176 GSM, 100 Brightness to keep tabs on it" [ref=f36e2030] [cursor=pointer]'
+                - generic [ref=f36e2031]:
+                  - 'link "Astrobrights Colored Paper 8.5\" x 11\" 24lb 100ct Glow: Neon Multicolor Matte Printer Paper, 94 Brightness, 20lb Weight" [ref=f36e2033] [cursor=pointer]':
+                    - /url: /p/astrobrights-colored-paper-8-5-34-x-11-34-24lb-100ct-glow/-/A-13309470
+                  - 'link "$5.79 Astrobrights Colored Paper 8.5\" x 11\" 24lb 100ct Glow: Neon Multicolor Matte Printer Paper, 94 Brightness, 20lb Weight Average customer rating is 4.8 out of 5 stars with 256 reviews. Shipping arrives Tue, Oct 20 Ships free - exclusions apply" [ref=f36e2043] [cursor=pointer]':
+                    - /url: /p/astrobrights-colored-paper-8-5-34-x-11-34-24lb-100ct-glow/-/A-13309470
+                    - generic [ref=f36e2044]:
+                      - generic [ref=f36e2045]: $5.79
+                      - 'heading "Astrobrights Colored Paper 8.5\" x 11\" 24lb 100ct Glow: Neon Multicolor Matte Printer Paper, 94 Brightness, 20lb Weight" [level=3] [ref=f36e2048]'
+                      - generic "Average customer rating is 4.8 out of 5 stars with 256 reviews." [ref=f36e2051]:
+                        - generic [ref=f36e2052]: "4.8"
+                        - generic [ref=f36e2053]: 4.82 out of 5 stars
+                        - generic [ref=f36e2057]: (256)
+                      - generic [ref=f36e2060]:
+                        - generic [ref=f36e2061]: Shipping arrives Tue, Oct 20
+                        - generic [ref=f36e2063]: Ships free - exclusions apply
+                  - generic [ref=f36e2065]:
+                    - 'button "Add Astrobrights Colored Paper 8.5\" x 11\" 24lb 100ct Glow: Neon Multicolor Matte Printer Paper, 94 Brightness, 20lb Weight to cart" [ref=f36e2067] [cursor=pointer]': Add to cart
+                    - 'button "sign in to favorite Astrobrights Colored Paper 8.5\" x 11\" 24lb 100ct Glow: Neon Multicolor Matte Printer Paper, 94 Brightness, 20lb Weight to keep tabs on it" [ref=f36e2070] [cursor=pointer]'
+                - generic [ref=f36e2071]:
+                  - link "Astrobrights 300pk 8.5\" x 14\" 28 lb. Printer Paper" [ref=f36e2073] [cursor=pointer]:
+                    - /url: /p/astrodesigns-300pk-8-5-34-x14-34-printer-paper/-/A-94761074
+                  - link "Highly rated $14.99 Astrobrights 300pk 8.5\" x 14\" 28 lb. Printer Paper Average customer rating is 4.7 out of 5 stars with 39 reviews. Shipping arrives Tue, Oct 20 Ships free - exclusions apply" [ref=f36e2083] [cursor=pointer]:
+                    - /url: /p/astrodesigns-300pk-8-5-34-x14-34-printer-paper/-/A-94761074
+                    - generic [ref=f36e2084]:
+                      - generic [ref=f36e2085]: Highly rated
+                      - generic [ref=f36e2091]: $14.99
+                      - heading "Astrobrights 300pk 8.5\" x 14\" 28 lb. Printer Paper" [level=3] [ref=f36e2094]
+                      - generic "Average customer rating is 4.7 out of 5 stars with 39 reviews." [ref=f36e2097]:
+                        - generic [ref=f36e2098]: "4.7"
+                        - generic [ref=f36e2099]: 4.67 out of 5 stars
+                        - generic [ref=f36e2103]: (39)
+                      - generic [ref=f36e2106]:
+                        - generic [ref=f36e2107]: Shipping arrives Tue, Oct 20
+                        - generic [ref=f36e2109]: Ships free - exclusions apply
+                  - generic [ref=f36e2111]:
+                    - button "Add Astrobrights 300pk 8.5\" x 14\" 28 lb. Printer Paper to cart" [ref=f36e2113] [cursor=pointer]: Add to cart
+                    - button "sign in to favorite Astrobrights 300pk 8.5\" x 14\" 28 lb. Printer Paper to keep tabs on it" [ref=f36e2116] [cursor=pointer]
+                - generic [ref=f36e2122]:
+                  - iframe
+                - generic [ref=f36e2127]:
+                  - heading "Related to your search" [level=3] [ref=f36e2130]
+                  - generic [ref=f36e2131]:
+                    - region "Carousel" [ref=f36e2132]:
+                      - list [ref=f36e2133]:
+                        - listitem [ref=f36e2134]:
+                          - generic [ref=f36e2136]:
+                            - link [ref=f36e2137] [cursor=pointer]:
+                              - /url: /p/bic-5pk-highlighter-brite-liner-assorted/-/A-83620041#lnk=sametab
+                              - heading [level=3] [ref=f36e2139]:
+                                - 'img "BIC 5pk Highlighter Brite Liner Assorted: Back to School Supplies for Color-Coded Notes" [ref=f36e2143]'
+                            - generic [ref=f36e2144]:
+                              - generic [ref=f36e2145]: $2.39
+                              - 'link "BIC 5pk Highlighter Brite Liner Assorted: Back to School Supplies for Color-Coded Notes" [ref=f36e2148] [cursor=pointer]':
+                                - /url: /p/bic-5pk-highlighter-brite-liner-assorted/-/A-83620041#lnk=sametab
+                              - generic [ref=f36e2150]: Sponsored
+                              - link "4.8 out of 5 stars with 1875 ratings" [ref=f36e2151] [cursor=pointer]:
+                                - /url: /p/bic-5pk-highlighter-brite-liner-assorted/-/A-83620041?type=scroll_to_review_section#lnk=sametab
+                                - generic [ref=f36e2152]:
+                                  - generic [ref=f36e2153]: 4.8 out of 5 stars with 1875 ratings
+                                  - generic [aria-hidden] [ref=f36e2176]: 1875 reviews
+                            - 'button "Add to cart for BIC 5pk Highlighter Brite Liner Assorted: Back to School Supplies for Color-Coded Notes" [ref=f36e2179] [cursor=pointer]': Add to cart
+                        - listitem [ref=f36e2180]:
+                          - generic [ref=f36e2182]:
+                            - link [ref=f36e2183] [cursor=pointer]:
+                              - /url: /p/crayola-24ct-kids-crayons/-/A-14151826#lnk=sametab
+                              - heading [level=3] [ref=f36e2185]:
+                                - img "Crayola 24ct Crayons, Elementary School Supplies for Kids, Art Classroom Must Haves for Teachers, Coloring Gift Ages 3+" [ref=f36e2189]
+                            - generic [ref=f36e2190]:
+                              - button "Highly rated in Crayons" [ref=f36e2191] [cursor=pointer]:
+                                - generic [ref=f36e2192]: Highly rated
+                              - generic [ref=f36e2195]: $1.49
+                              - link "Crayola 24ct Crayons, Elementary School Supplies for Kids, Art Classroom Must Haves for Teachers, Coloring Gift Ages 3+" [ref=f36e2198] [cursor=pointer]:
+                                - /url: /p/crayola-24ct-kids-crayons/-/A-14151826#lnk=sametab
+                              - link "4.8 out of 5 stars with 7778 ratings" [ref=f36e2200] [cursor=pointer]:
+                                - /url: /p/crayola-24ct-kids-crayons/-/A-14151826?type=scroll_to_review_section#lnk=sametab
+                                - generic [ref=f36e2201]:
+                                  - generic [ref=f36e2202]: 4.8 out of 5 stars with 7778 ratings
+                                  - generic [aria-hidden] [ref=f36e2225]: 7778 reviews
+                            - button "Add to cart for Crayola 24ct Crayons, Elementary School Supplies for Kids, Art Classroom Must Haves for Teachers, Coloring Gift Ages 3+" [ref=f36e2228] [cursor=pointer]: Add to cart
+                        - listitem [ref=f36e2229]:
+                          - generic [ref=f36e2231]:
+                            - link [ref=f36e2232] [cursor=pointer]:
+                              - /url: /p/crayola-12ct-kids-pre-sharpened-colored-pencils/-/A-14152249#lnk=sametab
+                              - heading [level=3] [ref=f36e2234]:
+                                - img "Crayola 12ct Pre-Sharpened Colored Pencils, Kids School Supplies, Art Classroom Must Haves for Teachers, Coloring Gift Ages 5+" [ref=f36e2238]
+                            - generic [ref=f36e2239]:
+                              - button "Highly rated in Pencils" [ref=f36e2240] [cursor=pointer]:
+                                - generic [ref=f36e2241]: Highly rated
+                              - generic [ref=f36e2244]: $2.19
+                              - link "Crayola 12ct Pre-Sharpened Colored Pencils, Kids School Supplies, Art Classroom Must Haves for Teachers, Coloring Gift Ages 5+" [ref=f36e2247] [cursor=pointer]:
+                                - /url: /p/crayola-12ct-kids-pre-sharpened-colored-pencils/-/A-14152249#lnk=sametab
+                              - link "4.8 out of 5 stars with 4126 ratings" [ref=f36e2249] [cursor=pointer]:
+                                - /url: /p/crayola-12ct-kids-pre-sharpened-colored-pencils/-/A-14152249?type=scroll_to_review_section#lnk=sametab
+                                - generic [ref=f36e2250]:
+                                  - generic [ref=f36e2251]: 4.8 out of 5 stars with 4126 ratings
+                                  - generic [aria-hidden] [ref=f36e2274]: 4126 reviews
+                            - button "Add to cart for Crayola 12ct Pre-Sharpened Colored Pencils, Kids School Supplies, Art Classroom Must Haves for Teachers, Coloring Gift Ages 5+" [ref=f36e2277] [cursor=pointer]: Add to cart
+                        - listitem [ref=f36e2278]:
+                          - generic [ref=f36e2280]:
+                            - link [ref=f36e2281] [cursor=pointer]:
+                              - /url: /p/elmer-39-s-2pk-washable-school-glue-sticks-disappearing-purple/-/A-17088980#lnk=sametab
+                              - heading [level=3] [ref=f36e2283]:
+                                - img "Elmer's 2pk Washable School Glue Sticks - Disappearing Purple" [ref=f36e2287]
+                            - generic [ref=f36e2288]:
+                              - button "Highly rated in Glue" [ref=f36e2289] [cursor=pointer]:
+                                - generic [ref=f36e2290]: Highly rated
+                              - generic [ref=f36e2293]: $1.69
+                              - link "Elmer's 2pk Washable School Glue Sticks - Disappearing Purple" [ref=f36e2296] [cursor=pointer]:
+                                - /url: /p/elmer-39-s-2pk-washable-school-glue-sticks-disappearing-purple/-/A-17088980#lnk=sametab
+                              - link "4.8 out of 5 stars with 3925 ratings" [ref=f36e2298] [cursor=pointer]:
+                                - /url: /p/elmer-39-s-2pk-washable-school-glue-sticks-disappearing-purple/-/A-17088980?type=scroll_to_review_section#lnk=sametab
+                                - generic [ref=f36e2299]:
+                                  - generic [ref=f36e2300]: 4.8 out of 5 stars with 3925 ratings
+                                  - generic [aria-hidden] [ref=f36e2323]: 3925 reviews
+                            - button "Add to cart for Elmer's 2pk Washable School Glue Sticks - Disappearing Purple" [ref=f36e2326] [cursor=pointer]: Add to cart
+                        - listitem [ref=f36e2327]:
+                          - generic [ref=f36e2329]:
+                            - link [ref=f36e2330] [cursor=pointer]:
+                              - /url: /p/expo-4pk-dry-erase-markers-chisel-tip-black/-/A-14395396#lnk=sametab
+                              - heading [level=3] [ref=f36e2332]:
+                                - img "Expo 4pk Dry Erase Markers Chisel Tip Black" [ref=f36e2336]
+                            - generic [ref=f36e2337]:
+                              - button "Highly rated in Markers" [ref=f36e2338] [cursor=pointer]:
+                                - generic [ref=f36e2339]: Highly rated
+                              - generic [ref=f36e2342]: $5.29
+                              - link "Expo 4pk Dry Erase Markers Chisel Tip Black" [ref=f36e2345] [cursor=pointer]:
+                                - /url: /p/expo-4pk-dry-erase-markers-chisel-tip-black/-/A-14395396#lnk=sametab
+                              - link "4.7 out of 5 stars with 1894 ratings" [ref=f36e2347] [cursor=pointer]:
+                                - /url: /p/expo-4pk-dry-erase-markers-chisel-tip-black/-/A-14395396?type=scroll_to_review_section#lnk=sametab
+                                - generic [ref=f36e2348]:
+                                  - generic [ref=f36e2349]: 4.7 out of 5 stars with 1894 ratings
+                                  - generic [aria-hidden] [ref=f36e2372]: 1894 reviews
+                            - button "Add to cart for Expo 4pk Dry Erase Markers Chisel Tip Black" [ref=f36e2375] [cursor=pointer]: Add to cart
+                        - listitem [ref=f36e2376]:
+                          - generic [ref=f36e2378]:
+                            - link [ref=f36e2379] [cursor=pointer]:
+                              - /url: /p/2-pocket-plastic-folder-with-prongs-blue-up-38-up-8482/-/A-17079607?preselect=17079607#lnk=sametab
+                              - heading [level=3] [ref=f36e2381]:
+                                - 'img "2 Pocket Plastic Folder with Prongs Blue - up&up™: School Supplies, Polypropylene, 50 Sheet Capacity, 2 Internal Pockets" [ref=f36e2385]'
+                            - generic [ref=f36e2386]:
+                              - button "Highly rated in Folders" [ref=f36e2387] [cursor=pointer]:
+                                - generic [ref=f36e2388]: Highly rated
+                              - generic [ref=f36e2391]: $1.29
+                              - 'link "2 Pocket Plastic Folder with Prongs Blue - up&up™: School Supplies, Polypropylene, 50 Sheet Capacity, 2 Internal Pockets" [ref=f36e2394] [cursor=pointer]':
+                                - /url: /p/2-pocket-plastic-folder-with-prongs-blue-up-38-up-8482/-/A-17079607?preselect=17079607#lnk=sametab
+                            - 'button "Add to cart for 2 Pocket Plastic Folder with Prongs Blue - up&up™: School Supplies, Polypropylene, 50 Sheet Capacity, 2 Internal Pockets" [ref=f36e2398] [cursor=pointer]': Add to cart
+                      - button "Next Page" [ref=f36e2399] [cursor=pointer]
+                    - list [ref=f36e2402]:
+                      - listitem [ref=f36e2403]
+                      - listitem [ref=f36e2404]
+                      - listitem [ref=f36e2405]
+                      - listitem [ref=f36e2406]
+                - generic [ref=f36e2407]:
+                  - link "Astrobrights 75ct Cardstock Printer Paper" [ref=f36e2409] [cursor=pointer]:
+                    - /url: /p/astrobrights-75ct-cardstock-printer-paper/-/A-54154180
+                  - link "$11.59 Astrobrights 75ct Cardstock Printer Paper Average customer rating is 4.7 out of 5 stars with 150 reviews. Only 2 left at Northgate Pickup ready within 2 hours Shipping arrives Tue, Oct 20 Ships free - exclusions apply" [ref=f36e2419] [cursor=pointer]:
+                    - /url: /p/astrobrights-75ct-cardstock-printer-paper/-/A-54154180
+                    - generic [ref=f36e2420]:
+                      - generic [ref=f36e2421]: $11.59
+                      - heading "Astrobrights 75ct Cardstock Printer Paper" [level=3] [ref=f36e2424]
+                      - generic "Average customer rating is 4.7 out of 5 stars with 150 reviews." [ref=f36e2427]:
+                        - generic [ref=f36e2428]: "4.7"
+                        - generic [ref=f36e2429]: 4.69 out of 5 stars
+                        - generic [ref=f36e2433]: (150)
+                      - generic [ref=f36e2435]: Only 2 left at Northgate
+                      - generic [ref=f36e2439]:
+                        - generic [ref=f36e2440]: Pickup ready within 2 hours
+                        - generic [ref=f36e2442]: Shipping arrives Tue, Oct 20
+                        - generic [ref=f36e2444]: Ships free - exclusions apply
+                  - generic [ref=f36e2446]:
+                    - button "Add Astrobrights 75ct Cardstock Printer Paper to cart" [ref=f36e2448] [cursor=pointer]: Add to cart
+                    - button "sign in to favorite Astrobrights 75ct Cardstock Printer Paper to keep tabs on it" [ref=f36e2451] [cursor=pointer]
+                - generic [ref=f36e2452]:
+                  - link "HP Everyday Photo Paper, Glossy, 52 lb, 4 x 6 in. (101 x 152 mm), 50 sheets CR758A" [ref=f36e2454] [cursor=pointer]:
+                    - /url: /p/hp-inc-everyday-photo-paper-glossy-52-lb-4-x-6-in-101-x-152-mm-50-sheets-cr758a/-/A-1000940768
+                  - link "Bestseller $5.09 reg $5.99 Sale HP Inc. HP Everyday Photo Paper, Glossy, 52 lb, 4 x 6 in. (101 x 152 mm), 50 sheets CR758A Average customer rating is 4.6 out of 5 stars with 612 reviews. Shipping arrives Mon, Oct 26 Ships free - exclusions apply" [ref=f36e2464] [cursor=pointer]:
+                    - /url: /p/hp-inc-everyday-photo-paper-glossy-52-lb-4-x-6-in-101-x-152-mm-50-sheets-cr758a/-/A-1000940768
+                    - generic [ref=f36e2465]:
+                      - generic [ref=f36e2466]: Bestseller
+                      - generic [ref=f36e2472]:
+                        - generic [ref=f36e2473]: $5.09 reg $5.99
+                        - generic [ref=f36e2474]: Sale
+                      - heading "HP Inc. HP Everyday Photo Paper, Glossy, 52 lb, 4 x 6 in. (101 x 152 mm), 50 sheets CR758A" [level=3] [ref=f36e2477]
+                      - generic "Average customer rating is 4.6 out of 5 stars with 612 reviews." [ref=f36e2480]:
+                        - generic [ref=f36e2481]: "4.6"
+                        - generic [ref=f36e2482]: 4.65 out of 5 stars
+                        - generic [ref=f36e2486]: (612)
+                      - generic [ref=f36e2489]:
+                        - generic [ref=f36e2490]: Shipping arrives Mon, Oct 26
+                        - generic [ref=f36e2492]: Ships free - exclusions apply
+                  - generic [ref=f36e2494]:
+                    - button "Add HP Everyday Photo Paper, Glossy, 52 lb, 4 x 6 in. (101 x 152 mm), 50 sheets CR758A to cart" [ref=f36e2496] [cursor=pointer]: Add to cart
+                    - button "sign in to favorite HP Everyday Photo Paper, Glossy, 52 lb, 4 x 6 in. (101 x 152 mm), 50 sheets CR758A to keep tabs on it" [ref=f36e2499] [cursor=pointer]
+                - generic [ref=f36e2500]:
+                  - link "Epson EcoTank ET-2410 Wireless All-in-One Cartridge-Free Supertank Printer - Wi-Fi Apple AirPrint" [ref=f36e2502] [cursor=pointer]:
+                    - /url: /p/epson-ecotank-et-2410-wireless-all-in-one-cartridge-free-supertank-printer-wi-fi-apple-airprint/-/A-95008087
+                  - link "1k+ bought in last month $179.99 Epson EcoTank ET-2410 Wireless All-in-One Cartridge-Free Supertank Printer - Wi-Fi Apple AirPrint Average customer rating is 3.8 out of 5 stars with 28 reviews. Only 2 left at Northgate Pickup ready within 2 hours Shipping arrives Tue, Oct 20 Ships free - exclusions apply" [ref=f36e2512] [cursor=pointer]:
+                    - /url: /p/epson-ecotank-et-2410-wireless-all-in-one-cartridge-free-supertank-printer-wi-fi-apple-airprint/-/A-95008087
+                    - generic [ref=f36e2513]:
+                      - generic [ref=f36e2514]: 1k+ bought in last month
+                      - generic [ref=f36e2519]: $179.99
+                      - heading "Epson EcoTank ET-2410 Wireless All-in-One Cartridge-Free Supertank Printer - Wi-Fi Apple AirPrint" [level=3] [ref=f36e2522]
+                      - generic "Average customer rating is 3.8 out of 5 stars with 28 reviews." [ref=f36e2525]:
+                        - generic [ref=f36e2526]: "3.8"
+                        - generic [ref=f36e2527]: 3.83 out of 5 stars
+                        - generic [ref=f36e2531]: (28)
+                      - generic [ref=f36e2533]: Only 2 left at Northgate
+                      - generic [ref=f36e2537]:
+                        - generic [ref=f36e2538]: Pickup ready within 2 hours
+                        - generic [ref=f36e2540]: Shipping arrives Tue, Oct 20
+                        - generic [ref=f36e2542]: Ships free - exclusions apply
+                  - generic [ref=f36e2544]:
+                    - button "Add Epson EcoTank ET-2410 Wireless All-in-One Cartridge-Free Supertank Printer - Wi-Fi Apple AirPrint to cart" [ref=f36e2546] [cursor=pointer]: Add to cart
+                    - button "sign in to favorite Epson EcoTank ET-2410 Wireless All-in-One Cartridge-Free Supertank Printer - Wi-Fi Apple AirPrint to keep tabs on it" [ref=f36e2549] [cursor=pointer]
+                - generic [ref=f36e2550]:
+                  - 'link "100ct College Ruled Reinforced Notebook Filler Paper - up&up™: 10.5x8 Inches, Loose Leaf, 20 lb, White, 100 Sheets" [ref=f36e2552] [cursor=pointer]':
+                    - /url: /p/100ct-college-ruled-reinforced-filler-paper-up-38-up-8482/-/A-13684336
+                    - generic [ref=f36e2553]:
+                      - img "Three sheets of white colored filler paper with blue lines and three punched holes along the edge." [ref=f36e2558]
+                      - img "A pack of reinforced college ruled filler paper with 100 sheets, featuring heavyweight paper and reinforced holes, in a blue and pink colored cover." [ref=f36e2563]
+                  - 'link "Highly rated $2.79 up&up 100ct College Ruled Reinforced Notebook Filler Paper - up&up™: 10.5x8 Inches, Loose Leaf, 20 lb, White, 100 Sheets Average customer rating is 4.7 out of 5 stars with 951 reviews. Shipping arrives Tue, Oct 20 Ships free - exclusions apply" [ref=f36e2564] [cursor=pointer]':
+                    - /url: /p/100ct-college-ruled-reinforced-filler-paper-up-38-up-8482/-/A-13684336
+                    - generic [ref=f36e2565]:
+                      - generic [ref=f36e2566]: Highly rated
+                      - generic [ref=f36e2572]: $2.79
+                      - 'heading "up&up 100ct College Ruled Reinforced Notebook Filler Paper - up&up™: 10.5x8 Inches, Loose Leaf, 20 lb, White, 100 Sheets" [level=3] [ref=f36e2575]'
+                      - generic "Average customer rating is 4.7 out of 5 stars with 951 reviews." [ref=f36e2578]:
+                        - generic [ref=f36e2579]: "4.7"
+                        - generic [ref=f36e2580]: 4.72 out of 5 stars
+                        - generic [ref=f36e2584]: (951)
+                      - generic [ref=f36e2587]:
+                        - generic [ref=f36e2588]: Shipping arrives Tue, Oct 20
+                        - generic [ref=f36e2590]: Ships free - exclusions apply
+                  - generic [ref=f36e2592]:
+                    - 'button "Add 100ct College Ruled Reinforced Notebook Filler Paper - up&up™: 10.5x8 Inches, Loose Leaf, 20 lb, White, 100 Sheets to cart" [ref=f36e2594] [cursor=pointer]': Add to cart
+                    - 'button "sign in to favorite 100ct College Ruled Reinforced Notebook Filler Paper - up&up™: 10.5x8 Inches, Loose Leaf, 20 lb, White, 100 Sheets to keep tabs on it" [ref=f36e2597] [cursor=pointer]'
+                - generic [ref=f36e2598]:
+                  - link "Rifle Paper Co. Strawberry Fields Notepad" [ref=f36e2600] [cursor=pointer]:
+                    - /url: /p/rifle-paper-co-strawberry-fields-notepad/-/A-94932507
+                  - link "$9.99 Rifle Paper Co. Strawberry Fields Notepad Average customer rating is 5.0 out of 5 stars with 1 review. Pickup ready within 2 hours Shipping arrives Tue, Oct 20 Ships free - exclusions apply" [ref=f36e2610] [cursor=pointer]:
+                    - /url: /p/rifle-paper-co-strawberry-fields-notepad/-/A-94932507
+                    - generic [ref=f36e2611]:
+                      - generic [ref=f36e2612]: $9.99
+                      - heading "Rifle Paper Co. Strawberry Fields Notepad" [level=3] [ref=f36e2615]
+                      - generic "Average customer rating is 5.0 out of 5 stars with 1 review." [ref=f36e2618]:
+                        - generic [ref=f36e2619]: "5.0"
+                        - generic [ref=f36e2620]: 5 out of 5 stars
+                        - generic [ref=f36e2624]: (1)
+                      - generic [ref=f36e2627]:
+                        - generic [ref=f36e2628]: Pickup ready within 2 hours
+                        - generic [ref=f36e2630]: Shipping arrives Tue, Oct 20
+                        - generic [ref=f36e2632]: Ships free - exclusions apply
+                  - generic [ref=f36e2634]:
+                    - button "Add Rifle Paper Co. Strawberry Fields Notepad to cart" [ref=f36e2636] [cursor=pointer]: Add to cart
+                    - button "sign in to favorite Rifle Paper Co. Strawberry Fields Notepad to keep tabs on it" [ref=f36e2639] [cursor=pointer]
+                - generic [ref=f36e2640]:
+                  - link "Parchment Paper Roll - 50 sq ft - up&up™" [ref=f36e2642] [cursor=pointer]:
+                    - /url: /p/parchment-paper-roll-50-sq-ft-up-38-up-8482/-/A-52018898
+                    - generic [ref=f36e2643]:
+                      - img "Four marbled cookies on a baking sheet lined with white parchment paper against a pink background." [ref=f36e2648]
+                      - img "A box of parchment paper with a pink colored label showing \"Parchment Paper\" and \"50 Square Feet\" along with images of cookies." [ref=f36e2653]
+                  - link "Bestseller $3.99 ($0.08/square foot) Buy 1, get 1 25% off up&up™ home essentials up&up™ Parchment Paper Roll - 50 sq ft Average customer rating is 4.8 out of 5 stars with 5038 reviews. Pickup ready within 2 hours Shipping arrives Wed, Oct 21 Ships free - exclusions apply" [ref=f36e2654] [cursor=pointer]:
+                    - /url: /p/parchment-paper-roll-50-sq-ft-up-38-up-8482/-/A-52018898
+                    - generic [ref=f36e2655]:
+                      - generic [ref=f36e2656]: Bestseller
+                      - generic [ref=f36e2662]:
+                        - generic [ref=f36e2663]: $3.99 ($0.08/square foot)
+                        - generic [ref=f36e2664]: Buy 1, get 1 25% off up&up™ home essentials
+                      - heading "up&up™ Parchment Paper Roll - 50 sq ft" [level=3] [ref=f36e2667]
+                      - generic "Average customer rating is 4.8 out of 5 stars with 5038 reviews." [ref=f36e2670]:
+                        - generic [ref=f36e2671]: "4.8"
+                        - generic [ref=f36e2672]: 4.75 out of 5 stars
+                        - generic [ref=f36e2676]: (5,038)
+                      - generic [ref=f36e2679]:
+                        - generic [ref=f36e2680]: Pickup ready within 2 hours
+                        - generic [ref=f36e2682]: Shipping arrives Wed, Oct 21
+                        - generic [ref=f36e2684]: Ships free - exclusions apply
+                  - generic [ref=f36e2686]:
+                    - button "Add Parchment Paper Roll - 50 sq ft - up&up™ to cart" [ref=f36e2688] [cursor=pointer]: Add to cart
+                    - button "sign in to favorite Parchment Paper Roll - 50 sq ft - up&up™ to keep tabs on it" [ref=f36e2691] [cursor=pointer]
+                - generic [ref=f36e2692]:
+                  - link "Paper Chains Red Stripe - Hearth & Hand™ with Magnolia" [ref=f36e2694] [cursor=pointer]:
+                    - /url: /p/paper-chains-red-stripe-hearth-38-hand-8482-with-magnolia/-/A-95161874
+                    - generic [ref=f36e2695]:
+                      - img "Red colored and cream colored striped paper chain garland draped through a decorated evergreen tree above wrapped gifts on a wood floor." [ref=f36e2700]
+                      - img "Paper chain strips featuring red colored and white colored vertical stripes, with several flat unassembled strips on the left and a linked chain of assembled rings on the right against a light green colored background." [ref=f36e2705]
+                  - link "$7.99 New at Target Hearth & Hand with Magnolia Paper Chains Red Stripe - Hearth & Hand™ with Magnolia Average customer rating is 5.0 out of 5 stars with 1 review. Shipping arrives Tue, Oct 20 Ships free - exclusions apply" [ref=f36e2706] [cursor=pointer]:
+                    - /url: /p/paper-chains-red-stripe-hearth-38-hand-8482-with-magnolia/-/A-95161874
+                    - generic [ref=f36e2707]:
+                      - generic [ref=f36e2708]: $7.99
+                      - generic [ref=f36e2712]:
+                        - text: New at
+                        - img "Target" [ref=f36e2714]
+                      - heading "Hearth & Hand with Magnolia Paper Chains Red Stripe - Hearth & Hand™ with Magnolia" [level=3] [ref=f36e2717]
+                      - generic "Average customer rating is 5.0 out of 5 stars with 1 review." [ref=f36e2720]:
+                        - generic [ref=f36e2721]: "5.0"
+                        - generic [ref=f36e2722]: 5 out of 5 stars
+                        - generic [ref=f36e2726]: (1)
+                      - generic [ref=f36e2729]:
+                        - generic [ref=f36e2730]: Shipping arrives Tue, Oct 20
+                        - generic [ref=f36e2732]: Ships free - exclusions apply
+                  - generic [ref=f36e2734]:
+                    - button "Add Paper Chains Red Stripe - Hearth & Hand™ with Magnolia to cart" [ref=f36e2736] [cursor=pointer]: Add to cart
+                    - button "sign in to favorite Paper Chains Red Stripe - Hearth & Hand™ with Magnolia to keep tabs on it" [ref=f36e2739] [cursor=pointer]
+                - generic [ref=f36e2740]:
+                  - link "Crayola 240-Sheet Construction Paper 12-Color, School Supplies for Kids, Craft Paper, 9x12 Inches, Multicolor, Uncoated, Classroom Essentials" [ref=f36e2742] [cursor=pointer]:
+                    - /url: /p/crayola-240-sheet-construction-paper-12-color/-/A-16693485
+                    - generic [ref=f36e2743]:
+                      - img "A pack of Crayola construction paper with 240 sheets in 12 colors, including blue, red, green, and yellow, with dimensions of 9 inches by 12 inches." [ref=f36e2748]
+                      - img "A pack of Crayola construction paper with 240 sheets in 12 colors, measuring 9 inches by 12 inches." [ref=f36e2753]
+                  - link "Highly rated $5.89 Crayola 240-Sheet Construction Paper 12-Color, School Supplies for Kids, Craft Paper, 9x12 Inches, Multicolor, Uncoated, Classroom Essentials Average customer rating is 4.7 out of 5 stars with 1423 reviews. Pickup ready within 2 hours Shipping arrives Wed, Oct 21 Ships free - exclusions apply" [ref=f36e2754] [cursor=pointer]:
+                    - /url: /p/crayola-240-sheet-construction-paper-12-color/-/A-16693485
+                    - generic [ref=f36e2755]:
+                      - generic [ref=f36e2756]: Highly rated
+                      - generic [ref=f36e2762]: $5.89
+                      - heading "Crayola 240-Sheet Construction Paper 12-Color, School Supplies for Kids, Craft Paper, 9x12 Inches, Multicolor, Uncoated, Classroom Essentials" [level=3] [ref=f36e2765]
+                      - generic "Average customer rating is 4.7 out of 5 stars with 1423 reviews." [ref=f36e2768]:
+                        - generic [ref=f36e2769]: "4.7"
+                        - generic [ref=f36e2770]: 4.73 out of 5 stars
+                        - generic [ref=f36e2774]: (1,423)
+                      - generic [ref=f36e2777]:
+                        - generic [ref=f36e2778]: Pickup ready within 2 hours
+                        - generic [ref=f36e2780]: Shipping arrives Wed, Oct 21
+                        - generic [ref=f36e2782]: Ships free - exclusions apply
+                  - generic [ref=f36e2784]:
+                    - button "Add Crayola 240-Sheet Construction Paper 12-Color, School Supplies for Kids, Craft Paper, 9x12 Inches, Multicolor, Uncoated, Classroom Essentials to cart" [ref=f36e2786] [cursor=pointer]: Add to cart
+                    - button "sign in to favorite Crayola 240-Sheet Construction Paper 12-Color, School Supplies for Kids, Craft Paper, 9x12 Inches, Multicolor, Uncoated, Classroom Essentials to keep tabs on it" [ref=f36e2789] [cursor=pointer]
+                - generic [ref=f36e2790]:
+                  - link "HP Matte Photo Paper, 48 lb, 4 x 6 in. (101 x 152 mm), 25 sheets 6QH46A" [ref=f36e2792] [cursor=pointer]:
+                    - /url: /p/hp-inc-matte-photo-paper-48-lb-4-x-6-in-101-x-152-mm-25-sheets-6qh46a/-/A-1000940758
+                  - link "$7.64 reg $8.99 Sale HP Inc. HP Matte Photo Paper, 48 lb, 4 x 6 in. (101 x 152 mm), 25 sheets 6QH46A Average customer rating is 4.3 out of 5 stars with 86 reviews. Shipping arrives Mon, Oct 26 Ships free - exclusions apply" [ref=f36e2802] [cursor=pointer]:
+                    - /url: /p/hp-inc-matte-photo-paper-48-lb-4-x-6-in-101-x-152-mm-25-sheets-6qh46a/-/A-1000940758
+                    - generic [ref=f36e2803]:
+                      - generic [ref=f36e2804]:
+                        - generic [ref=f36e2805]: $7.64 reg $8.99
+                        - generic [ref=f36e2806]: Sale
+                      - heading "HP Inc. HP Matte Photo Paper, 48 lb, 4 x 6 in. (101 x 152 mm), 25 sheets 6QH46A" [level=3] [ref=f36e2809]
+                      - generic "Average customer rating is 4.3 out of 5 stars with 86 reviews." [ref=f36e2812]:
+                        - generic [ref=f36e2813]: "4.3"
+                        - generic [ref=f36e2814]: 4.27 out of 5 stars
+                        - generic [ref=f36e2818]: (86)
+                      - generic [ref=f36e2821]:
+                        - generic [ref=f36e2822]: Shipping arrives Mon, Oct 26
+                        - generic [ref=f36e2824]: Ships free - exclusions apply
+                  - generic [ref=f36e2826]:
+                    - button "Add HP Matte Photo Paper, 48 lb, 4 x 6 in. (101 x 152 mm), 25 sheets 6QH46A to cart" [ref=f36e2828] [cursor=pointer]: Add to cart
+                    - button "sign in to favorite HP Matte Photo Paper, 48 lb, 4 x 6 in. (101 x 152 mm), 25 sheets 6QH46A to keep tabs on it" [ref=f36e2831] [cursor=pointer]
+                - generic [ref=f36e2832]:
+                  - link "HP Advanced Photo Paper Glossy 65 lb 8 x 10 in. (203 x 254 mm) 25 sheets" [ref=f36e2834] [cursor=pointer]:
+                    - /url: /p/hp-inc-advanced-photo-paper-glossy-65-lb-8-x-10-in-203-x-254-mm-25-sheets/-/A-1000940766
+                  - link "$15.99 HP Inc. HP Advanced Photo Paper Glossy 65 lb 8 x 10 in. (203 x 254 mm) 25 sheets Average customer rating is 4.7 out of 5 stars with 415 reviews. Shipping arrives Mon, Oct 26 Ships free - exclusions apply" [ref=f36e2844] [cursor=pointer]:
+                    - /url: /p/hp-inc-advanced-photo-paper-glossy-65-lb-8-x-10-in-203-x-254-mm-25-sheets/-/A-1000940766
+                    - generic [ref=f36e2845]:
+                      - generic [ref=f36e2846]: $15.99
+                      - heading "HP Inc. HP Advanced Photo Paper Glossy 65 lb 8 x 10 in. (203 x 254 mm) 25 sheets" [level=3] [ref=f36e2849]
+                      - generic "Average customer rating is 4.7 out of 5 stars with 415 reviews." [ref=f36e2852]:
+                        - generic [ref=f36e2853]: "4.7"
+                        - generic [ref=f36e2854]: 4.68 out of 5 stars
+                        - generic [ref=f36e2858]: (415)
+                      - generic [ref=f36e2861]:
+                        - generic [ref=f36e2862]: Shipping arrives Mon, Oct 26
+                        - generic [ref=f36e2864]: Ships free - exclusions apply
+                  - generic [ref=f36e2866]:
+                    - button "Add HP Advanced Photo Paper Glossy 65 lb 8 x 10 in. (203 x 254 mm) 25 sheets to cart" [ref=f36e2868] [cursor=pointer]: Add to cart
+                    - button "sign in to favorite HP Advanced Photo Paper Glossy 65 lb 8 x 10 in. (203 x 254 mm) 25 sheets to keep tabs on it" [ref=f36e2871] [cursor=pointer]
+              - generic [ref=f36e2876]:
+                - button "previous page" [disabled] [ref=f36e2877]
+                - button "page 1 of 12" [ref=f36e2880] [cursor=pointer]
+                - button "next page" [ref=f36e2885] [cursor=pointer]
+            - generic [ref=f36e2890]:
+              - heading "Recommended for you" [level=2] [ref=f36e2893]
+              - generic [ref=f36e2894]:
+                - region "Carousel" [ref=f36e2895]:
+                  - list [ref=f36e2896]:
+                    - listitem [ref=f36e2897]:
+                      - generic [ref=f36e2899]:
+                        - link [ref=f36e2900] [cursor=pointer]:
+                          - /url: /p/500ct-letter-printer-paper-white-up-38-up-8482/-/A-75001545#lnk=sametab
+                          - heading [level=3] [ref=f36e2902]:
+                            - 'img "500ct Letter Printer Paper White - up&up™: 8.5x11 Inches, 20 lb, 92 Brightness, Ideal for Printing Letters" [ref=f36e2906]'
+                        - generic [ref=f36e2907]:
+                          - button "Bestseller in Paper" [ref=f36e2908] [cursor=pointer]:
+                            - generic [ref=f36e2909]: Bestseller
+                          - generic [ref=f36e2912]: $5.79
+                          - 'link "500ct Letter Printer Paper White - up&up™: 8.5x11 Inches, 20 lb, 92 Brightness, Ideal for Printing Letters" [ref=f36e2915] [cursor=pointer]':
+                            - /url: /p/500ct-letter-printer-paper-white-up-38-up-8482/-/A-75001545#lnk=sametab
+                          - link "4.7 out of 5 stars with 6944 ratings" [ref=f36e2917] [cursor=pointer]:
+                            - /url: /p/500ct-letter-printer-paper-white-up-38-up-8482/-/A-75001545?type=scroll_to_review_section#lnk=sametab
+                            - generic [ref=f36e2918]:
+                              - generic [ref=f36e2919]: 4.7 out of 5 stars with 6944 ratings
+                              - generic [aria-hidden] [ref=f36e2942]: 6944 reviews
+                        - 'button "Add to cart for 500ct Letter Printer Paper White - up&up™: 8.5x11 Inches, 20 lb, 92 Brightness, Ideal for Printing Letters" [ref=f36e2945] [cursor=pointer]': Add to cart
+                    - listitem [ref=f36e2946]:
+                      - generic [ref=f36e2948]:
+                        - link [ref=f36e2949] [cursor=pointer]:
+                          - /url: /p/recycled-printer-paper-letter-size-20lb-500ct-white-up-38-up-8482/-/A-14471166#lnk=sametab
+                          - heading [level=3] [ref=f36e2951]:
+                            - 'img "Recycled Printer Paper Letter Size 20lb 500ct White - up&up™: 30% Recycled, 8.5x11 Inches, 92 Brightness, 500 Sheets" [ref=f36e2955]'
+                        - generic [ref=f36e2956]:
+                          - button "Highly rated in Paper" [ref=f36e2957] [cursor=pointer]:
+                            - generic [ref=f36e2958]: Highly rated
+                          - generic [ref=f36e2961]: $5.79
+                          - 'link "Recycled Printer Paper Letter Size 20lb 500ct White - up&up™: 30% Recycled, 8.5x11 Inches, 92 Brightness, 500 Sheets" [ref=f36e2964] [cursor=pointer]':
+                            - /url: /p/recycled-printer-paper-letter-size-20lb-500ct-white-up-38-up-8482/-/A-14471166#lnk=sametab
+                          - link "4.5 out of 5 stars with 1559 ratings" [ref=f36e2966] [cursor=pointer]:
+                            - /url: /p/recycled-printer-paper-letter-size-20lb-500ct-white-up-38-up-8482/-/A-14471166?type=scroll_to_review_section#lnk=sametab
+                            - generic [ref=f36e2967]:
+                              - generic [ref=f36e2968]: 4.5 out of 5 stars with 1559 ratings
+                              - generic [aria-hidden] [ref=f36e2991]: 1559 reviews
+                        - 'button "Add to cart for Recycled Printer Paper Letter Size 20lb 500ct White - up&up™: 30% Recycled, 8.5x11 Inches, 92 Brightness, 500 Sheets" [ref=f36e2994] [cursor=pointer]': Add to cart
+                    - listitem [ref=f36e2995]:
+                      - generic [ref=f36e2997]:
+                        - link [ref=f36e2998] [cursor=pointer]:
+                          - /url: /p/750-sheets-letter-printer-paper-white-up-38-up-8482/-/A-14471281#lnk=sametab
+                          - heading [level=3] [ref=f36e3000]:
+                            - 'img "750 Sheets Letter Printer Paper White - up&up™: 8.5x11 Inch, 20 lb, 92 Brightness, Stationery, Office Supplies" [ref=f36e3004]'
+                        - generic [ref=f36e3005]:
+                          - button "Highly rated in Paper" [ref=f36e3006] [cursor=pointer]:
+                            - generic [ref=f36e3007]: Highly rated
+                          - generic [ref=f36e3010]: $8.29
+                          - 'link "750 Sheets Letter Printer Paper White - up&up™: 8.5x11 Inch, 20 lb, 92 Brightness, Stationery, Office Supplies" [ref=f36e3013] [cursor=pointer]':
+                            - /url: /p/750-sheets-letter-printer-paper-white-up-38-up-8482/-/A-14471281#lnk=sametab
+                          - link "4.6 out of 5 stars with 2443 ratings" [ref=f36e3015] [cursor=pointer]:
+                            - /url: /p/750-sheets-letter-printer-paper-white-up-38-up-8482/-/A-14471281?type=scroll_to_review_section#lnk=sametab
+                            - generic [ref=f36e3016]:
+                              - generic [ref=f36e3017]: 4.6 out of 5 stars with 2443 ratings
+                              - generic [aria-hidden] [ref=f36e3040]: 2443 reviews
+                        - 'button "Add to cart for 750 Sheets Letter Printer Paper White - up&up™: 8.5x11 Inch, 20 lb, 92 Brightness, Stationery, Office Supplies" [ref=f36e3043] [cursor=pointer]': Add to cart
+                    - listitem [ref=f36e3044]:
+                      - generic [ref=f36e3046]:
+                        - link [ref=f36e3047] [cursor=pointer]:
+                          - /url: /p/8-5-34-x11-34-300-sheet-premium-inkjet-38-laser-printer-paper-white-astrobrights/-/A-80421337#lnk=sametab
+                          - heading [level=3] [ref=f36e3049]:
+                            - img "8.5\"x11\" 300-Sheet Premium Inkjet & Laser Printer Paper White - Astrobrights" [ref=f36e3053]
+                        - generic [ref=f36e3054]:
+                          - generic [ref=f36e3055]: $4.99
+                          - link "8.5\"x11\" 300-Sheet Premium Inkjet & Laser Printer Paper White - Astrobrights" [ref=f36e3058] [cursor=pointer]:
+                            - /url: /p/8-5-34-x11-34-300-sheet-premium-inkjet-38-laser-printer-paper-white-astrobrights/-/A-80421337#lnk=sametab
+                          - link "4.5 out of 5 stars with 174 ratings" [ref=f36e3060] [cursor=pointer]:
+                            - /url: /p/8-5-34-x11-34-300-sheet-premium-inkjet-38-laser-printer-paper-white-astrobrights/-/A-80421337?type=scroll_to_review_section#lnk=sametab
+                            - generic [ref=f36e3061]:
+                              - generic [ref=f36e3062]: 4.5 out of 5 stars with 174 ratings
+                              - generic [aria-hidden] [ref=f36e3085]: 174 reviews
+                        - button "Add to cart for 8.5\"x11\" 300-Sheet Premium Inkjet & Laser Printer Paper White - Astrobrights" [ref=f36e3088] [cursor=pointer]: Add to cart
+                    - listitem [ref=f36e3089]:
+                      - generic [ref=f36e3091]:
+                        - link [ref=f36e3092] [cursor=pointer]:
+                          - /url: /p/hp-office-paper-500-ct/-/A-13721142#lnk=sametab
+                          - heading [level=3] [ref=f36e3094]:
+                            - 'img "HP Office Paper 500-ct.: 8.5x11 Inch Letter Size, 92 Brightness, 20 lb Printer Paper" [ref=f36e3098]'
+                        - generic [ref=f36e3099]:
+                          - button "Highly rated in Paper" [ref=f36e3100] [cursor=pointer]:
+                            - generic [ref=f36e3101]: Highly rated
+                          - generic [ref=f36e3104]: $7.99
+                          - 'link "HP Office Paper 500-ct.: 8.5x11 Inch Letter Size, 92 Brightness, 20 lb Printer Paper" [ref=f36e3107] [cursor=pointer]':
+                            - /url: /p/hp-office-paper-500-ct/-/A-13721142#lnk=sametab
+                          - link "4.6 out of 5 stars with 585 ratings" [ref=f36e3109] [cursor=pointer]:
+                            - /url: /p/hp-office-paper-500-ct/-/A-13721142?type=scroll_to_review_section#lnk=sametab
+                            - generic [ref=f36e3110]:
+                              - generic [ref=f36e3111]: 4.6 out of 5 stars with 585 ratings
+                              - generic [aria-hidden] [ref=f36e3134]: 585 reviews
+                        - 'button "Add to cart for HP Office Paper 500-ct.: 8.5x11 Inch Letter Size, 92 Brightness, 20 lb Printer Paper" [ref=f36e3137] [cursor=pointer]': Add to cart
+                    - listitem [ref=f36e3138]:
+                      - generic [ref=f36e3140]:
+                        - link [ref=f36e3141] [cursor=pointer]:
+                          - /url: /p/astrobrights-8-5-34-x-11-34-printer-38-copy-paper-300-sheets-28lb-astro-white/-/A-78015957#lnk=sametab
+                          - heading [level=3] [ref=f36e3143]:
+                            - 'img "Astrobrights 8.5\" x 11\" Printer & Copy Paper, 300 Sheets, 28lb - Astro White: 97 Brightness, Uncoated" [ref=f36e3147]'
+                        - generic [ref=f36e3148]:
+                          - generic [ref=f36e3149]: $6.99
+                          - 'link "Astrobrights 8.5\" x 11\" Printer & Copy Paper, 300 Sheets, 28lb - Astro White: 97 Brightness, Uncoated" [ref=f36e3152] [cursor=pointer]':
+                            - /url: /p/astrobrights-8-5-34-x-11-34-printer-38-copy-paper-300-sheets-28lb-astro-white/-/A-78015957#lnk=sametab
+                          - link "4.7 out of 5 stars with 185 ratings" [ref=f36e3154] [cursor=pointer]:
+                            - /url: /p/astrobrights-8-5-34-x-11-34-printer-38-copy-paper-300-sheets-28lb-astro-white/-/A-78015957?type=scroll_to_review_section#lnk=sametab
+                            - generic [ref=f36e3155]:
+                              - generic [ref=f36e3156]: 4.7 out of 5 stars with 185 ratings
+                              - generic [aria-hidden] [ref=f36e3179]: 185 reviews
+                        - 'button "Add to cart for Astrobrights 8.5\" x 11\" Printer & Copy Paper, 300 Sheets, 28lb - Astro White: 97 Brightness, Uncoated" [ref=f36e3182] [cursor=pointer]': Add to cart
+                  - button "Next Page" [ref=f36e3183] [cursor=pointer]
+                - list [ref=f36e3186]:
+                  - listitem [ref=f36e3187]
+                  - listitem [ref=f36e3188]
+                  - listitem [ref=f36e3189]
+                  - listitem [ref=f36e3190]
+                  - listitem [ref=f36e3191]
+          - iframe [ref=f36e3196]:
+            - generic [ref=f68e4]:
+              - link [ref=f68e5] [cursor=pointer]:
+                - /url: https://adclick.g.doubleclick.net/pcs/click?xai=AKAOjsvFGe8xV-HXCCHkcXSK4reEABXiLkoP5DDP6hZkVHVyh7hPdJ3rnONol3T0crdhO5DfD0MNv98DK9trrvol8Ewk47EhLJSmlkLhQ1jc1kZeQkVMJIbwrV1awoNrxkhMOtrOaOyc5oE0yg00XYFyfX_4VB04GxD8oCdgrBzWlXqczHVxeYmj1lB0tG7T12sXn8zJhIt8kZjEA4I5Qo8xwEo3LQcfiq1-XRnruyirThnWttv8pFax_UQJoUvj9lz6paywWc45j-PvY0rCkzJBStJzt4HbtNzorpTVcWGUyfGtFK3-0aGBXmtupl4EI-hhsFc1mbqmrE5BKsIwWPu-Og5SwhD2iV2HZSOCJ_oK0zDkJkBjUO0HMA7kQE5oSwRSXfYeRBsxGkn55pvMoiCw1tUs_ciqCXV_WP_prm7f-w&sai=AMfl-YSOLGywKLICVBc8jrzou1qgftUhp5ZHdCzBj0jhxtB5fw6kKuFVpo4AMW8sZUbtJJSmK7pEVo3CWPs1lWAfkH2NCbbQ7SFHHlVn0Y4h1_MDvH2sS2qKW74jRn_qhfjGyF7Fd0RfsfwyTbQnSAIPrfWA2_8hjyHcsxhg15zKqEhOuGlmfiZdRjRBHC7BTrJtbG7jfDvGeS6jRtietMcVhzZ2xNAnVvEXbNGBZhQa6XuUQzbJMaV1VDk8icqKdZcdpbIXmdBb5H3OaRT3ZLA0Z52XpJqDLf9Hj1Z9wle-dn4rwa7qY0tQrZsBzm-I3NlcWUlEoe1pouTqAxK6WVIboeSxpoZgyZOum02UoWVYj0k5X_Cu46hcbUBIZBqSk5M8vOwz9cUnpa_I5g&sig=Cg0ArKJSzAZK9ZHVnqQ5EAE&fbs_aeid=%5Bgw_fbsaeid%5D&urlfix=1&adurl=https://www.target.com/c/hp-ink-cartridges/-/N-o7sfo
+                - img "Get more pages with the 61XL Shop now Vs. The prior HP 61XL Standard Ink Cartridge" [ref=f68e6]
+              - generic [ref=f68e7]: sponsored
+      - generic [ref=f36e1024]:
+        - heading "Get top deals, latest trends, and more." [level=3] [ref=f36e1025]
+        - generic [ref=f36e1027]:
+          - generic [ref=f36e1029]:
+            - textbox "Email address" [ref=f36e1030]:
+              - /placeholder: " "
+            - generic: Email address
+          - generic [ref=f36e1032]:
+            - alert [ref=f36e1033]
+            - button "Sign up" [ref=f36e1034] [cursor=pointer]
+        - generic [ref=f36e1035]:
+          - link "privacy policy - opens in a new tab" [ref=f36e1036] [cursor=pointer]:
+            - /url: https://www.target.com/c/target-privacy-policy/-/N-4sr7p
+            - text: Privacy policy
+          - link "terms and conditions - opens in a new tab" [ref=f36e1040] [cursor=pointer]:
+            - /url: https://www.target.com/c/terms-conditions/-/N-4sr7l
+            - text: Terms
+      - contentinfo [ref=f36e3197]:
+        - heading "Footer" [level=2] [ref=f36e1044]
+        - link [ref=f36e3200] [cursor=pointer]:
+          - /url: /help/articles/promotions-coupons/current-promotions
+          - paragraph [ref=f36e3201]:
+            - generic [ref=f36e3202]:
+              - superscript [ref=f36e3203]: "*"
+              - text: See details.
+            - text: Restrictions and terms apply. Pricing, promotions, and availability may vary by location and at Target.com
+        - generic [ref=f36e3204]:
+          - navigation "Footer" [ref=f36e3206]:
+            - generic [ref=f36e3207]:
+              - generic [ref=f36e3208]:
+                - heading "About Us" [level=3] [ref=f36e3209]
+                - link "About Target" [ref=f36e3210] [cursor=pointer]:
+                  - /url: https://corporate.target.com/about
+                - link "Careers" [ref=f36e3213] [cursor=pointer]:
+                  - /url: https://corporate.target.com/careers/
+                - link "News & Blog" [ref=f36e3216] [cursor=pointer]:
+                  - /url: https://corporate.target.com/news-features
+                - link "Target Brands" [ref=f36e3219] [cursor=pointer]:
+                  - /url: https://corporate.target.com/about/products-services/Target-Brands
+                - link "Bullseye Shop" [ref=f36e3222] [cursor=pointer]:
+                  - /url: https://www.bullseyeshop.com/
+                - link "Sustainability & Governance" [ref=f36e3225] [cursor=pointer]:
+                  - /url: https://corporate.target.com/sustainability-governance
+                - link "Press Center" [ref=f36e3228] [cursor=pointer]:
+                  - /url: https://corporate.target.com/press
+                - link "Advertise with Us" [ref=f36e3231] [cursor=pointer]:
+                  - /url: https://roundel.com/?utm_source=Referral&utm_medium=Targetwebsite&utm_campaign=advertisewithus
+                - link "Investors" [ref=f36e3234] [cursor=pointer]:
+                  - /url: https://corporate.target.com/investors
+                - link "Affiliates & Partners" [ref=f36e3237] [cursor=pointer]:
+                  - /url: https://partners.target.com/
+                - link "Club Target" [ref=f36e3240] [cursor=pointer]:
+                  - /url: https://www.target.com/c/club-target/-/N-q6m3b
+                - link "Suppliers" [ref=f36e3243] [cursor=pointer]:
+                  - /url: https://corporate.target.com/about/products-services/suppliers#?lnk=fnav_t_spc_1_16
+                - link "TargetPlus" [ref=f36e3246] [cursor=pointer]:
+                  - /url: https://plus.target.com/
+              - generic [ref=f36e3249]:
+                - heading "Help" [level=3] [ref=f36e3250]
+                - link "Target Help" [ref=f36e3251] [cursor=pointer]:
+                  - /url: /help
+                - link "Returns" [ref=f36e3254] [cursor=pointer]:
+                  - /url: /returns
+                - link "Track Orders" [ref=f36e3257] [cursor=pointer]:
+                  - /url: /orders
+                - link "Recalls" [ref=f36e3260] [cursor=pointer]:
+                  - /url: /help/articles/news-safety/product-recalls
+                - link "Contact Us" [ref=f36e3263] [cursor=pointer]:
+                  - /url: /help/contact-us
+                - button "Feedback" [ref=f36e3266] [cursor=pointer]
+                - link "Accessibility" [ref=f36e3268] [cursor=pointer]:
+                  - /url: /help/articles/compliances/accessibility
+                - link "Security & Fraud" [ref=f36e3271] [cursor=pointer]:
+                  - /url: https://security.target.com/
+                - link "Team Member Services" [ref=f36e3274] [cursor=pointer]:
+                  - /url: /c/team-member-services/-/N-4srq9
+                - link "Legal & Privacy" [ref=f36e3277] [cursor=pointer]:
+                  - /url: /guest-privacy/legal-privacy
+              - generic [ref=f36e3280]:
+                - heading "Stores" [level=3] [ref=f36e3281]
+                - link "Find a Store" [ref=f36e3282] [cursor=pointer]:
+                  - /url: /store-locator/find-stores
+                - link "Clinic" [ref=f36e3288] [cursor=pointer]:
+                  - /url: /c/clinic/-/N-54x94
+                - link "Pharmacy" [ref=f36e3292] [cursor=pointer]:
+                  - /url: /c/pharmacy-health/-/N-54y52
+                - link "Target Optical" [ref=f36e3296] [cursor=pointer]:
+                  - /url: /c/optical/-/N-4y8o9
+                - link "More In-Store Services" [ref=f36e3300] [cursor=pointer]:
+                  - /url: /c/services/-/N-oq1wk
+              - generic [ref=f36e3303]:
+                - heading "Services" [level=3] [ref=f36e3304]
+                - link "Target Circle™" [ref=f36e3305] [cursor=pointer]:
+                  - /url: /l/target-circle/-/N-pzno9
+                - link "Target Circle™ Card" [ref=f36e3311] [cursor=pointer]:
+                  - /url: /circlecard
+                - link "Target Circle 360™" [ref=f36e3317] [cursor=pointer]:
+                  - /url: /l/target-circle-360/-/N-2rguk
+                - link "Target App" [ref=f36e3323] [cursor=pointer]:
+                  - /url: /c/target-app/-/N-4th2r
+                - link "Registry" [ref=f36e3327] [cursor=pointer]:
+                  - /url: /gift-registry
+                - link "Same Day Delivery" [ref=f36e3333] [cursor=pointer]:
+                  - /url: /c/same-day-delivery/-/N-bswkz
+                - link "Order Pickup" [ref=f36e3339] [cursor=pointer]:
+                  - /url: /c/order-pickup/-/N-ng0a0
+                - link "Drive Up" [ref=f36e3345] [cursor=pointer]:
+                  - /url: /c/drive-up/-/N-9d42z
+                - link "Free 2-Day Shipping" [ref=f36e3351] [cursor=pointer]:
+                  - /url: /c/free-2-day-shipping/-/N-49cz6
+                - link "Shipping & Delivery" [ref=f36e3357] [cursor=pointer]:
+                  - /url: /c/shipping-order-services/-/N-551st
+                - link "More Services" [ref=f36e3363] [cursor=pointer]:
+                  - /url: /c/services/-/N-oq1wk
+          - 'img "Target: Expect More. Pay Less." [ref=f36e3367]'
+          - generic [ref=f36e3370]:
+            - generic [ref=f36e3371]:
+              - link "Pinterest" [ref=f36e3373] [cursor=pointer]:
+                - /url: https://www.pinterest.com/target
+              - link "Facebook" [ref=f36e3375] [cursor=pointer]:
+                - /url: https://www.facebook.com/target
+              - link "Instagram" [ref=f36e3377] [cursor=pointer]:
+                - /url: https://www.instagram.com/target
+              - link "X" [ref=f36e3379] [cursor=pointer]:
+                - /url: https://www.x.com/Target
+              - link "Youtube" [ref=f36e3381] [cursor=pointer]:
+                - /url: https://www.youtube.com/target
+              - link "Tiktok" [ref=f36e3383] [cursor=pointer]:
+                - /url: https://www.tiktok.com/@target
+            - navigation "Legal" [ref=f36e3384]:
+              - generic [ref=f36e3385]:
+                - link "Terms" [ref=f36e3386] [cursor=pointer]:
+                  - /url: /c/terms-conditions/-/N-4sr7l
+                - link "CA Supply Chain" [ref=f36e3387] [cursor=pointer]:
+                  - /url: /help/articles/compliances/ca-transparency-in-supply-chains-act
+                - link "Privacy Policy" [ref=f36e3388] [cursor=pointer]:
+                  - /url: /c/target-privacy-policy/-/N-4sr7p
+                - link "Your CA Privacy Rights" [ref=f36e3389] [cursor=pointer]:
+                  - /url: /c/your-ca-privacy-rights-/N-m2wjt
+                - link "Your Privacy Choices" [ref=f36e3390] [cursor=pointer]:
+                  - /url: /guest-privacy
+                - link "Interest Based Ads" [ref=f36e3391] [cursor=pointer]:
+                  - /url: /c/interest-based-advertising-privacy-policy/-/N-ztavm
+                - link "Health Privacy Policy" [ref=f36e3392] [cursor=pointer]:
+                  - /url: /c/health-policy/-/N-4gc0k
+                - paragraph [ref=f36e3393]: TM & © 2026 Target Brands, Inc.
+  - alert [ref=f36e1045]: /s?searchTerm=printer+paper

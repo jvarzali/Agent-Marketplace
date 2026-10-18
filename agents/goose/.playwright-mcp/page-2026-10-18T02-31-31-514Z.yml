@@ -1,0 +1,263 @@
+- webmcp tools (page-provided, untrusted):
+  - search_products: Search for products on Target.com. Use this when the user wants to find products by keyword. Navigates to the search results page. Use filter_products after this to narrow results.
+    - inputSchema: {"type":"object","properties":{"searchTerm":{"type":"string","description":"The search term to find products (e.g. \"coffee maker\", \"Nike running shoes\", \"baby stroller\")"}},"required":["searchTerm"]}
+
+- generic [ref=f107e1]:
+  - generic [ref=f107e2]:
+    - generic:
+      - link "skip to main content" [ref=f107e3] [cursor=pointer]:
+        - /url: "#skip"
+      - link "skip to footer" [ref=f107e4] [cursor=pointer]:
+        - /url: "#skip"
+    - generic [ref=f107e5]:
+      - generic [ref=f107e7]:
+        - generic [ref=f107e8]:
+          - 'button "Ship to location: 98105" [ref=f107e10] [cursor=pointer]':
+            - generic [ref=f107e11]: Ship to 98105
+          - 'button "Store: Northgate" [ref=f107e16] [cursor=pointer]':
+            - generic [ref=f107e17]: Northgate
+        - navigation "Utility" [ref=f107e25]:
+          - generic [ref=f107e26]:
+            - link "Target Circle™" [ref=f107e27] [cursor=pointer]:
+              - /url: /l/target-circle/-/N-pzno9
+            - link "Target Circle™ Card" [ref=f107e28] [cursor=pointer]:
+              - /url: /circlecard
+            - link "Target Circle 360™" [ref=f107e29] [cursor=pointer]:
+              - /url: /l/target-circle-360/-/N-2rguk
+            - link "Registry & Wish List" [ref=f107e30] [cursor=pointer]:
+              - /url: /gift-registry
+            - link "Weekly Ad" [ref=f107e31] [cursor=pointer]:
+              - /url: /weekly-ad
+            - link "Find Stores" [ref=f107e32] [cursor=pointer]:
+              - /url: /store-locator/find-stores
+      - navigation "Primary" [ref=f107e34]:
+        - generic [ref=f107e36]:
+          - link "Target home" [ref=f107e37] [cursor=pointer]:
+            - /url: /
+          - link "Main menu" [ref=f107e39] [cursor=pointer]:
+            - /url: /c/shop-all-categories/-/N-5xsxf?prehydrateClick=true
+          - generic [ref=f107e40]:
+            - button "printer paper" [ref=f107e41] [cursor=pointer]
+            - generic [ref=f107e46]:
+              - searchbox "What can we help you find? suggestions appear below" [ref=f107e47]
+              - button "search by voice" [ref=f107e49] [cursor=pointer]
+              - button "search" [ref=f107e50] [cursor=pointer]
+          - link "Account, sign in" [ref=f107e51] [cursor=pointer]:
+            - /url: /account?prehydrateClick=true
+            - generic [ref=f107e55]: Account
+          - link "cart 0 items" [ref=f107e56] [cursor=pointer]:
+            - /url: /cart?prehydrateClick=true
+      - main [active] [ref=f107e60]:
+        - generic [ref=f107e61]:
+          - generic [ref=f107e62]:
+            - navigation "Breadcrumbs" [ref=f107e69]:
+              - list [ref=f107e70]:
+                - listitem [ref=f107e71]:
+                  - link "Target" [ref=f107e72] [cursor=pointer]:
+                    - /url: /
+                - listitem [ref=f107e73]:
+                  - link "School & Office Supplies" [ref=f107e76] [cursor=pointer]:
+                    - /url: /c/school-office-supplies/-/N-5xsxr
+                - listitem [ref=f107e77]:
+                  - link "School Supplies" [ref=f107e80] [cursor=pointer]:
+                    - /url: /c/school-supplies-office/-/N-my2p6
+                - listitem [ref=f107e81]:
+                  - link "Paper" [ref=f107e84] [cursor=pointer]:
+                    - /url: /c/paper-school-supplies-office/-/N-5xsxn
+                - listitem [ref=f107e85]:
+                  - link "Printer Paper" [ref=f107e88] [cursor=pointer]:
+                    - /url: /c/printer-paper-school-supplies-office/-/N-4yjva
+            - generic [ref=f107e89]:
+              - generic [ref=f107e92]:
+                - link "Skip images" [ref=f107e93] [cursor=pointer]:
+                  - /url: "#info-and-fulfillment"
+                - region "Image gallery" [ref=f107e94]:
+                  - generic [ref=f107e95]:
+                    - img "A package of letter-sized printer paper with 500 sheets, labeled as 20# weight and 92 brightness, in a purple and orange design." [ref=f107e100]
+                    - button "view full screen, A package of letter-sized printer paper with 500 sheets, labeled as 20# weight and 92 brightness, in a purple and orange design." [ref=f107e101] [cursor=pointer]
+                    - 'button "sign in to favorite 500ct Letter Printer Paper White - up&up™: 8.5x11 Inches, 20 lb, 92 Brightness, Ideal for Printing Letters to keep tabs on it" [ref=f107e104] [cursor=pointer]'
+                  - button [ref=f107e106] [cursor=pointer]:
+                    - 'img "500ct Letter Printer Paper White - up&#38;up&#8482;: 8.5x11 Inches, 20 lb, 92 Brightness, Ideal for Printing Letters, 2 of 5, play video" [ref=f107e109]'
+                  - generic [ref=f107e113]:
+                    - img "Three sheets of white colored paper fanned out on a light orange surface." [ref=f107e118]
+                    - button "view full screen, Three sheets of white colored paper fanned out on a light orange surface." [ref=f107e119] [cursor=pointer]
+                  - generic [ref=f107e120]:
+                    - img "A ream of letter-sized printer paper in a blue and orange colored package labeled with \"Letter,\" \"20 lb,\" \"92,\" and \"500 sheets.\"" [ref=f107e125]
+                    - button "view full screen, A ream of letter-sized printer paper in a blue and orange colored package labeled with \"Letter,\" \"20 lb,\" \"92,\" and \"500 sheets.\"" [ref=f107e126] [cursor=pointer]
+                  - generic [ref=f107e133]:
+                    - heading "Already have this product?" [level=2] [ref=f107e134]
+                    - heading "Snap a pic for all to see!" [level=2] [ref=f107e135]
+                    - button "click to upload your image" [ref=f107e137] [cursor=pointer]: Upload photo
+              - generic [ref=f107e140]:
+                - list [ref=f107e143]:
+                  - listitem [ref=f107e144]:
+                    - link "Shop all up&up" [ref=f107e145] [cursor=pointer]:
+                      - /url: /b/up/-/N-q643lepiiob
+                - 'heading "500ct Letter Printer Paper White - up&up™: 8.5x11 Inches, 20 lb, 92 Brightness, Ideal for Printing Letters" [level=1] [ref=f107e148]'
+                - generic [ref=f107e151]:
+                  - link [ref=f107e152]:
+                    - button "Average customer rating is 4.7 out of 5 stars with 6944 reviews." [ref=f107e153] [cursor=pointer]:
+                      - generic [ref=f107e154]: 4.68 out of 5 stars
+                      - generic [ref=f107e162]:
+                        - text: 6,944
+                        - img "Chevron right" [ref=f107e164]
+                  - link "29 Questions" [ref=f107e166] [cursor=pointer]:
+                    - /url: "#"
+                - generic [ref=f107e169]:
+                  - button [ref=f107e171] [cursor=pointer]:
+                    - generic [ref=f107e173]:
+                      - img "Pumpkin" [ref=f107e175]
+                      - text: Bestseller
+                  - generic [ref=f107e178]:
+                    - img "Thumbs up" [ref=f107e180]
+                    - text: Rarely returned
+                - generic [ref=f107e184]:
+                  - generic [ref=f107e185]: $5.79
+                  - button "More info about pricing" [ref=f107e189] [cursor=pointer]
+                - region "Fulfillment" [ref=f107e191]:
+                  - generic [ref=f107e192]:
+                    - generic [ref=f107e193]:
+                      - button "Pickup Ready within 2 hours, selected" [ref=f107e194] [cursor=pointer]:
+                        - generic [ref=f107e195]: Pickup
+                        - generic [ref=f107e197]: Ready within 2 hours
+                      - button "Delivery Check availability," [ref=f107e199] [cursor=pointer]:
+                        - generic [ref=f107e200]: Delivery
+                        - generic [ref=f107e202]: Check availability
+                      - button "Shipping Arrives by Wed, Oct 21," [ref=f107e204] [cursor=pointer]:
+                        - generic [ref=f107e205]: Shipping
+                        - generic [ref=f107e207]: Arrives by Wed, Oct 21
+                    - generic [ref=f107e210]:
+                      - generic [ref=f107e211]:
+                        - generic [ref=f107e212]: Pickup at Northgate
+                        - generic [ref=f107e213]: Ready within 2 hours
+                        - generic [ref=f107e214]: Always free
+                      - button "Change" [ref=f107e215] [cursor=pointer]
+                - generic [ref=f107e218]:
+                  - button "Add to cart" [ref=f107e221] [cursor=pointer]
+                  - 'button "Sign in to buy now for 500ct Letter Printer Paper White - up&#38;up&#8482;: 8.5x11 Inches, 20 lb, 92 Brightness, Ideal for Printing Letters" [ref=f107e222] [cursor=pointer]': Sign in to buy now
+                - generic [ref=f107e227]:
+                  - img "Free & easy returns" [ref=f107e234]
+                  - generic [ref=f107e236]:
+                    - generic [ref=f107e237]: Free & easy returns
+                    - generic [ref=f107e238]: Return this item by mail or in store within 365 days for a full refund.
+                - generic [ref=f107e241]:
+                  - generic [ref=f107e244]: Eligible for registries and wish lists
+                  - button "sign in to add item to registry and wish list" [ref=f107e246] [cursor=pointer]:
+                    - generic [ref=f107e247]: Sign in
+                - button "Add to List" [ref=f107e249] [cursor=pointer]:
+                  - generic [ref=f107e250]: Add to list
+                - generic [ref=f107e252]:
+                  - link "Save 5% every day With Target Circle™ Card (restrictions apply), Learn more about Target Circle™ Card" [ref=f107e253] [cursor=pointer]:
+                    - /url: /circlecard?cpng=redcard9235
+                    - generic [ref=f107e254]:
+                      - generic [ref=f107e260]:
+                        - generic [ref=f107e261]: Save 5% every day
+                        - generic [ref=f107e262]: With Target Circle™ Card (restrictions apply)
+                      - img "Info" [ref=f107e265]
+                  - button "Pay in 4 Pay in 4 interest-free payments on purchases of $10-$2,000, Learn more about PayPal" [ref=f107e267] [cursor=pointer]:
+                    - generic [ref=f107e268]:
+                      - generic [ref=f107e274]:
+                        - generic [ref=f107e275]: Pay in 4
+                        - generic [ref=f107e276]: Pay in 4 interest-free payments on purchases of $10-$2,000
+                      - img "Info" [ref=f107e279]
+                  - button "Pay over time With Affirm on orders over $50, Learn more about Affirm" [ref=f107e281] [cursor=pointer]:
+                    - generic [ref=f107e282]:
+                      - generic [ref=f107e288]:
+                        - generic [ref=f107e289]: Pay over time
+                        - generic [ref=f107e290]: With Affirm on orders over $50
+                      - img "Info" [ref=f107e293]
+          - generic [ref=f107e295]:
+            - generic [ref=f107e297]:
+              - heading "About this item" [level=2] [ref=f107e298]
+              - generic [ref=f107e300]:
+                - generic [ref=f107e301]:
+                  - button [expanded] [ref=f107e302] [cursor=pointer]:
+                    - heading "Details" [level=3] [ref=f107e304]
+                  - generic [ref=f107e308]:
+                    - generic [ref=f107e311]:
+                      - generic [ref=f107e313]:
+                        - heading "Highlights" [level=4] [ref=f107e314]
+                        - list [ref=f107e315]:
+                          - listitem [ref=f107e316]:
+                            - generic [ref=f107e317]: Packaging may vary. Same trusted quality
+                          - listitem [ref=f107e319]:
+                            - generic [ref=f107e320]: Pack includes 500 sheets of white letter size printer paper — great for the home or office
+                          - listitem [ref=f107e322]:
+                            - generic [ref=f107e323]: Multipurpose letter size paper is great for everyday use
+                          - listitem [ref=f107e325]:
+                            - generic [ref=f107e326]: Bright white paper provides better contrast and color reproduction
+                          - listitem [ref=f107e328]:
+                            - generic [ref=f107e329]: Perfect for printing reports, presentations, school projects and more
+                          - listitem [ref=f107e331]:
+                            - generic [ref=f107e332]: Multipurpose printer paper will work in all home printers
+                      - generic [ref=f107e334]:
+                        - heading "Description" [level=4] [ref=f107e335]
+                        - generic [ref=f107e336]: "Solve all your printing needs with this 500-Count Letter Printer Paper from up&up™. A perfect choice for the home or office, this ream of letter size printer paper is great for fulfilling your everyday printing needs. The multipurpose copy paper has a smooth finish and is 92 bright white for better contrast and color reproduction. Whether you're looking to impress your clients in a business meeting with a striking presentation, print out your family recipes so they're easy to read or make flyers for your next event, this choice of premium copy paper makes printing easy and effective.up&up™: We believe making smart choices for the people, places, and pets in your life should be easy and affordable. And, having quality you can trust should be a given. That’s why you can count on our promise – caring for your everyday in every way.Satisfaction guaranteed – Love it or your money back."
+                    - button "Show more" [ref=f107e340] [cursor=pointer]
+                - button [ref=f107e342] [cursor=pointer]:
+                  - heading "Specifications" [level=3] [ref=f107e344]
+                - button [ref=f107e346] [cursor=pointer]:
+                  - heading "Shipping & Returns" [level=3] [ref=f107e348]
+                - button [ref=f107e350] [cursor=pointer]:
+                  - heading "Q&A (29)" [level=3] [ref=f107e352]
+            - region [ref=f107e353]:
+              - heading "Additional product information and recommendations" [level=2] [ref=f107e354]
+              - button "Load all content at once" [ref=f107e355] [cursor=pointer]
+              - generic [ref=f107e356]:
+                - generic [ref=f107e358]:
+                  - iframe [ref=f107e362]:
+                    - link [ref=f116e5] [cursor=pointer]:
+                      - /url: https://adclick.g.doubleclick.net/pcs/click?xai=AKAOjsvHSTCaZnCeONJ2HZj80FxXm9Y6Q7oLKOAASf2wrt-dEpMNVzPoWi618yErnHFxHLZ3fuBiEECjgSGuYhK0lJCfacE9nAqKl7Inu5pBGwfWyHLht6PP1Yww0Pln5TZU9K4ckyObZpV42bcOgZRXntNMFNkaNVIt4UUSJVFnn1kWjzu40a8jFDlDzNUQL3O3nGDD6AgwEvRnWtCcp5v3860Ua-vDCziwHL1J17Vew5bemv3K-w-Jq2OtrLWiLrp_0yRans5I1jiyQ0MNxXi4xKQcmtqimB-LvAxTYXU6sJ6OokhPrEVhRgVKfJQOHTZe2qYuDQw7Wcb5ILZLdgg0mSP9lP-rBfP3oX_ULD8F7b1R4UShedltK6oWfF2lyIHq0Dwy0jBxDmq4xc3F0RfUfLTqDdoLtKw&sai=AMfl-YSRkXjSaEr3UHWb8q1Xemqd-QBQ51uyctg1vClN817H8EFURlSZouCtPv_KNuatFKZLy66LA3gHMVI-s9wdrPU88mrQt_0ZssunKPPxu3nXJ0ba0rcpqybPFRrUd-0ggbiH3hr-QcA3KvN18oW_hVcLm8TXuLDDOp6altCMM0jQUD89TWSNCdlxbFHZncPz1kB9c0oLZISJtEgunw_bSdYTupo4IFrX1cfvYa0NRkXvkOlWXqhTEgmzeAro_44X6WAbe-shFA3lUtHMWVIjgOw7IvwkYGezNoUKV61mut01_NWG0B0El7RMqqro3-LwJlkGzTKovbhYnaPDAjOMZPW5TbWktTRjqatPv8iQZT0e51mVLf0U1lyXaMj7SRrW2c1wfakeEPxQvw&sig=Cg0ArKJSzMklAee3M6SdEAE&fbs_aeid=%5Bgw_fbsaeid%5D&urlfix=1&adurl=https://www.target.com/c/fall-foods/-/N-4sjnv
+                      - img "Shop sweet, spiced & fresh Delivered same day." [ref=f116e7]
+                  - paragraph [ref=f107e363]: Sponsored
+                - link "Skip to next section" [ref=f107e367] [cursor=pointer]:
+                  - /url: "#skip"
+                - link "Skip to next section" [ref=f107e420] [cursor=pointer]:
+                  - /url: "#skip"
+                - link "Skip to next section" [ref=f107e473] [cursor=pointer]:
+                  - /url: "#skip"
+                - link "Skip to next section" [ref=f107e526] [cursor=pointer]:
+                  - /url: "#skip"
+                - link "Skip to next section" [ref=f107e579] [cursor=pointer]:
+                  - /url: "#skip"
+                - generic [ref=f107e630]:
+                  - heading "Related categories" [level=3] [ref=f107e631]
+                  - list [ref=f107e635]:
+                    - listitem [ref=f107e636]
+                    - listitem [ref=f107e638]
+                    - listitem [ref=f107e640]
+                    - listitem [ref=f107e642]
+                    - listitem [ref=f107e644]
+                    - listitem [ref=f107e646]
+                - link "Skip to next section" [ref=f107e651] [cursor=pointer]:
+                  - /url: "#skip"
+                - link "Skip to next section" [ref=f107e704] [cursor=pointer]:
+                  - /url: "#skip"
+                - heading "Guest ratings & reviews" [level=3] [ref=f107e757]
+                - heading "Disclaimer" [level=3] [ref=f107e784]
+                - iframe [ref=f107e792]:
+                  - generic [ref=f137e4]:
+                    - link [ref=f137e5] [cursor=pointer]:
+                      - /url: https://adclick.g.doubleclick.net/pcs/click?xai=AKAOjsuDfVkVjzbSqNPRn1eUYmkO9UUNdGkO4_RE7g1-ppLU3LYno1rcx5x_itjyiGVh5L_6L3VTQWq17QgaYIHFm68Elby_Lnr0KyVAl5DUR4UzjTEj3R6fNGQcr0l-oj0cnz8a0qjDL58QwSP69fn0sw2Dg0sgrnwsWnhngoK1vafsvE0lIQOssedOxJfTcQQkZGmF61ZiEouSmGeUKHrj_7Nk206IGOMuLtAnRt8Qf5bQ4bh8biOE_duH_hE1amDYdcDbR3lOAvWQhUOiwul9VWKIDKxDqg0N6x7Ets7V72b7seLDYKxsK-fdeZFaSqZW9k-ELwpEh5Y1emkx1eWiO8VaSHQQznZsjZAiBEP_iJVAaYulDY4tOQUpdEgiQGPrIphxFV_L0_aRrtnz97y8hAqhIuCE1K2GB58btTMzGVX1fgrzFMRsgJ1s8uKn&sai=AMfl-YSzRLBKc5DmJDTnlxT1Q1A0JF4YfErYHFf9ygeZiY-gGX2fa3ggqSUaDE_sLA_ZrG2JsqTb3g82PaHRvlFUK2Cs1bKh6bgc5u2nR7P3i7jV0NQAr0YQjk09EWr3COS_wYXr7_YY4V7RgocUFa1oDtH_l_AhnvmXsFIDJt8gTGWybTlmEh4d3bIJW05FWOMNu1vsYB9Q988QwQ8rwEhWcwS-6cuonY0vU-ZB0iXnDCimvPEpUn_k0iA-XmpPGv2bMcg53VRF1QeBusejoZJDHh2R9ocFfBU4-V2mUYj9W-xl4YMQtX8UqdS5aHNlmqQgYlh9Up3o4ZRDXuKWJh5IdG8DAO98wWs8B2HRFWwWpA-GzPzQs28tq_kRkYAKXdNIuiqYpGqJ_gObSw&sig=Cg0ArKJSzMhtybYKrSIUEAE&fbs_aeid=%5Bgw_fbsaeid%5D&urlfix=1&adurl=https://www.target.com/c/fall-foods/-/N-4sjnv
+                      - img "Shop sweet, spiced & fresh Delivered same day." [ref=f137e6]
+                    - generic [ref=f137e7]: sponsored
+      - generic [ref=f107e794]:
+        - heading "Get top deals, latest trends, and more." [level=3] [ref=f107e795]
+        - generic [ref=f107e797]:
+          - generic [ref=f107e799]:
+            - textbox "Email address" [ref=f107e800]:
+              - /placeholder: " "
+            - generic: Email address
+          - generic [ref=f107e802]:
+            - alert [ref=f107e803]
+            - button "Sign up" [ref=f107e804] [cursor=pointer]
+        - generic [ref=f107e805]:
+          - link "privacy policy - opens in a new tab" [ref=f107e806] [cursor=pointer]:
+            - /url: https://www.target.com/c/target-privacy-policy/-/N-4sr7p
+            - text: Privacy policy
+          - link "terms and conditions - opens in a new tab" [ref=f107e810] [cursor=pointer]:
+            - /url: https://www.target.com/c/terms-conditions/-/N-4sr7l
+            - text: Terms
+      - contentinfo:
+        - heading "Footer" [level=2] [ref=f107e814]
+  - alert [ref=f107e815]

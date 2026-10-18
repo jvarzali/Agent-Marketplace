@@ -6,12 +6,15 @@ import { bearer, handleMcpRequest } from "@agent-wallet/mcp";
  *
  *   GET  /api/v1/agent/policy
  *   GET  /api/v1/agent/budget
+ *   GET  /api/v1/agent/shipping            name, email, phone, address for checkout
  *   GET  /api/v1/purchases                 recent requests
  *   POST /api/v1/purchases                 request_purchase
  *   GET  /api/v1/purchases/:id             get_purchase_status (credential once)
  *   POST /api/v1/purchases/:id/status      same, with body { current_cart } to confirm the cart
+ *   POST /api/v1/purchases/:id/wait        { seconds? } waits for the owner's decision (max 120s)
  *   POST /api/v1/purchases/:id/cancel      { reason? }
  *   POST /api/v1/purchases/:id/result      { success, order_reference?, amount_charged?, notes? }
+ *   POST /api/v1/purchases/:id/fill-payment  wallet types the approved card into the checkout page
  *   POST /api/mcp                          MCP (Streamable HTTP)
  *   POST /api/webhooks/issuer              card issuer webhooks (signature-verified)
  *   GET|POST /api/cron/expire              expiry sweep (Authorization: Bearer $CRON_SECRET)
@@ -57,12 +60,13 @@ async function route(wallet: Wallet, agent: AuthedAgent, req: Request, path: str
   const m = req.method;
   if (path === "/api/v1/agent/policy" && m === "GET") return json(200, await p.getMyPolicy(agent));
   if (path === "/api/v1/agent/budget" && m === "GET") return json(200, await p.getBudget(agent));
+  if (path === "/api/v1/agent/shipping" && m === "GET") return json(200, await p.getShippingDetails(agent));
   if (path === "/api/v1/purchases" && m === "GET") return json(200, { purchases: await p.listMyPurchases(agent, Number(new URL(req.url).searchParams.get("limit") ?? 20)) });
   if (path === "/api/v1/purchases" && m === "POST") {
     const v = await p.requestPurchase(agent, await body(req));
     return json(v.status === "denied" ? 200 : 201, v);
   }
-  const match = /^\/api\/v1\/purchases\/([A-Za-z0-9_-]{1,64})(?:\/(status|cancel|result))?$/.exec(path);
+  const match = /^\/api\/v1\/purchases\/([A-Za-z0-9_-]{1,64})(?:\/(status|cancel|result|fill-payment|wait))?$/.exec(path);
   if (match) {
     const [, id, action] = match as unknown as [string, string, string | undefined];
     if (!action && m === "GET") return noStore(json(200, await p.getPurchaseStatus(agent, id)));
@@ -75,6 +79,11 @@ async function route(wallet: Wallet, agent: AuthedAgent, req: Request, path: str
       return json(200, await p.cancelPurchase(agent, id, typeof b?.reason === "string" ? b.reason : undefined));
     }
     if (action === "result" && m === "POST") return json(200, await p.reportPurchaseResult(agent, id, await body(req)));
+    if (action === "wait" && m === "POST") {
+      const b = (await body(req)) as { seconds?: unknown };
+      return noStore(json(200, await p.waitForDecision(agent, id, typeof b?.seconds === "number" ? b.seconds : 60)));
+    }
+    if (action === "fill-payment" && m === "POST") return noStore(json(200, await p.fillPaymentDetails(agent, id)));
   }
   return error(404, "not_found", "No such endpoint.");
 }

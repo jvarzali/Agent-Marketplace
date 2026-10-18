@@ -1,0 +1,6 @@
+[     960ms] [WARNING] [GPT] Slot.getTargeting is deprecated, use Slot.getConfig('targeting') instead.
+https://goo.gle/gpt-message#201 @ https://securepubads.g.doubleclick.net/pagead/managed/js/gpt/m202610120101/pubads_impl.js:22
+[    1177ms] [LOG] Error @ https://assets.targetimg1.com/ssx/ssx.mod.js?seed=AEA02EyhAQAAN9pXwWVZDqLnaHtMZoZVdA8o8W-W2NEw1hCpc8AoU35tiBbF&X-GyJwza5Z--z=q:0
+[    1178ms] [LOG] Error @ https://assets.targetimg1.com/ssx/ssx.mod.js?seed=AEA02EyhAQAAN9pXwWVZDqLnaHtMZoZVdA8o8W-W2NEw1hCpc8AoU35tiBbF&X-GyJwza5Z--z=q:0
+[    1332ms] [LOG] Error @ https://assets.targetimg1.com/ssx/ssx.mod.js?seed=AEA02EyhAQAAN9pXwWVZDqLnaHtMZoZVdA8o8W-W2NEw1hCpc8AoU35tiBbF&X-GyJwza5Z--z=q:0
+[    1422ms] [LOG] Error @ https://assets.targetimg1.com/ssx/ssx.mod.js?seed=AEA02EyhAQAAN9pXwWVZDqLnaHtMZoZVdA8o8W-W2NEw1hCpc8AoU35tiBbF&X-GyJwza5Z--z=q:0

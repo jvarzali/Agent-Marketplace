@@ -1,4 +1,6 @@
 import type { Db, Prisma } from "@agent-wallet/db";
+import type { CardFiller } from "../checkout/browser-fill";
+import type { ShopperProfile } from "./shopper";
 import type { ItemClassifier } from "../classifier/types";
 import type { CardIssuer } from "../issuer/types";
 import { redact, type Logger } from "../logger";
@@ -18,6 +20,19 @@ export interface WalletConfig {
   pendingTtlMinutes: number;
   /** Clean purchases in a row before a trust suggestion is offered. */
   trustMinStreak: number;
+  /**
+   * "agent": get_purchase_status hands the agent the card once, and it types it in.
+   * "browser": the agent never gets the number; it calls fill_payment_details and the wallet
+   * types the card into the checkout page itself (needs `cardFiller`).
+   */
+  cardDelivery: "agent" | "browser";
+  /**
+   * Name, email, phone and shipping address for checkout forms (get_shipping_details).
+   * Unset: the built-in fake profile when cards are test cards, otherwise none.
+   */
+  shopper?: ShopperProfile | null;
+  /** The made-up profile used with test cards (TEST_SHOPPER, with TEST_SHOPPER_* overrides). */
+  testShopper?: ShopperProfile;
 }
 
 export const defaultConfig: WalletConfig = {
@@ -26,6 +41,7 @@ export const defaultConfig: WalletConfig = {
   credentialTtlMinutes: 30,
   pendingTtlMinutes: 24 * 60,
   trustMinStreak: 10,
+  cardDelivery: "agent",
 };
 
 export interface WalletDeps {
@@ -38,6 +54,8 @@ export interface WalletDeps {
   logger: Logger;
   now: () => Date;
   config: WalletConfig;
+  /** Types issued cards into the agent's checkout page (fill_payment_details). */
+  cardFiller?: CardFiller;
 }
 
 export type WalletErrorCode =

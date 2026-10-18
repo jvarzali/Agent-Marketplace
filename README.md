@@ -31,7 +31,10 @@ Human ──chat──▶ Agent (Claude, ChatGPT, …)
 | 5. Dashboard (`apps/web`): email sign-in, approvals, agents, freeze, policy editor, activity, onboarding, trust suggestions | ✅ wired to the backend |
 | 6. Notifications: email (Resend or console) and web push (VAPID or console) | ✅ (push toggle in the dashboard header) |
 | 7. Trust suggestions | ✅ |
-| 8. Stripe Issuing adapter + webhook handling | ✅ written against current Stripe docs; **not yet run against a live Stripe account** |
+| 8. Stripe Issuing adapter + webhook handling | ✅ unit-tested with Stripe's real webhook signing; setup script and demo store for test mode; **not yet run against a real Stripe account** |
+| 8a. Demo store (`/shop`) for full agent checkouts with test cards (mock or Stripe test mode) | ✅ |
+| 8c. Wallet enters the card in the agent's browser (`fill_payment_details`) | ✅ tested in a real headless Chrome and end to end on the demo store; real stores' card forms not yet tried |
+| 8b. Privacy.com adapter (real cards, personal use) | ✅ written against Privacy's API docs and tested against a fake; **not yet run against a live Privacy account** |
 | 9. Browser extension | later |
 
 ## Repository layout
@@ -82,11 +85,61 @@ All of them are documented in [`.env.example`](.env.example). The important ones
 | `DATABASE_URL` | Postgres connection |
 | `AUTH_SECRET` | signs dashboard session cookies |
 | `APP_URL` | dashboard URL, used in notification links |
-| `CARD_ISSUER` | `mock` (default) or `stripe` |
+| `CARD_ISSUER` | `mock` (default), `privacy` or `stripe` |
+| `SHOPPER_NAME`, `SHOPPER_EMAIL`, `SHOPPER_PHONE`, `SHOPPER_ADDRESS_*` | checkout details given to agents; unset = a made-up person with test cards (agents aren't told), none with real cards |
+| `TEST_SHOPPER_NAME`, `TEST_SHOPPER_EMAIL`, `TEST_SHOPPER_PHONE` | replace the made-up person's reserved-looking email/phone with ones you own |
+| `CARD_DELIVERY` | `agent` (default: agent gets the card once) or `browser` (wallet types it into the checkout page) |
+| `AGENT_BROWSER_CDP_URL`, `AGENT_BROWSER_PAYMENT_HOSTS` | shopping browser for `browser` delivery |
+| `PRIVACY_API_KEY`, `PRIVACY_CARDHOLDER_NAME`, `PRIVACY_BILLING_*` | Privacy.com cards |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_ISSUING_CARDHOLDER_ID` | Stripe Issuing |
 | `RESEND_API_KEY`, `EMAIL_FROM` | email; empty = print to console |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | web push; empty = log to console |
 | `CRON_SECRET` | protects `/api/cron/expire` |
+
+### Card delivery: the wallet enters the card (`CARD_DELIVERY="browser"`)
+
+By default an approved agent receives the single-use card once and types it in. With
+`CARD_DELIVERY="browser"`, the agent never gets the number: it opens the payment step and calls
+`fill_payment_details` (REST: `POST /api/v1/purchases/:id/fill-payment`), and the wallet types the
+card into the page through the same Chrome the agent drives (`agents/browser/start-chrome.sh`,
+remote debugging on 127.0.0.1:9222; point Playwright MCP at it with `--cdp-endpoint`). The wallet:
+
+- only uses a tab on the approved store's domain, and only if the page shows the approved total;
+- only types into the page itself or iframes of known payment providers (Shopify, Stripe,
+  Braintree, Adyen, Square, PayPal...; extend with `AGENT_BROWSER_PAYMENT_HOSTS`);
+- logs each fill (`credential.filled`, with the page and fields, never the number) and stops
+  after 5 fills per card.
+
+The number is still in the page after it's typed, so a browser tool that reads field values could
+show it to the model. The point is that the model never handles it or types it, and the wallet
+decides where it goes. This needs the wallet and the browser on the same machine (local use).
+
+### Stripe Issuing in test mode (free, no Issuing application)
+
+Test mode needs only a free Stripe account. Charges are simulated, but they go through Stripe
+and your rules exactly like real ones, including the real-time approve/decline.
+
+1. Stripe dashboard → switch to **test mode** → Issuing → **Get started**. Then Balances →
+   Issuing balance → **Add to balance** (any amount of test money, e.g. $1,000).
+2. Put the test secret key in `.env`: `STRIPE_SECRET_KEY="sk_test_..."`.
+3. `npm run stripe:setup` creates the test cardholder and writes `STRIPE_ISSUING_CARDHOLDER_ID`
+   and `CARD_ISSUER="stripe"` to `.env`.
+4. Install the Stripe CLI (`brew install stripe/stripe-cli/stripe`, then `stripe login`) and keep this
+   running:
+   ```bash
+   stripe listen --events issuing_authorization.request,issuing_authorization.created,issuing_transaction.created \
+     --forward-to localhost:3000/api/webhooks/issuer
+   ```
+   Put the `whsec_...` it prints in `.env` as `STRIPE_WEBHOOK_SECRET`, then restart `npm run dev`.
+5. Shop at **http://shop.localhost:3000/shop** (add `shop.localhost` to the agent's stores).
+   The agent requests approval with the checkout total, you approve, and it pays with its
+   single-use test card. The store charges the card through Stripe; Stripe asks the wallet; the
+   wallet approves and the purchase shows as completed in Activity.
+6. Guardrail tests: `/shop?mode=overcharge` charges $15 more than the approved total,
+   `/shop?mode=wrong-merchant` charges as a different business. Both are declined and
+   raise a security alert. Paying twice with the same card is declined too.
+
+The demo store also works with `CARD_ISSUER="mock"`, with no Stripe account at all.
 
 ## Tests
 
@@ -107,6 +160,9 @@ npm run typecheck
 The integration test database schema is **dropped and recreated on each run**.
 
 ## Connecting an agent
+
+**A free agent that shops in a real browser:** see [`agents/goose/README.md`](agents/goose/README.md)
+(Goose + Gemini's free tier + Playwright, paying only through this wallet with Privacy.com cards).
 
 Create an agent in the dashboard (or use a key printed by `db:seed`). The key is shown once.
 
@@ -165,8 +221,11 @@ share one process.
 |---|---|
 | `get_my_policy` | The rules, in plain language, so the agent plans carts that pass |
 | `get_budget` | Remaining amounts per rolling window, orders left today, largest order that fits |
+| `get_shipping_details` | Name, email, phone and shipping address for checkout forms: a made-up person with test cards (the agent isn't told), otherwise the owner's `SHOPPER_*` settings |
 | `request_purchase` | Submit the final cart → `denied` (with reasons), `pending_approval`, or `approved` |
 | `get_purchase_status` | Status; when approved, the single-use card **exactly once**. Optional `current_cart` re-checks the cart hash |
+| `wait_for_decision` | Waits (up to 120 s) for the owner to approve or deny a pending request, so the agent never has to ask the user |
+| `fill_payment_details` | The wallet types the approved card into the checkout page open in the agent's browser (`CARD_DELIVERY="browser"`) |
 | `cancel_purchase` | Abandon; any issued card is cancelled |
 | `report_purchase_result` | Order number / failure; a failure cancels the card |
 | `list_my_purchases` | Recent requests (never card details) |
@@ -304,8 +363,16 @@ Defaults I picked where the brief left room. Change any of them freely.
 
 ## Open items / things I'm unsure about
 
-- Stripe adapter is untested against a real account (needs Issuing access). PAN retrieval
-  requires Stripe sign-off.
+- Privacy.com has no real-time authorization hook for this kind of account: charges are checked
+  right after they happen (from its webhook), and a mismatch closes the card. The single-use card
+  and its cap are what stop a bad charge up front. Privacy's spend limit is whole dollars, so the
+  cap is the approved total rounded up; the exact amount is checked on the webhook.
+
+- The Stripe adapter is tested against a fake client with Stripe's real webhook signing, not yet
+  against a real account. In test mode the full card number is available; in live mode,
+  retrieving it needs Stripe's sign-off (PCI). `stripe listen` relaying the real-time
+  authorization answer is expected from Stripe's docs but unverified here; if test charges are
+  declined with `webhook_timeout`, point a dashboard webhook endpoint at a tunnel URL instead.
 - Merchant-name matching for authorizations will need tuning with real descriptors.
 - The mock issuer is in-memory: fine for dev and tests, not shared across processes.
 - No LLM classifier implementation yet. Items the rules don't know go to human approval.

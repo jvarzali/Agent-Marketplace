@@ -4,6 +4,8 @@ export default defineConfig({
   test: {
     projects: [
       { test: { name: "unit", include: ["test/unit/**/*.test.ts"] } },
+      // Card filling in a real (headless) Chrome; skipped when Chrome isn't installed.
+      { test: { name: "browser", include: ["test/browser/**/*.test.ts"], testTimeout: 30_000 } },
       {
         test: {
           name: "integration",

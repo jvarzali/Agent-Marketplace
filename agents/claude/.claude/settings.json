@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": ["mcp__agentwallet", "mcp__playwright"],
+    "deny": [
+      "Bash", "Read", "Edit", "Write", "NotebookEdit", "Glob", "Grep", "WebFetch", "WebSearch", "Agent", "Task",
+      "mcp__claude-in-chrome",
+      "mcp__Claude_Browser",
+      "mcp__computer-use",
+      "mcp__remote-devices"
+    ]
+  },
+  "enableAllProjectMcpServers": false
+}

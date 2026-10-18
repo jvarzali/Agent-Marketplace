@@ -1,7 +1,9 @@
 import { getDb, type Db } from "@agent-wallet/db";
+import { CdpCardFiller, type CardFiller } from "../checkout/browser-fill";
 import { RuleBasedClassifier } from "../classifier/rules";
 import type { ItemClassifier } from "../classifier/types";
 import { MockCardIssuer } from "../issuer/mock";
+import { PrivacyCardIssuer } from "../issuer/privacy";
 import { StripeIssuingCardIssuer } from "../issuer/stripe";
 import type { CardIssuer } from "../issuer/types";
 import { consoleLogger, type Logger } from "../logger";
@@ -13,6 +15,7 @@ import { IssuerEventService } from "./issuer-events";
 import { expireStale } from "./maintenance";
 import { OwnerService } from "./owner";
 import { PurchaseService } from "./purchases";
+import { shopperFromEnv, testShopperFromEnv } from "./shopper";
 import { TrustService } from "./trust";
 
 export interface Wallet {
@@ -36,6 +39,7 @@ export interface WalletOverrides {
   logger?: Logger;
   now?: () => Date;
   config?: Partial<WalletConfig>;
+  cardFiller?: CardFiller;
 }
 
 export function createWallet(o: WalletOverrides = {}): Wallet {
@@ -50,6 +54,7 @@ export function createWallet(o: WalletOverrides = {}): Wallet {
     logger,
     now: o.now ?? (() => new Date()),
     config: { ...defaultConfig, ...o.config },
+    ...(o.cardFiller ? { cardFiller: o.cardFiller } : {}),
   };
   let owner: OwnerService;
   const trust = new TrustService(deps, () => owner);
@@ -73,6 +78,9 @@ const env = (k: string) => {
 export function createWalletFromEnv(o: WalletOverrides = {}): Wallet {
   const logger = o.logger ?? consoleLogger();
 
+  // The owner's real checkout details (SHOPPER_*), also used as the name and billing address on cards.
+  const shopper = o.config?.shopper === undefined ? shopperFromEnv(env) : o.config.shopper;
+
   let issuer = o.issuer;
   if (!issuer) {
     const provider = env("CARD_ISSUER") ?? "mock";
@@ -81,9 +89,38 @@ export function createWalletFromEnv(o: WalletOverrides = {}): Wallet {
       const webhookSecret = env("STRIPE_WEBHOOK_SECRET");
       const cardholder = env("STRIPE_ISSUING_CARDHOLDER_ID");
       if (!secretKey || !webhookSecret || !cardholder) throw new Error("CARD_ISSUER=stripe requires STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET and STRIPE_ISSUING_CARDHOLDER_ID");
-      issuer = new StripeIssuingCardIssuer({ secretKey, webhookSecret, resolveCardholder: async () => cardholder });
+      issuer = new StripeIssuingCardIssuer({
+        secretKey,
+        webhookSecret,
+        resolveCardholder: async () => cardholder,
+        ...(env("STRIPE_FINANCIAL_ACCOUNT") ? { financialAccount: env("STRIPE_FINANCIAL_ACCOUNT")! } : {}),
+      });
+    } else if (provider === "privacy") {
+      const apiKey = env("PRIVACY_API_KEY");
+      const cardholderName = env("PRIVACY_CARDHOLDER_NAME") ?? shopper?.name;
+      if (!apiKey || !cardholderName) throw new Error("CARD_ISSUER=privacy requires PRIVACY_API_KEY and PRIVACY_CARDHOLDER_NAME (or SHOPPER_NAME)");
+      const line1 = env("PRIVACY_BILLING_LINE1");
+      const cardType = env("PRIVACY_CARD_TYPE");
+      if (cardType && cardType !== "SINGLE_USE" && cardType !== "MERCHANT_LOCKED") throw new Error("PRIVACY_CARD_TYPE must be SINGLE_USE or MERCHANT_LOCKED");
+      issuer = new PrivacyCardIssuer({
+        apiKey,
+        ...(env("PRIVACY_API_BASE") ? { baseUrl: env("PRIVACY_API_BASE")! } : {}),
+        ...(cardType ? { cardType: cardType as "SINGLE_USE" | "MERCHANT_LOCKED" } : {}),
+        ...(env("PRIVACY_FUNDING_TOKEN") ? { fundingToken: env("PRIVACY_FUNDING_TOKEN")! } : {}),
+        cardholderName,
+        billingAddress: line1
+          ? {
+              line1,
+              line2: env("PRIVACY_BILLING_LINE2") ?? null,
+              city: env("PRIVACY_BILLING_CITY") ?? "",
+              state: env("PRIVACY_BILLING_STATE") ?? "",
+              postalCode: env("PRIVACY_BILLING_POSTAL_CODE") ?? "",
+              country: env("PRIVACY_BILLING_COUNTRY") ?? "US",
+            }
+          : (shopper?.address ?? null),
+      });
     } else if (provider === "mock") {
-      issuer = new MockCardIssuer(env("MOCK_ISSUER_WEBHOOK_SECRET") ?? "mock_webhook_secret");
+      issuer = new MockCardIssuer(env("MOCK_ISSUER_WEBHOOK_SECRET") ?? "mock_webhook_secret", undefined, shopper ?? undefined);
     } else {
       throw new Error(`Unknown CARD_ISSUER "${provider}"`);
     }
@@ -111,8 +148,20 @@ export function createWalletFromEnv(o: WalletOverrides = {}): Wallet {
     ...(num("TRUST_MIN_STREAK") ? { trustMinStreak: num("TRUST_MIN_STREAK")! } : {}),
     ...o.config,
   };
+  const delivery = env("CARD_DELIVERY") as WalletConfig["cardDelivery"] | undefined;
+  if (delivery && delivery !== "agent" && delivery !== "browser") throw new Error('CARD_DELIVERY must be "agent" or "browser"');
+  if (delivery && !o.config?.cardDelivery) config.cardDelivery = delivery;
+  if (o.config?.shopper === undefined && shopper) config.shopper = shopper;
+  if (!o.config?.testShopper) config.testShopper = testShopperFromEnv(env);
+  // The browser the agent shops in, started with remote debugging (agents/browser/start-chrome.sh).
+  const cardFiller =
+    o.cardFiller ??
+    new CdpCardFiller({
+      cdpUrl: env("AGENT_BROWSER_CDP_URL") ?? "http://127.0.0.1:9222",
+      extraPaymentHosts: (env("AGENT_BROWSER_PAYMENT_HOSTS") ?? "").split(",").map((h) => h.trim().toLowerCase()).filter(Boolean),
+    });
   const limit = num("AGENT_RATE_LIMIT_PER_MINUTE") ?? 60;
-  return createWallet({ ...o, logger, issuer, email, push, agentRateLimiter: o.agentRateLimiter ?? new MemoryRateLimiter(limit, 60_000), config });
+  return createWallet({ ...o, logger, issuer, email, push, cardFiller, agentRateLimiter: o.agentRateLimiter ?? new MemoryRateLimiter(limit, 60_000), config });
 }
 
 const globalForWallet = globalThis as unknown as { __agentWallet?: Wallet };

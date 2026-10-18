@@ -17,6 +17,6 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // Everything except the login page, API routes (agents, webhooks, Auth.js), Next internals and static files.
-  matcher: ["/((?!login|api/|_next/|sw\\.js|favicon\\.ico|.*\\.(?:png|svg|ico|webmanifest)$).*)"],
+  // Everything except the login page, the test store (/shop), API routes (agents, webhooks, Auth.js), Next internals and static files.
+  matcher: ["/((?!login|demo-store|shop|api/|_next/|sw\\.js|favicon\\.ico|.*\\.(?:png|svg|ico|webmanifest)$).*)"],
 };
