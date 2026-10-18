@@ -2,9 +2,9 @@
 
 **Spending guardrails for AI agents.** Users set rules for each of their agents (where it can
 shop, what it can buy, how much, and when a human must approve). Agents ask this service for
-permission to buy. If the purchase is allowed (and approved, if required), the agent gets a
-**single-use virtual card locked to that exact merchant, amount and a 30-minute window**. The
-card is the hard stop: limits never depend on the agent behaving.
+permission to buy. If the purchase is allowed (and approved, if required), the tool fills in
+the user's payment information. 
+The agent never touches or gets to freely use the user's card.
 
 ```
 Human ──chat──▶ Agent (Claude, ChatGPT, …)
