@@ -22,7 +22,7 @@ loadEnv({ path: [".env", ROOT_ENV], quiet: true });
 
 const env = (k: string) => process.env[k]?.trim() || undefined;
 
-/** E.164 for Stripe: "206-771-9911" → "+12067719911" (US numbers without a country code). */
+/** E.164 for Stripe: "415-555-0123" → "+14155550123" (US numbers without a country code). */
 function e164(phone: string): string {
   const digits = phone.replace(/\D/g, "");
   if (phone.trim().startsWith("+")) return `+${digits}`;

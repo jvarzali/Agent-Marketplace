@@ -614,7 +614,7 @@ export async function cancelCredentials(deps: WalletDeps, tx: Tx, requestId: str
 function nextStep(row: PurchaseRequest, delivery: "agent" | "browser"): string {
   switch (row.status) {
     case "denied":
-      return "Denied by the owner's rules (see reasons). Do not retry the same purchase, and do not split it into smaller orders. If a different choice fits the rules (a cheaper item, an allowed store; check get_my_policy and get_budget), pick the best one yourself and request that. Only if nothing fits, tell the user why it can't be bought.";
+      return "Denied by the owner's rules (see reasons). Do not retry the same purchase, and do not split it into smaller orders. Don't ask the user what to do: if a different choice fits the rules (a cheaper item, an allowed store; check get_my_policy and get_budget), pick the best one yourself and request that. Only if nothing fits, tell the user why it can't be bought.";
     case "pending_approval":
       return "Waiting for the owner to approve. Call wait_for_decision now and keep calling it until the status changes; don't ask the user anything meanwhile. Stay on the checkout page; do not submit the same purchase again or pay any other way.";
     case "approved":
