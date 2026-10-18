@@ -107,12 +107,14 @@ remote debugging on 127.0.0.1:9222; point Playwright MCP at it with `--cdp-endpo
 - only uses a tab on the approved store's domain, and only if the page shows the approved total;
 - only types into the page itself or iframes of known payment providers (Shopify, Stripe,
   Braintree, Adyen, Square, PayPal...; extend with `AGENT_BROWSER_PAYMENT_HOSTS`);
-- logs each fill (`credential.filled`, with the page and fields, never the number) and stops
-  after 5 fills per card.
+- clicks the store's place-order button itself (never PayPal, Shop Pay or other payment buttons)
+  and waits for the store's answer: a confirmation is recorded with its order number; a decline,
+  a validation message or no answer clears the card from the form before the agent gets the
+  page back;
+- logs each fill (`credential.filled`, with the page, fields and outcome, never the number) and
+  stops after 5 fills per card.
 
-The number is still in the page after it's typed, so a browser tool that reads field values could
-show it to the model. The point is that the model never handles it or types it, and the wallet
-decides where it goes. This needs the wallet and the browser on the same machine (local use).
+So the agent never has control while the card is on the page. This needs the wallet and the browser on the same machine (local use).
 
 ### Stripe Issuing in test mode (free, no Issuing application)
 
@@ -225,7 +227,7 @@ share one process.
 | `request_purchase` | Submit the final cart → `denied` (with reasons), `pending_approval`, or `approved` |
 | `get_purchase_status` | Status; when approved, the single-use card **exactly once**. Optional `current_cart` re-checks the cart hash |
 | `wait_for_decision` | Waits (up to 120 s) for the owner to approve or deny a pending request, so the agent never has to ask the user |
-| `fill_payment_details` | The wallet types the approved card into the checkout page open in the agent's browser (`CARD_DELIVERY="browser"`) |
+| `fill_payment_details` | The wallet types the approved card into the checkout page open in the agent's browser, clicks the place-order button and reports the store's answer (`CARD_DELIVERY="browser"`) |
 | `cancel_purchase` | Abandon; any issued card is cancelled |
 | `report_purchase_result` | Order number / failure; a failure cancels the card |
 | `list_my_purchases` | Recent requests (never card details) |

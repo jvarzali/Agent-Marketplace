@@ -61,6 +61,10 @@ export interface FillPaymentView extends AgentPurchaseView {
   filled_fields: string[];
   page_url: string;
   card_last4: string;
+  /** The wallet clicked the store's place-order button; this is what happened. */
+  order_outcome: "confirmed" | "declined" | "needs_attention" | "unknown";
+  order_reference: string | null;
+  store_message: string;
   /** Billing details for any address fields the store asks for (not secret). */
   cardholder_name: string;
   billing_address: CardSecrets["billingAddress"];
@@ -282,7 +286,7 @@ export class PurchaseService {
    * the tab is on the approved store and shows the approved total; the agent never sees the
    * number. Issues the card first if the request was just approved.
    */
-  async fillPaymentDetails(agent: AuthedAgent, id: string): Promise<FillPaymentView> {
+  async fillPaymentDetails(agent: AuthedAgent, id: string, opts: { buttonText?: string } = {}): Promise<FillPaymentView> {
     let row = await this.ownRequest(agent, id);
     if (row.status === "approved") {
       await this.issueAndDeliver(agent, id, false);
@@ -306,25 +310,50 @@ export class PurchaseService {
     const secrets = await this.deps.issuer.getCardSecrets(cred.providerCardId);
     let result;
     try {
-      result = await filler.fill({ merchantDomain: cred.merchantDomain, totalCents: row.totalCents, currency: row.currency, secrets });
+      result = await filler.fill({
+        merchantDomain: cred.merchantDomain,
+        totalCents: row.totalCents,
+        currency: row.currency,
+        secrets,
+        // The wallet places the order itself, so the agent never gets the page back with the card on it.
+        placeOrder: opts.buttonText ? { buttonText: opts.buttonText } : {},
+      });
     } catch (e) {
       const message = e instanceof CardFillError ? e.message : "Couldn't enter the card in the browser. Tell the user; don't enter card details yourself.";
       await audit(this.deps.db, { userId: agent.userId, agentId: agent.id, purchaseRequestId: id, type: "credential.fill_failed", severity: "warning", payload: { last4: cred.last4, reason: message } }, now);
       if (!(e instanceof CardFillError)) this.deps.logger.error("card fill failed", { requestId: id, error: e instanceof Error ? e.message : String(e) });
       throw new WalletError("invalid_state", message);
     }
+    const order = result.order ?? { outcome: "unknown" as const, reference: null, message: "" };
     await this.deps.db.$transaction(async (tx) => {
       if (!cred.deliveredAt) await tx.issuedCredential.update({ where: { id: cred.id }, data: { deliveredAt: now } });
-      await audit(tx, { userId: agent.userId, agentId: agent.id, purchaseRequestId: id, type: "credential.filled", payload: { last4: cred.last4, page: result.pageUrl.split("?")[0], fields: result.filled } }, now);
+      await audit(
+        tx,
+        { userId: agent.userId, agentId: agent.id, purchaseRequestId: id, type: "credential.filled", payload: { last4: cred.last4, page: result.pageUrl.split("?")[0], fields: result.filled, order_outcome: order.outcome, store_message: order.message } },
+        now,
+      );
     });
+    let view = this.view(row);
+    if (order.outcome === "confirmed") {
+      view = await this.reportPurchaseResult(agent, id, { success: true, ...(order.reference ? { order_reference: order.reference } : {}), notes: `Placed by the wallet. Store said: ${order.message}`.slice(0, 2000) });
+    }
+    const steps: Record<typeof order.outcome, string> = {
+      confirmed: `The wallet entered the card ending ${cred.last4} and placed the order${order.reference ? ` (order ${order.reference})` : ""}. It's recorded; there's nothing left to do but tell the user what you bought.`,
+      declined: `The wallet entered the card and placed the order, but the store declined the payment ("${order.message}"). The card was removed from the form. Don't try another payment method. If the message is about something you can fix (e.g. the billing address), fix it and call fill_payment_details again; otherwise call report_purchase_result with success false and tell the user.`,
+      needs_attention: `The wallet entered the card and clicked to place the order, but the store asked for something first ("${order.message}"). The card was removed from the form. Fix that on the page (use the billing details here if it's the billing address), then call fill_payment_details again. If it's a captcha or a verification code, ask the user.`,
+      unknown: `The wallet entered the card and clicked to place the order, but couldn't tell if it went through. The card was removed from the form. Look at the page: if it shows an order confirmation, call report_purchase_result with the order number; if it shows an error you can fix, fix it and call fill_payment_details again; otherwise tell the user. Don't place the order a second time if it might have gone through.`,
+    };
     return {
-      ...this.view(row),
+      ...view,
       filled_fields: result.filled,
       page_url: result.pageUrl,
       card_last4: cred.last4,
+      order_outcome: order.outcome,
+      order_reference: order.reference,
+      store_message: order.message,
       cardholder_name: secrets.cardholderName,
       billing_address: secrets.billingAddress,
-      next_step: `The card ending ${cred.last4} is entered (${result.filled.join(", ")}). If the page still asks for a billing name or address, use the details here. Then place the order and call report_purchase_result with the order number. Do not change the cart.`,
+      next_step: steps[order.outcome],
     };
   }
 
@@ -590,11 +619,11 @@ function nextStep(row: PurchaseRequest, delivery: "agent" | "browser"): string {
       return "Waiting for the owner to approve. Call wait_for_decision now and keep calling it until the status changes; don't ask the user anything meanwhile. Stay on the checkout page; do not submit the same purchase again or pay any other way.";
     case "approved":
       return delivery === "browser"
-        ? `Approved. Stay on the checkout page at ${row.merchantDomain} and call fill_payment_details: the wallet enters the single-use card into the page for you.`
+        ? `Approved. Fill in everything else on the checkout page at ${row.merchantDomain} first (contact, shipping, billing), then call fill_payment_details: the wallet enters the single-use card and places the order for you.`
         : "Approved. Call get_purchase_status to receive the single-use card.";
     case "credential_issued":
       if (delivery === "browser") {
-        return `Approved, and a single-use card is ready. With the payment step showing on ${row.merchantDomain}, call fill_payment_details: the wallet types the card into the page (you never see the number). Then place the order and call report_purchase_result.`;
+        return `Approved, and a single-use card is ready. Fill in everything else on the checkout page first (contact, shipping, billing address), open the payment step on ${row.merchantDomain}, then call fill_payment_details: the wallet types the card in and places the order itself (you never see the number).`;
       }
       return "A single-use card was already issued and delivered for this request. It is not shown again. If you lost it, call cancel_purchase and submit a new request.";
     case "completed":

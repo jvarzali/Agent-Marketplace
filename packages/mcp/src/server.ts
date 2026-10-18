@@ -64,9 +64,9 @@ export function createMcpServer(wallet: Wallet, agent: AuthedAgent): McpServer {
     {
       instructions: `This is the user's PaySafe wallet: the only way you may pay for things on their behalf. Steps: (1) call get_my_policy and get_budget; (2) build the cart and go to the final checkout page, using get_shipping_details for the contact and shipping fields; (3) call request_purchase with the exact cart and total; (4) if it's pending_approval, call wait_for_decision and keep calling it until the status changes (don't ask the user anything or end your turn while waiting); (5) ${
         browser
-          ? "when approved, open the payment step (choose credit/debit card) and call fill_payment_details: the wallet types the single-use card into the page itself, so you never see or type a card number; then place the order"
-          : "when approved, get_purchase_status returns a single-use card exactly once: enter it as a new card and place the order (or call fill_payment_details to have the wallet type it in)"
-      }; (6) call report_purchase_result.\n\n${AUTONOMY}\n\n${RULES}`,
+          ? "when approved, fill in every other checkout field, open the payment step (choose credit/debit card) and call fill_payment_details: the wallet types the single-use card in and places the order itself, so you never see or type a card number and don't click the final button"
+          : "when approved, get_purchase_status returns a single-use card exactly once: enter it as a new card and place the order (or call fill_payment_details to have the wallet enter it and place the order)"
+      }; (6) call report_purchase_result unless fill_payment_details already recorded a confirmed order.\n\n${AUTONOMY}\n\n${RULES}`,
     },
   );
   const limited = async <T>(fn: () => Promise<T>) => {
@@ -163,13 +163,17 @@ export function createMcpServer(wallet: Wallet, agent: AuthedAgent): McpServer {
   server.registerTool(
     "fill_payment_details",
     {
-      title: "Enter the approved card on the checkout page",
+      title: "Pay: enter the approved card and place the order",
       description:
-        "After a purchase is approved, the wallet types its single-use card into the card fields of the checkout page open in your browser. You never see or type the card number. First open the store's payment step (choose credit/debit card, not a saved card, PayPal or Shop Pay) so the card fields and the approved total are visible. The wallet refuses if the tab isn't on the approved store or the page doesn't show the approved total. Returns which fields were filled and the billing name and address for any remaining address fields. Then place the order and call report_purchase_result.",
-      inputSchema: { purchase_id: z.string() },
-      annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: true },
+        "After a purchase is approved, the wallet types its single-use card into the checkout page open in your browser AND clicks the store's place-order button, then reports what the store said. You never see or type the card number, and you don't click the final button yourself. Before calling: fill in every other field (contact, shipping, billing address; use 'billing same as shipping' or get_shipping_details) and open the payment step with credit/debit card selected (not a saved card, PayPal or Shop Pay). The wallet refuses if the tab isn't on the approved store or the page doesn't show the approved total. If it can't find the place-order button, call again with button_text set to that button's exact text. A confirmed order is recorded automatically; for any other outcome the card is removed from the form and next_step says what to do.",
+      inputSchema: {
+        purchase_id: z.string(),
+        button_text: z.string().max(80).optional().describe("Exact text of the store's place-order button, only if the wallet couldn't find it"),
+      },
+      annotations: { destructiveHint: true, idempotentHint: false, openWorldHint: true },
     },
-    async ({ purchase_id }) => run(() => limited(() => wallet.purchases.fillPaymentDetails(agent, purchase_id)), (v) => `Card entered. ${v.next_step}`),
+    async ({ purchase_id, button_text }) =>
+      run(() => limited(() => wallet.purchases.fillPaymentDetails(agent, purchase_id, button_text ? { buttonText: button_text } : {})), (v) => `Order: ${v.order_outcome}. ${v.next_step}`),
   );
 
   server.registerTool(

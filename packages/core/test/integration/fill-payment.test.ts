@@ -1,17 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { CardFillError, type CardFiller, type FillParams } from "../../src/checkout/browser-fill";
+import { CardFillError, type CardFiller, type FillParams, type FillResult } from "../../src/checkout/browser-fill";
 import { WalletError } from "../../src/wallet/context";
 import { amazon, db, events, groceries, setup } from "./harness";
 
 /** Browser delivery with a filler that records what it was asked to type. */
-async function browserWallet(behave: (p: FillParams) => void = () => undefined) {
+async function browserWallet(behave: (p: FillParams) => void = () => undefined, order: FillResult["order"] = { outcome: "confirmed", reference: "A1B2C3", message: "Thank you for your order" }) {
   const t = await setup();
   const calls: FillParams[] = [];
   const filler: CardFiller = {
     fill: async (p) => {
       calls.push(p);
       behave(p);
-      return { pageUrl: "https://www.amazon.com/checkout/pay?session=1", filled: ["card number", "expiry", "security code"] };
+      return { pageUrl: "https://www.amazon.com/checkout/pay?session=1", filled: ["card number", "expiry", "security code"], ...(order ? { order } : {}) };
     },
   };
   t.wallet.deps.config.cardDelivery = "browser";
@@ -44,6 +44,31 @@ describe("fill_payment_details (browser card delivery)", () => {
     // The card still works for the store's charge.
     const charge = await t.issuer.simulateCharge({ providerCardId: cred.providerCardId, amountCents: 1200, merchant: amazon, deliver: t.deliver });
     expect(charge.approved).toBe(true);
+  });
+
+  it("the wallet places the order and records a confirmed one", async () => {
+    const { t, calls } = await browserWallet();
+    const v = await t.wallet.purchases.requestPurchase(t.agent, groceries());
+    const f = await t.wallet.purchases.fillPaymentDetails(t.agent, v.id);
+    expect(calls[0]!.placeOrder).toEqual({});
+    expect(f).toMatchObject({ order_outcome: "confirmed", order_reference: "A1B2C3", next_step: expect.stringMatching(/placed the order \(order A1B2C3\)/) });
+    expect(await events(t.user.id, "purchase.result_reported")).toHaveLength(1);
+  });
+
+  it("passes the agent's button_text to the browser", async () => {
+    const { t, calls } = await browserWallet(undefined, { outcome: "unknown", reference: null, message: "" });
+    const v = await t.wallet.purchases.requestPurchase(t.agent, groceries());
+    const f = await t.wallet.purchases.fillPaymentDetails(t.agent, v.id, { buttonText: "Finish" });
+    expect(calls[0]!.placeOrder).toEqual({ buttonText: "Finish" });
+    expect(f.next_step).toMatch(/Don't place the order a second time/);
+  });
+
+  it("a declined payment isn't recorded as a purchase, and the agent is told what to do", async () => {
+    const { t } = await browserWallet(undefined, { outcome: "declined", reference: null, message: "Your card was declined" });
+    const v = await t.wallet.purchases.requestPurchase(t.agent, groceries());
+    const f = await t.wallet.purchases.fillPaymentDetails(t.agent, v.id);
+    expect(f).toMatchObject({ order_outcome: "declined", status: "credential_issued", next_step: expect.stringMatching(/declined the payment.*removed from the form/) });
+    expect(await events(t.user.id, "purchase.result_reported")).toHaveLength(0);
   });
 
   it("issues the card on first fill straight after approval", async () => {

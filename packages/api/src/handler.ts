@@ -14,7 +14,7 @@ import { bearer, handleMcpRequest } from "@paysafe/mcp";
  *   POST /api/v1/purchases/:id/wait        { seconds? } waits for the owner's decision (max 120s)
  *   POST /api/v1/purchases/:id/cancel      { reason? }
  *   POST /api/v1/purchases/:id/result      { success, order_reference?, amount_charged?, notes? }
- *   POST /api/v1/purchases/:id/fill-payment  wallet types the approved card into the checkout page
+ *   POST /api/v1/purchases/:id/fill-payment  { button_text? } wallet enters the card and places the order
  *   POST /api/mcp                          MCP (Streamable HTTP)
  *   POST /api/webhooks/issuer              card issuer webhooks (signature-verified)
  *   GET|POST /api/cron/expire              expiry sweep (Authorization: Bearer $CRON_SECRET)
@@ -83,7 +83,10 @@ async function route(wallet: Wallet, agent: AuthedAgent, req: Request, path: str
       const b = (await body(req)) as { seconds?: unknown };
       return noStore(json(200, await p.waitForDecision(agent, id, typeof b?.seconds === "number" ? b.seconds : 60)));
     }
-    if (action === "fill-payment" && m === "POST") return noStore(json(200, await p.fillPaymentDetails(agent, id)));
+    if (action === "fill-payment" && m === "POST") {
+      const b = (await body(req)) as { button_text?: unknown };
+      return noStore(json(200, await p.fillPaymentDetails(agent, id, typeof b?.button_text === "string" && b.button_text.trim() ? { buttonText: b.button_text.slice(0, 80) } : {})));
+    }
   }
   return error(404, "not_found", "No such endpoint.");
 }

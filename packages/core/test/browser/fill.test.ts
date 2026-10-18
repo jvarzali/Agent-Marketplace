@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { chromium, type Browser } from "playwright-core";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { CardFillError, CdpCardFiller, textShowsTotal } from "../../src/checkout/browser-fill";
+import { CardFillError, CdpCardFiller, orderReference, textShowsTotal } from "../../src/checkout/browser-fill";
 
 const CHROME = process.env["CHROME_PATH"] ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const secrets = { number: "4000009990004242", cvc: "123", expMonth: 6, expYear: 2030, last4: "4242", cardholderName: "Pat Doe", billingAddress: { line1: "1 Main St", city: "Austin", state: "TX", postalCode: "78701", country: "US" } };
@@ -38,6 +38,12 @@ const PAGES: Record<string, (port: number) => string> = {
   <select name="expiration-year" aria-label="Expiration Year"><option value="">Year</option><option>2029</option><option>2030</option></select>
   <label>Security Code <input name="cvv-code" type="tel"></label>
 </div>`,
+  // Place-order flows. A PayPal button sits before the real one and must never be clicked.
+  "shop.test/place": () => `${plainForm}<button onclick="document.title='paypal'">PayPal</button><button onclick="setTimeout(()=>location.href='/thanks',300)">Place order</button>`,
+  "shop.test/thanks": () => `<h1>Thank you for your order!</h1><p>Order #A1B2C3 is on its way.</p>`,
+  "shop.test/place-decline": () => `${plainForm}<p id="err"></p><button onclick="setTimeout(()=>document.getElementById('err').textContent='Your card was declined. Try a different card.',300)">Pay now</button>`,
+  "shop.test/no-button": () => `${plainForm}<button>Continue shopping</button>`,
+  "shop.test/custom-button": () => `${plainForm}<button onclick="document.body.insertAdjacentHTML('beforeend','<p>Thanks for your purchase. Order number: 55-9001</p>')">Finish</button>`,
   // Only labels and placeholders to go on.
   "shop.test/labels": () => `<p>Total: $24.45</p><label>Gift card <input id="g1"></label>
 <label for="f1">Credit card number</label><input id="f1"><input id="f2" placeholder="MM / YY"><input id="f3" aria-label="CVC"><label for="f4">Name on card</label><input id="f4">`,
@@ -139,6 +145,39 @@ describe.skipIf(!existsSync(CHROME))("CdpCardFiller in a real Chrome", () => {
     await page.close();
   });
 
+  const place = (placeOrder: { buttonText?: string } = {}) => new CdpCardFiller({ cdpUrl }).fill({ merchantDomain: "shop.test", totalCents: 2445, currency: "USD", secrets, placeOrder });
+
+  it("places the order itself and reads the confirmation (never the PayPal button)", async () => {
+    const page = await open("shop.test/place");
+    const r = await place();
+    expect(r.order).toEqual({ outcome: "confirmed", reference: "A1B2C3", message: expect.stringMatching(/thank you for your order/i) });
+    expect(page.url()).toMatch(/\/thanks$/);
+    expect(await page.title()).not.toBe("paypal");
+    await page.close();
+  });
+
+  it("clears the card from the form when the store declines", async () => {
+    const page = await open("shop.test/place-decline");
+    const r = await place();
+    expect(r.order).toMatchObject({ outcome: "declined", message: "Your card was declined" });
+    for (const f of ["number", "exp", "cvc"]) expect(await page.inputValue(`[name="${f}"]`)).toBe("");
+    await page.close();
+  });
+
+  it("clears the card and asks for the button's name when there's no place-order button", async () => {
+    const page = await open("shop.test/no-button");
+    await expect(place()).rejects.toThrow(/couldn't find the button that places the order.*button_text/);
+    expect(await page.inputValue('[name="number"]')).toBe("");
+    await page.close();
+  });
+
+  it("clicks a button the agent names", async () => {
+    const page = await open("shop.test/custom-button");
+    const r = await place({ buttonText: "Finish" });
+    expect(r.order).toMatchObject({ outcome: "confirmed", reference: "55-9001" });
+    await page.close();
+  });
+
   it("won't type into an iframe from an unknown host", async () => {
     const page = await open("shop.test/evil-frame");
     await expect(fill()).rejects.toThrow(/Couldn't find a card number field/);
@@ -159,6 +198,14 @@ describe.skipIf(!existsSync(CHROME))("CdpCardFiller in a real Chrome", () => {
 
   it("explains how to start the browser when it isn't running", async () => {
     await expect(new CdpCardFiller({ cdpUrl: "http://127.0.0.1:1" }).fill({ merchantDomain: "shop.test", totalCents: 1, currency: "USD", secrets })).rejects.toBeInstanceOf(CardFillError);
+  });
+});
+
+describe("orderReference", () => {
+  it("finds order numbers, not words", () => {
+    expect(orderReference("Order confirmed. Thanks! Order DS-1A2B3C4D is confirmed.")).toBe("DS-1A2B3C4D");
+    expect(orderReference("Your order number is 112-3344556")).toBe("112-3344556");
+    expect(orderReference("Order confirmed")).toBeNull();
   });
 });
 

@@ -18,12 +18,28 @@ export interface FillParams {
   totalCents: number;
   currency: string;
   secrets: CardSecrets;
+  /**
+   * Also click the store's place-order button and wait for the result, so the agent never gets
+   * the page back with the card on it. `buttonText` names the button if it isn't recognized.
+   */
+  placeOrder?: { buttonText?: string };
 }
 
 export interface FillResult {
   pageUrl: string;
   /** Fields typed into, in plain words ("card number", "expiry", ...). */
   filled: string[];
+  /** Present when placeOrder was asked for. */
+  order?: OrderOutcome;
+}
+
+export interface OrderOutcome {
+  /** confirmed: the store showed a confirmation. declined: it refused the payment. needs_attention: it asked for something (a field, a check). unknown: no clear answer in time. */
+  outcome: "confirmed" | "declined" | "needs_attention" | "unknown";
+  /** Order number from the confirmation page, if one was shown. */
+  reference: string | null;
+  /** What the store said, briefly. */
+  message: string;
 }
 
 /** A fill that didn't happen, with a message written for the agent. */
@@ -170,7 +186,10 @@ export class CdpCardFiller implements CardFiller {
       if (missing.length) {
         throw new CardFillError(`Entered the card number on ${page.url()} but couldn't find the ${missing.map((m) => LABEL[m]).join(" and ")} field. Don't type card details yourself; tell the user the store's card form wasn't recognized.`);
       }
-      return { pageUrl: page.url(), filled: filled.map((f) => LABEL[f]) };
+      const cardFields = (["number", "expiry", "expMonth", "expYear", "cvc"] as Field[]).map((f) => found[f]).filter((l): l is Locator => !!l);
+      if (!p.placeOrder) return { pageUrl: page.url(), filled: filled.map((f) => LABEL[f]) };
+      const order = await this.placeOrder(page, p, cardFields);
+      return { pageUrl: page.url(), filled: filled.map((f) => LABEL[f]), order };
     } finally {
       // Disconnects only: the agent's browser and its tabs stay open.
       await browser.close().catch(() => undefined);
@@ -223,6 +242,46 @@ export class CdpCardFiller implements CardFiller {
     return found;
   }
 
+  /**
+   * Click the place-order button and wait for the store's answer. Anything short of a
+   * confirmation clears the card fields first, so the agent never sees a filled-in card.
+   */
+  private async placeOrder(page: Page, p: FillParams, cardFields: Locator[]): Promise<OrderOutcome> {
+    const clear = () => clearFields(cardFields);
+    try {
+      if (!(await pageShowsTotal(page, p.totalCents, p.currency))) {
+        await clear();
+        throw new CardFillError(`The page no longer shows the approved total of ${formatMoney(p.totalCents, p.currency)}, so the order wasn't placed and the card was removed from the form. If the total changed, call cancel_purchase and request again with the new cart.`);
+      }
+      const frames = () => page.frames().filter((f) => this.frameAllowed(f, p.merchantDomain));
+      const button = await findPlaceOrderButton(frames(), p.placeOrder?.buttonText);
+      if (!button) {
+        await clear();
+        throw new CardFillError(
+          `Entered the card but couldn't find the button that places the order on ${page.url()}, so the card was removed from the form. Call fill_payment_details again with button_text set to the exact text of that button (e.g. "Place order").`,
+        );
+      }
+      const before = await bodyText(page);
+      const startUrl = page.url();
+      await button.click({ timeout: 10_000 });
+      let outcome = await waitForOutcome(page, before, startUrl);
+      // Some checkouts have a final review step after the card ("Continue" → "Place order").
+      if (outcome.outcome === "unknown") {
+        const next = await findPlaceOrderButton(frames(), p.placeOrder?.buttonText);
+        if (next && !(await anyFilled(cardFields))) {
+          const before2 = await bodyText(page);
+          await next.click({ timeout: 10_000 }).catch(() => undefined);
+          outcome = await waitForOutcome(page, before2, page.url());
+        }
+      }
+      if (outcome.outcome !== "confirmed") await clear();
+      return outcome;
+    } catch (e) {
+      await clear();
+      throw e;
+    }
+  }
+
   /** Expiry, security code etc., looked up again after the number is typed (up to ~3 s). */
   private async restAfterNumber(page: Page, merchantDomain: string): Promise<Partial<Record<Field, Locator>>> {
     let found: Partial<Record<Field, Locator>> = {};
@@ -270,6 +329,81 @@ export function textShowsTotal(text: string, totalCents: number, _currency: stri
   const minor = String(totalCents % 100).padStart(2, "0");
   const forms = new Set([`${major}.${minor}`, `${major.toLocaleString("en-US")}.${minor}`]);
   return [...forms].some((f) => new RegExp(`(^|[^\\d.,])${f.replace(/[.,]/g, (c) => `\\${c}`)}(?![\\d])`).test(text));
+}
+
+const PLACE_ORDER = /\b(place (your |my )?order|complete (your )?(order|purchase)|submit (your )?order|confirm (and pay|order|purchase)|pay now|pay \$?[\d,.]+|buy now|purchase now|place order and pay)\b/i;
+const OTHER_METHOD = /paypal|shop ?pay|apple ?pay|google ?pay|g ?pay|amazon pay|klarna|afterpay|affirm|venmo|sezzle|zip pay|gift|link\b|cash app|crypto/i;
+
+/** The visible button that places the order (never another payment method's button). */
+async function findPlaceOrderButton(frames: Frame[], buttonText?: string): Promise<Locator | null> {
+  const wanted = buttonText?.trim().toLowerCase();
+  for (const frame of frames) {
+    const candidates = frame.locator('button, input[type="submit"], [role="button"], a[role="button"]');
+    const n = Math.min(await candidates.count().catch(() => 0), 200);
+    let best: { loc: Locator; score: number } | null = null;
+    for (let i = 0; i < n; i++) {
+      const loc = candidates.nth(i);
+      if (!(await loc.isVisible().catch(() => false)) || !(await loc.isEnabled().catch(() => false))) continue;
+      const text = ((await loc.innerText().catch(() => "")) || (await loc.getAttribute("value").catch(() => "")) || (await loc.getAttribute("aria-label").catch(() => "")) || "").replace(/\s+/g, " ").trim();
+      if (!text || text.length > 80 || OTHER_METHOD.test(text)) continue;
+      const lower = text.toLowerCase();
+      const score = wanted ? (lower === wanted ? 3 : lower.includes(wanted) ? 2 : 0) : PLACE_ORDER.test(text) ? (/place|complete|submit/i.test(text) ? 2 : 1) : 0;
+      if (score && (!best || score > best.score)) best = { loc, score };
+    }
+    if (best) return best.loc;
+  }
+  return null;
+}
+
+const CONFIRMED_URL = /thank|confirm|order-?(complete|received|placed|status)|\/orders?\/[\w-]+|receipt|success/i;
+const CONFIRMED_TEXT = /thank you for (your )?(order|purchase)|thanks for your (order|purchase)|order (is |has been )?(confirmed|placed|received|complete)|your order number|order #|thanks! order/i;
+const DECLINED_TEXT = /[^.\n]*(declin|card was (rejected|not accepted)|payment (failed|was unsuccessful|could not be processed|didn.t go through)|could not be processed|insufficient funds|do not honou?r|try (a )?different (card|payment)|card (number )?is (invalid|incorrect)|card has expired)[^.\n]*/i;
+const ATTENTION_TEXT = /[^.\n]*(required|enter (a|an|your) |is missing|please (select|enter|provide|complete|verify)|verify (you|that)|captcha|security check|authenticate|one-time (code|passcode))[^.\n]*/i;
+
+async function bodyText(page: Page): Promise<string> {
+  return page.locator("body").innerText({ timeout: 3_000 }).catch(() => "");
+}
+
+/** Watch the page for up to 45 s after the click: confirmation, decline, or a request for more. */
+async function waitForOutcome(page: Page, before: string, startUrl: string): Promise<OrderOutcome> {
+  const isNew = (m: RegExpMatchArray | null) => (m && !before.includes(m[0].trim()) ? m[0].trim().slice(0, 200) : null);
+  const deadline = Date.now() + 45_000;
+  let attention: string | null = null;
+  while (Date.now() < deadline) {
+    await page.waitForTimeout(500);
+    const text = await bodyText(page);
+    const url = page.url();
+    const moved = url.split("#")[0] !== startUrl.split("#")[0];
+    if ((moved && CONFIRMED_URL.test(new URL(url).pathname)) || (CONFIRMED_TEXT.test(text) && !CONFIRMED_TEXT.test(before))) {
+      return { outcome: "confirmed", reference: orderReference(text), message: (text.match(CONFIRMED_TEXT)?.[0] ?? "Order confirmed").slice(0, 200) };
+    }
+    const declined = isNew(text.match(DECLINED_TEXT));
+    if (declined) return { outcome: "declined", reference: null, message: declined };
+    attention = isNew(text.match(ATTENTION_TEXT)) ?? attention;
+    // A validation message that has settled for a couple of seconds is the answer.
+    if (attention && Date.now() > deadline - 42_000) return { outcome: "needs_attention", reference: null, message: attention };
+  }
+  return { outcome: "unknown", reference: null, message: "The store didn't show a confirmation or an error within 45 seconds." };
+}
+
+/** "Order #A1B2-C3", "Order number: 112-3344", "Order DS-1A2B is confirmed" → the reference. */
+export function orderReference(text: string): string | null {
+  const m = /order\s*(?:number|no\.?|#|id|confirmation)?\s*(?:is\s*)?[:#]?\s*((?=[A-Z0-9-]*\d)[A-Z0-9][A-Z0-9-]{3,})/i.exec(text);
+  return m ? m[1]! : null;
+}
+
+async function anyFilled(fields: Locator[]): Promise<boolean> {
+  for (const f of fields) if ((await f.inputValue({ timeout: 1_000 }).catch(() => "")).trim()) return true;
+  return false;
+}
+
+/** Empty the card fields (number, expiry, security code). Best effort: the page may have moved on. */
+async function clearFields(fields: Locator[]): Promise<void> {
+  for (const f of fields) {
+    const tag = await f.evaluate((el) => el.tagName.toLowerCase(), undefined, { timeout: 1_000 }).catch(() => null);
+    if (tag === "select") await f.selectOption({ index: 0 }, { timeout: 1_000 }).catch(() => undefined);
+    else if (tag) await f.fill("", { timeout: 1_000 }).catch(() => undefined);
+  }
 }
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
