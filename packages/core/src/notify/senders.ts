@@ -9,6 +9,11 @@ export class ConsoleEmailSender implements EmailSender {
   async send(message: EmailMessage): Promise<void> {
     this.sent.push(message);
     this.logger.info("email (console)", { to: message.to, subject: message.subject, text: message.text });
+    // The JSON line escapes newlines, which glues "\n\nThe…" onto any link in the body and breaks
+    // it when clicked in a terminal. Print the body plainly too so links open as-is.
+    if (process.env["NODE_ENV"] !== "test") {
+      console.log(`\n──── email to ${message.to}: ${message.subject} ────\n${message.text}\n────\n`);
+    }
   }
 }
 

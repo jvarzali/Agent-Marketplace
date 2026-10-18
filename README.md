@@ -18,6 +18,10 @@ Human ──chat──▶ Agent (Claude, ChatGPT, …)
          agent                 human
 ```
 
+**Built with** TypeScript, Next.js 15 + React 19, PostgreSQL + Prisma 7, Auth.js (email magic
+links), the Model Context Protocol SDK, Stripe Issuing, Privacy.com, Zod, Web Push, Resend and
+Vitest.
+
 > The earlier marketplace concept doc now lives in [`docs/paysafe-vision.md`](docs/paysafe-vision.md).
 
 ## Status
@@ -28,8 +32,8 @@ Human ──chat──▶ Agent (Claude, ChatGPT, …)
 | 2. Purchase flow with `MockCardIssuer`, audit log, integration tests | ✅ |
 | 3. REST API for agents (API-key auth, rate limiting) | ✅ |
 | 4. MCP server (remote HTTP + local stdio) | ✅ |
-| 5. Dashboard (`apps/web`): email sign-in, approvals, agents, freeze, policy editor, activity, onboarding, trust suggestions | ✅ wired to the backend |
-| 6. Notifications: email (Resend or console) and web push (VAPID or console) | ✅ (push toggle in the dashboard header) |
+| 5. Dashboard (`apps/web`): email sign-in, overview KPIs, approvals with override, agents, freeze, policy editor, activity + automated purchases, settings (light/dark theme), onboarding, trust suggestions | ✅ wired to the backend |
+| 6. Notifications: email (Resend or console) and web push (VAPID or console) | ✅ (push toggle in the header and in Settings) |
 | 7. Trust suggestions | ✅ |
 | 8. Stripe Issuing adapter + webhook handling | ✅ unit-tested with Stripe's real webhook signing; setup script and demo store for test mode; **not yet run against a real Stripe account** |
 | 8a. Demo store (`/shop`) for full agent checkouts with test cards (mock or Stripe test mode) | ✅ |
@@ -74,7 +78,36 @@ Set `AUTH_SECRET` in `.env` (`npx auth secret`). Sign in at http://localhost:300
 log. `npm run dev:api` still starts the standalone agent API on :4000, which is the only place
 the dev-only charge simulator lives.
 
-`npm run db:reset` drops and recreates the dev database (then run `db:seed` again).
+`npm run db:reset` drops and recreates the dev database (then run `db:seed` again). Restart
+`npm run dev` afterwards. Its old database connections otherwise make sign-in fail with
+"Sign-in didn't work".
+
+### Windows
+
+`npm run db:up` uses `scripts/local-db.sh`, which doesn't work on Windows: Postgres can't create
+its socket lock file at a Git Bash path. Instead, use Docker (`docker compose up -d`) or the
+PostgreSQL binaries zip:
+
+1. Initialize the cluster: `initdb -D .pgdata -U postgres -A trust`.
+2. Append these lines to `.pgdata/postgresql.conf`:
+
+   ```
+   port = 54329
+   unix_socket_directories = ''
+   ```
+
+3. Start it from Git Bash, in the repo root, and create the databases:
+
+   ```bash
+   pg_ctl -D "$(cygpath -w .pgdata)" -l "$(cygpath -w .pgdata)\server.log" -w start
+   psql -h localhost -p 54329 -U postgres -c "CREATE DATABASE paysafe" -c "CREATE DATABASE paysafe_test"
+   ```
+
+`npm run db:seed` doesn't load the root `.env`, so pass it explicitly:
+
+```bash
+cd packages/db && npx tsx --env-file=../../.env ../core/scripts/seed.ts
+```
 
 ### Environment variables
 
@@ -143,6 +176,31 @@ and your rules exactly like real ones, including the real-time approve/decline.
 
 The demo store also works with `CARD_ISSUER="mock"`, with no Stripe account at all.
 
+## Dashboard
+
+A sidebar layout in the style of a financial dashboard, with a top bar showing the current
+section and a **Freeze all** control.
+
+- **Overview**: four clickable KPI tiles. Each tile's top rule changes color with its state:
+  - **Waiting on you**: yellow when approvals are pending.
+  - **Automated purchases**: purchases made without approval since you last checked. Yellow
+    while any are unchecked.
+  - **Spent this week**: yellow above 80% of the budget, red above 100%.
+  - **Agents active**: one segment per agent, black when active, red when frozen.
+
+  The overview also shows the receipt strip and per-agent budgets.
+- **Approvals**: pending requests with Approve / Deny. Click a row under *Recently decided* to
+  expand it into the purchase facts, the receipt and the decision with its reasons. A denied
+  purchase can be overridden (**Override and approve**), except for denials no single approval
+  should lift: a frozen agent, a cart whose math or currency is wrong, and cash-like items
+  (gift cards, stored value, cash-like MCCs).
+- **Agents**: budgets, per-agent freeze, policy editor, keys and trust suggestions.
+- **Activity**: the audit log with filters. The *Automated purchases* tab
+  (`/activity?type=auto`) lists auto-allowed buys. Opening it marks them as seen, and the marker
+  is saved on your account.
+- **Settings**: theme (match device, light or dark, saved per browser), push notifications and
+  sign out.
+
 ## Tests
 
 ```bash
@@ -152,7 +210,7 @@ npm run typecheck
 ```
 
 - `packages/core/test/unit`: the pure engine, cart hash, classifier, budget, trust and security
-  helpers. Includes every edge case from the brief (§12).
+  helpers, including the policy edge cases.
 - `packages/core/test/integration`: the full flow against a real database and the mock issuer
   (request → decide → approve → issue → charge → reconcile → refund), plus freeze, expiry,
   concurrency, append-only audit, and "card number never stored".
@@ -295,15 +353,13 @@ curl -s -X POST localhost:4000/dev/simulate-charge -H 'content-type: application
 
 ## Decisions
 
-Defaults I picked where the brief left room. Change any of them freely.
+Design choices and their defaults. All of them can be changed.
 
-- **No upfront questions.** The brief asks for questions before coding, but I was asked to build
-  everything except the frontend. I used the brief's own defaults: US / USD, mock issuer behind a
-  clean interface, REST + MCP both in the MVP, and the suggested stack. Hosting is unspecified;
-  everything is Web-standard `Request → Response` and runs on Vercel / any Node host (see notes
-  below).
+- **Scope**: US / USD, with card issuers (mock, Privacy.com, Stripe Issuing) behind one
+  `CardIssuer` interface and both REST and MCP for agents. Everything is Web-standard
+  `Request → Response`, so it runs on Vercel or any Node host (see the hosting notes below).
 - **Money** is integer cents in the database and services. Policies are written in dollars
-  (as in the brief's example) and converted with rounding to the cent.
+  and converted with rounding to the cent.
 - **Rolling windows**: `per_day` = last 24h, `per_week` = last 7 days, `per_month` = last 30 days.
 - **Order splitting** → `needs_approval` (not deny): same-store requests within
   `limits.split_window_minutes` (default 60) are summed. If the sum exceeds the per-order limit
@@ -328,8 +384,8 @@ Defaults I picked where the brief left room. Change any of them freely.
   round up to $5 and never exceed the per-order limit. Dismissed suggestions are not re-offered.
 - **Credential delivery**: issued lazily on the first `get_purchase_status` after approval, so
   "approval expired before use" and "frozen between approval and issuance" are natural states.
-  Auto-allowed requests return `approved` and the card comes from the next status call (as in
-  the brief). A lost card can't be re-shown: cancel and re-request.
+  Auto-allowed requests return `approved` and the card comes from the next status call.
+  A lost card can't be re-shown: cancel and re-request.
 - **A failed checkout** reported via `report_purchase_result` cancels the card.
 - **Pending approvals lapse** after 24h (`PENDING_TTL_MINUTES`).
 - **API keys** are `aw_` + 32 random bytes. They're stored as SHA-256 (fine for high-entropy
@@ -363,7 +419,7 @@ Defaults I picked where the brief left room. Change any of them freely.
 - Stripe's synchronous authorization webhook must answer within 2 seconds. Keep the webhook
   route warm and the database close to the function region.
 
-## Open items / things I'm unsure about
+## Known limitations
 
 - Privacy.com has no real-time authorization hook for this kind of account: charges are checked
   right after they happen (from its webhook), and a mismatch closes the card. The single-use card
@@ -378,3 +434,4 @@ Defaults I picked where the brief left room. Change any of them freely.
 - Merchant-name matching for authorizations will need tuning with real descriptors.
 - The mock issuer is in-memory: fine for dev and tests, not shared across processes.
 - No LLM classifier implementation yet. Items the rules don't know go to human approval.
+- `npm run db:up` / `db:down` don't work on Windows (see [Windows](#windows)).
