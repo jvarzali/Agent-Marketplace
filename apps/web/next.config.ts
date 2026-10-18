@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
   // Pin tracing to the monorepo root so a stray lockfile higher up isn't picked.
   outputFileTracingRoot: root,
   // The backend packages ship TypeScript source.
-  transpilePackages: ["@agent-wallet/core", "@agent-wallet/db", "@agent-wallet/api", "@agent-wallet/mcp"],
+  transpilePackages: ["@paysafe/core", "@paysafe/db", "@paysafe/api", "@paysafe/mcp"],
   // Keep the database driver and the browser driver (card filling) out of the bundle.
   serverExternalPackages: ["pg", "@prisma/adapter-pg", "playwright-core"],
 };

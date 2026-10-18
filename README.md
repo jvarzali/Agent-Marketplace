@@ -1,4 +1,4 @@
-# Agent Wallet
+# PaySafe
 
 **Spending guardrails for AI agents.** Users set rules for each of their agents (where it can
 shop, what it can buy, how much, and when a human must approve). Agents ask this service for
@@ -18,7 +18,7 @@ Human ──chat──▶ Agent (Claude, ChatGPT, …)
          agent                 human
 ```
 
-> The earlier marketplace concept doc now lives in [`docs/agentmart-vision.md`](docs/agentmart-vision.md).
+> The earlier marketplace concept doc now lives in [`docs/paysafe-vision.md`](docs/paysafe-vision.md).
 
 ## Status
 
@@ -70,7 +70,7 @@ npm run dev                     # dashboard + agent API + MCP on http://localhos
 ```
 
 Set `AUTH_SECRET` in `.env` (`npx auth secret`). Sign in at http://localhost:3000 as
-`demo@agentwallet.dev`; without `RESEND_API_KEY` the sign-in link is printed in the `npm run dev`
+`demo@paysafe.dev`; without `RESEND_API_KEY` the sign-in link is printed in the `npm run dev`
 log. `npm run dev:api` still starts the standalone agent API on :4000, which is the only place
 the dev-only charge simulator lives.
 
@@ -144,7 +144,7 @@ The demo store also works with `CARD_ISSUER="mock"`, with no Stripe account at a
 ## Tests
 
 ```bash
-npm run db:up        # integration tests need Postgres (TEST_DATABASE_URL, default …/agent_wallet_test)
+npm run db:up        # integration tests need Postgres (TEST_DATABASE_URL, default …/paysafe_test)
 npm test             # all packages
 npm run typecheck
 ```
@@ -174,7 +174,7 @@ or `:4000` with the standalone `npm run dev:api` server), authenticated with the
 **Claude Code:**
 
 ```bash
-claude mcp add --transport http agent-wallet http://localhost:3000/api/mcp \
+claude mcp add --transport http paysafe http://localhost:3000/api/mcp \
   --header "Authorization: Bearer aw_your_agent_key"
 ```
 
@@ -183,7 +183,7 @@ claude mcp add --transport http agent-wallet http://localhost:3000/api/mcp \
 ```json
 {
   "mcpServers": {
-    "agent-wallet": {
+    "paysafe": {
       "type": "http",
       "url": "https://your-app.example.com/api/mcp",
       "headers": { "Authorization": "Bearer aw_your_agent_key" }
@@ -199,12 +199,12 @@ Runs the server as a local process with direct database access. Useful for devel
 ```json
 {
   "mcpServers": {
-    "agent-wallet": {
+    "paysafe": {
       "command": "npx",
-      "args": ["tsx", "/absolute/path/to/Agent-Marketplace/packages/mcp/src/stdio.ts"],
+      "args": ["tsx", "/absolute/path/to/paysafe/packages/mcp/src/stdio.ts"],
       "env": {
-        "AGENT_WALLET_API_KEY": "aw_your_agent_key",
-        "DATABASE_URL": "postgresql://postgres@localhost:54329/agent_wallet"
+        "PAYSAFE_API_KEY": "aw_your_agent_key",
+        "DATABASE_URL": "postgresql://postgres@localhost:54329/paysafe"
       }
     }
   }

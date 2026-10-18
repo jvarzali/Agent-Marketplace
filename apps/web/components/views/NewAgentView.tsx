@@ -28,7 +28,7 @@ export function NewAgentView() {
     ? JSON.stringify(
         {
           mcpServers: {
-            agentmart: {
+            paysafe: {
               type: "http",
               url: mcpUrl,
               headers: { Authorization: `Bearer ${created.apiKey}` },
@@ -142,7 +142,7 @@ export function NewAgentView() {
       {step === 2 && created && (
         <div className="ledger stack">
           <div className="banner banner--hold">
-            This key is shown once. AgentMart only keeps a scrambled copy, so if you lose it you&rsquo;ll need a new one.
+            This key is shown once. PaySafe only keeps a scrambled copy, so if you lose it you&rsquo;ll need a new one.
           </div>
           <CopyField label="API key" value={created.apiKey} />
 
@@ -162,7 +162,7 @@ export function NewAgentView() {
               <CopyField
                 label="Claude Code"
                 multiline
-                value={`claude mcp add --transport http agentmart ${mcpUrl} \\\n  --header "Authorization: Bearer ${created.apiKey}"`}
+                value={`claude mcp add --transport http paysafe ${mcpUrl} \\\n  --header "Authorization: Bearer ${created.apiKey}"`}
               />
               <p>For Claude Desktop or another client that takes a JSON config, add this and restart it:</p>
               <CopyField label="MCP server config" value={mcpConfig} multiline />
@@ -170,7 +170,7 @@ export function NewAgentView() {
           ) : (
             <>
               <p>
-                Add AgentMart as a remote MCP server at <code>{mcpUrl}</code>, sending the key as a bearer token. In a
+                Add PaySafe as a remote MCP server at <code>{mcpUrl}</code>, sending the key as a bearer token. In a
                 client that takes a JSON config:
               </p>
               <CopyField label="MCP server config" value={mcpConfig} multiline />

@@ -90,7 +90,7 @@ export class PrivacyCardIssuer implements CardIssuer {
     const spendLimit = Math.ceil(p.amountLimitCents / 100) * 100;
     const card = await this.request<PrivacyCard>("POST", "/cards", {
       type: this.opts.cardType ?? "SINGLE_USE",
-      memo: `Agent Wallet ${p.merchantDomain} ${p.purchaseRequestId}`.slice(0, 100),
+      memo: `PaySafe ${p.merchantDomain} ${p.purchaseRequestId}`.slice(0, 100),
       spend_limit: spendLimit,
       spend_limit_duration: "FOREVER",
       state: "OPEN",

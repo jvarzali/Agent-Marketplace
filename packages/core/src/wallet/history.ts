@@ -1,4 +1,4 @@
-import type { Db } from "@agent-wallet/db";
+import type { Db } from "@paysafe/db";
 import type { CartItem, NormalizedCart } from "../cart";
 import type { ItemClassification } from "../classifier/types";
 import type { HistoryEntry } from "../policy/engine";

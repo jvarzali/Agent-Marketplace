@@ -1,4 +1,4 @@
-import type { AuditEvent, Prisma, PurchaseRequest } from "@agent-wallet/db";
+import type { AuditEvent, Prisma, PurchaseRequest } from "@paysafe/db";
 import type { CartItem } from "../cart";
 import type { ItemClassification } from "../classifier/types";
 import { computeBudget, type Budget } from "../policy/budget";

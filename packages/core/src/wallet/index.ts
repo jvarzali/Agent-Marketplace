@@ -1,4 +1,4 @@
-import { getDb, type Db } from "@agent-wallet/db";
+import { getDb, type Db } from "@paysafe/db";
 import { CdpCardFiller, type CardFiller } from "../checkout/browser-fill";
 import { RuleBasedClassifier } from "../classifier/rules";
 import type { ItemClassifier } from "../classifier/types";
@@ -129,7 +129,7 @@ export function createWalletFromEnv(o: WalletOverrides = {}): Wallet {
   let email = o.email;
   if (!email) {
     const key = env("RESEND_API_KEY");
-    email = key ? new ResendEmailSender(key, env("EMAIL_FROM") ?? "Agent Wallet <wallet@example.com>") : new ConsoleEmailSender(logger);
+    email = key ? new ResendEmailSender(key, env("EMAIL_FROM") ?? "PaySafe <wallet@example.com>") : new ConsoleEmailSender(logger);
   }
 
   let push = o.push;

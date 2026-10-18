@@ -2,7 +2,7 @@ import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 
-export const TEST_DATABASE_URL = process.env["TEST_DATABASE_URL"] ?? "postgresql://postgres@localhost:54329/agent_wallet_test";
+export const TEST_DATABASE_URL = process.env["TEST_DATABASE_URL"] ?? "postgresql://postgres@localhost:54329/paysafe_test";
 
 /** Recreate the test schema from migrations once per run. */
 export default async function setup() {

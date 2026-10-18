@@ -4,7 +4,7 @@
 // email or push link (a GET) can never approve or change anything. The user id always comes
 // from the server-side session, never from the client.
 
-import { AGENT_CLIENTS, getWallet, WalletError, type AgentClient, type PolicyTemplateId } from "@agent-wallet/core";
+import { AGENT_CLIENTS, getWallet, WalletError, type AgentClient, type PolicyTemplateId } from "@paysafe/core";
 import { AuthError } from "next-auth";
 import { auth, signIn, signOut } from "@/auth";
 import { toSnapshot } from "@/lib/server/snapshot";

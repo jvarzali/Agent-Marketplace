@@ -1,5 +1,5 @@
 {
-  "name": "@agent-wallet/db",
+  "name": "@paysafe/db",
   "version": "0.1.0",
   "private": true,
   "type": "module",

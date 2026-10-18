@@ -1,5 +1,5 @@
 {
-  "name": "@agent-wallet/core",
+  "name": "@paysafe/core",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -10,7 +10,7 @@
     "./pure": "./src/pure.ts"
   },
   "dependencies": {
-    "@agent-wallet/db": "*",
+    "@paysafe/db": "*",
     "playwright-core": "^1.64.1",
     "stripe": "^23.0.0",
     "web-push": "^3.6.7",

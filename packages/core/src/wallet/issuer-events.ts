@@ -1,4 +1,4 @@
-import type { IssuedCredential, PurchaseRequest } from "@agent-wallet/db";
+import type { IssuedCredential, PurchaseRequest } from "@paysafe/db";
 import { domainMatches } from "../cart";
 import { formatMoney } from "../money";
 import { ALWAYS_DENIED_MCCS } from "../policy/schema";

@@ -1,5 +1,5 @@
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
-import { getWallet, type Wallet } from "@agent-wallet/core";
+import { getWallet, type Wallet } from "@paysafe/core";
 import { createMcpServer } from "./server";
 
 export function bearer(req: Request): string | null {
@@ -18,7 +18,7 @@ export async function handleMcpRequest(req: Request, wallet: Wallet = getWallet(
   if (!agent) {
     return new Response(JSON.stringify({ jsonrpc: "2.0", error: { code: -32001, message: "Invalid or revoked agent API key" }, id: null }), {
       status: 401,
-      headers: { "content-type": "application/json", "www-authenticate": 'Bearer realm="agent-wallet"' },
+      headers: { "content-type": "application/json", "www-authenticate": 'Bearer realm="paysafe"' },
     });
   }
   if (req.method !== "POST") {

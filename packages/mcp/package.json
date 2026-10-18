@@ -1,5 +1,5 @@
 {
-  "name": "@agent-wallet/mcp",
+  "name": "@paysafe/mcp",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,13 +9,13 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@agent-wallet/core": "*",
+    "@paysafe/core": "*",
     "dotenv": "^17",
     "@modelcontextprotocol/sdk": "^1.32.1",
     "zod": "^4.6.7"
   },
   "bin": {
-    "agent-wallet-mcp": "./src/stdio.ts"
+    "paysafe-mcp": "./src/stdio.ts"
   },
   "scripts": {
     "typecheck": "tsc -p .",

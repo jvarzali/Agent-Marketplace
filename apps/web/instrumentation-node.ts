@@ -11,7 +11,7 @@ config({ path: path.join(process.cwd(), "../../.env"), quiet: true });
 const g = globalThis as unknown as { __expirySweep?: ReturnType<typeof setInterval> };
 if (process.env.EXPIRY_SWEEP !== "off" && !g.__expirySweep) {
   g.__expirySweep = setInterval(() => {
-    import("@agent-wallet/core")
+    import("@paysafe/core")
       .then(({ getWallet }) => getWallet().expireStale())
       .catch((e) => console.error("expiry sweep failed", e instanceof Error ? e.message : e));
   }, 60_000);

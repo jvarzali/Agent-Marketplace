@@ -86,7 +86,7 @@ describe("StripeIssuingCardIssuer", () => {
     const ev = { type: "authorization.request" as const, eventId: "e", authorizationId: "a", providerCardId: "c", amountCents: 1, currency: "USD", merchant: { name: "", mcc: null, domain: null, country: null }, raw: null };
     const r = issuer.webhookResponse(ev, { approved: false, reason: "amount over approval" });
     expect(r.headers["stripe-version"]).toBe(Stripe.API_VERSION);
-    expect(JSON.parse(r.body)).toEqual({ approved: false, metadata: { agent_wallet_reason: "amount over approval" } });
+    expect(JSON.parse(r.body)).toEqual({ approved: false, metadata: { paysafe_reason: "amount over approval" } });
   });
 
   it("parses captures and refunds with positive amounts", async () => {

@@ -13,11 +13,11 @@ case "${1:-start}" in
     if ! pg_ctl -D "$PGDATA" status >/dev/null 2>&1; then
       pg_ctl -D "$PGDATA" -o "-p $PORT -k $PGDATA" -l "$PGDATA/server.log" -w start >/dev/null
     fi
-    for db in agent_wallet agent_wallet_test; do
+    for db in paysafe paysafe_test; do
       psql -h localhost -p "$PORT" -U postgres -tc "SELECT 1 FROM pg_database WHERE datname='$db'" | grep -q 1 \
         || psql -h localhost -p "$PORT" -U postgres -c "CREATE DATABASE $db" >/dev/null
     done
-    echo "postgres running on localhost:$PORT (databases: agent_wallet, agent_wallet_test)"
+    echo "postgres running on localhost:$PORT (databases: paysafe, paysafe_test)"
     ;;
   stop)
     pg_ctl -D "$PGDATA" stop >/dev/null && echo "stopped"

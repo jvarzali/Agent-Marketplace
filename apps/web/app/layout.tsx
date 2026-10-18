@@ -7,7 +7,7 @@ const sans = Inter({ subsets: ["latin"], variable: "--font-sans", display: "swap
 const mono = Spline_Sans_Mono({ subsets: ["latin"], variable: "--font-receipt", display: "swap" });
 
 export const metadata: Metadata = {
-  title: { default: "AgentMart", template: "%s | AgentMart" },
+  title: { default: "PaySafe", template: "%s | PaySafe" },
   description: "Set what your AI agents can buy, approve purchases, and freeze spending instantly.",
 };
 

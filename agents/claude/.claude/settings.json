@@ -1,6 +1,6 @@
 {
   "permissions": {
-    "allow": ["mcp__agentwallet", "mcp__playwright"],
+    "allow": ["mcp__paysafe", "mcp__playwright"],
     "deny": [
       "Bash", "Read", "Edit", "Write", "NotebookEdit", "Glob", "Grep", "WebFetch", "WebSearch", "Agent", "Task",
       "mcp__claude-in-chrome",

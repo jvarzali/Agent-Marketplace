@@ -12,10 +12,10 @@ providers:
 GOOSE_MODE: "smart_approve"
 
 extensions:
-  # Agent Wallet: the guardrail. The agent's only way to pay.
-  agentwallet:
+  # PaySafe: the guardrail. The agent's only way to pay.
+  paysafe:
     type: streamable_http
-    name: agentwallet
+    name: paysafe
     enabled: true
     uri: http://localhost:3000/api/mcp
     headers:

@@ -7,7 +7,7 @@
  *   npm run db:seed            (uses DATABASE_URL)
  */
 import { config as loadEnv } from "dotenv";
-import { createDb } from "@agent-wallet/db";
+import { createDb } from "@paysafe/db";
 import { MockCardIssuer } from "../src/issuer/mock";
 import { silentLogger } from "../src/logger";
 import { ConsoleEmailSender, ConsolePushSender } from "../src/notify/senders";
@@ -19,7 +19,7 @@ import { createWallet, type AuthedAgent } from "../src/wallet/index";
 // The monorepo keeps one .env at its root; a package-local .env (if any) wins.
 loadEnv({ path: [".env", new URL("../../../.env", import.meta.url).pathname], quiet: true });
 
-const DEMO_EMAIL = process.env["SEED_EMAIL"] ?? "demo@agentwallet.dev";
+const DEMO_EMAIL = process.env["SEED_EMAIL"] ?? "demo@paysafe.dev";
 const DAY = 86_400_000;
 
 async function main() {

@@ -1,5 +1,5 @@
-/* Agent Wallet push service worker. Serve as /sw.js from the web app.
- * Payload (from @agent-wallet/core WebPushSender): { title, body, url, tag, actions }.
+/* PaySafe push service worker. Serve as /sw.js from the web app.
+ * Payload (from @paysafe/core WebPushSender): { title, body, url, tag, actions }.
  * Approve/Deny buttons only OPEN the confirmation page; nothing is decided from a notification.
  */
 self.addEventListener("push", (event) => {
@@ -7,10 +7,10 @@ self.addEventListener("push", (event) => {
   try {
     data = event.data ? event.data.json() : {};
   } catch {
-    data = { title: "Agent Wallet", body: event.data ? event.data.text() : "" };
+    data = { title: "PaySafe", body: event.data ? event.data.text() : "" };
   }
   event.waitUntil(
-    self.registration.showNotification(data.title || "Agent Wallet", {
+    self.registration.showNotification(data.title || "PaySafe", {
       body: data.body || "",
       tag: data.tag,
       data: { url: data.url || "/" },

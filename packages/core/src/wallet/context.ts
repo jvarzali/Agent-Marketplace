@@ -1,4 +1,4 @@
-import type { Db, Prisma } from "@agent-wallet/db";
+import type { Db, Prisma } from "@paysafe/db";
 import type { CardFiller } from "../checkout/browser-fill";
 import type { ShopperProfile } from "./shopper";
 import type { ItemClassifier } from "../classifier/types";
@@ -79,7 +79,7 @@ const STATUS: Record<WalletErrorCode, number> = {
   issuer_error: 502,
 };
 
-const WALLET_ERROR: unique symbol = Symbol.for("agent-wallet.WalletError");
+const WALLET_ERROR: unique symbol = Symbol.for("paysafe.WalletError");
 
 /** Errors with messages written for whoever called (agent or human): what happened and what to do next. */
 export class WalletError extends Error {

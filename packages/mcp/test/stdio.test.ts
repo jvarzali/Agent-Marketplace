@@ -11,7 +11,7 @@ describe("stdio MCP server (as Claude Desktop / Claude Code would launch it)", (
     const transport = new StdioClientTransport({
       command: "npx",
       args: ["tsx", fileURLToPath(new URL("../src/stdio.ts", import.meta.url))],
-      env: { ...(process.env as Record<string, string>), DATABASE_URL: TEST_DATABASE_URL, AGENT_WALLET_API_KEY: t.apiKey, CARD_ISSUER: "mock" },
+      env: { ...(process.env as Record<string, string>), DATABASE_URL: TEST_DATABASE_URL, PAYSAFE_API_KEY: t.apiKey, CARD_ISSUER: "mock" },
       stderr: "pipe",
     });
     const client = new Client({ name: "test-client", version: "1.0.0" });
@@ -32,7 +32,7 @@ describe("stdio MCP server (as Claude Desktop / Claude Code would launch it)", (
     const transport = new StdioClientTransport({
       command: "npx",
       args: ["tsx", fileURLToPath(new URL("../src/stdio.ts", import.meta.url))],
-      env: { ...(process.env as Record<string, string>), DATABASE_URL: TEST_DATABASE_URL, AGENT_WALLET_API_KEY: "aw_invalidinvalidinvalid" },
+      env: { ...(process.env as Record<string, string>), DATABASE_URL: TEST_DATABASE_URL, PAYSAFE_API_KEY: "aw_invalidinvalidinvalid" },
       stderr: "pipe",
     });
     const client = new Client({ name: "test-client", version: "1.0.0" });

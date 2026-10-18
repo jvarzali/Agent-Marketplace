@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MOCK_SIGNATURE_HEADER } from "@agent-wallet/core";
+import { MOCK_SIGNATURE_HEADER } from "@paysafe/core";
 import { amazon, db, groceries, setup } from "../../core/test/integration/harness";
 import { createApiHandler } from "../src/handler";
 

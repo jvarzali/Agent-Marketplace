@@ -1,5 +1,5 @@
 {
-  "name": "@agent-wallet/api",
+  "name": "@paysafe/api",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -15,8 +15,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@agent-wallet/core": "*",
-    "@agent-wallet/mcp": "*",
+    "@paysafe/core": "*",
+    "@paysafe/mcp": "*",
     "dotenv": "^17"
   }
 }

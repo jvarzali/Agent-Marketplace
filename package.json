@@ -1,5 +1,5 @@
 {
-  "name": "agent-wallet",
+  "name": "paysafe",
   "private": true,
   "type": "module",
   "workspaces": [
@@ -11,15 +11,15 @@
     "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "db:generate": "npm run generate -w @agent-wallet/db",
-    "db:migrate": "npm run migrate -w @agent-wallet/db",
-    "db:seed": "npm run seed -w @agent-wallet/db",
-    "dev:api": "npm run dev -w @agent-wallet/api",
-    "mcp:stdio": "npm run start:stdio -w @agent-wallet/mcp",
-    "db:reset": "npm run reset -w @agent-wallet/db",
+    "db:generate": "npm run generate -w @paysafe/db",
+    "db:migrate": "npm run migrate -w @paysafe/db",
+    "db:seed": "npm run seed -w @paysafe/db",
+    "dev:api": "npm run dev -w @paysafe/api",
+    "mcp:stdio": "npm run start:stdio -w @paysafe/mcp",
+    "db:reset": "npm run reset -w @paysafe/db",
     "db:up": "./scripts/local-db.sh start",
     "db:down": "./scripts/local-db.sh stop",
-    "stripe:setup": "npm run stripe:setup -w @agent-wallet/core"
+    "stripe:setup": "npm run stripe:setup -w @paysafe/core"
   },
   "engines": {
     "node": ">=20.19"

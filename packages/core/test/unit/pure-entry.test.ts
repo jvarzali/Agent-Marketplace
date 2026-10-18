@@ -18,9 +18,9 @@ function runtimeImports(file: string, seen = new Set<string>(), bare = new Set<s
   return bare;
 }
 
-describe("@agent-wallet/core/pure", () => {
+describe("@paysafe/core/pure", () => {
   it("is browser-safe: no Node built-ins, database or provider SDKs at runtime", () => {
     const deps = [...runtimeImports(resolve(src, "pure.ts"))];
-    expect(deps.filter((d) => d.startsWith("node:") || d.startsWith("@agent-wallet/") || ["stripe", "web-push", "pg"].includes(d))).toEqual([]);
+    expect(deps.filter((d) => d.startsWith("node:") || d.startsWith("@paysafe/") || ["stripe", "web-push", "pg"].includes(d))).toEqual([]);
   });
 });

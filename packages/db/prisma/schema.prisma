@@ -1,4 +1,4 @@
-// Agent Wallet data model.
+// PaySafe data model.
 // Money is stored as integer minor units (cents) in *_cents columns.
 // Full card numbers / CVCs are NEVER stored: only the provider card id and last4.
 

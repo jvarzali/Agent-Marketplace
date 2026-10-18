@@ -1,5 +1,5 @@
 /**
- * Prepares a Stripe test-mode account for Agent Wallet:
+ * Prepares a Stripe test-mode account for PaySafe:
  *  1. checks STRIPE_SECRET_KEY is a test key and that Issuing is turned on,
  *  2. creates the cardholder every card is issued to (or checks the existing one),
  *  3. writes STRIPE_ISSUING_CARDHOLDER_ID (and CARD_ISSUER="stripe") into the root .env,
@@ -98,7 +98,7 @@ async function main() {
         dob: { day: 1, month: 1, year: 1990 },
         card_issuing: { user_terms_acceptance: { date: Math.floor(Date.now() / 1000), ip: "127.0.0.1" } },
       },
-      metadata: { created_by: "agent-wallet stripe:setup" },
+      metadata: { created_by: "paysafe stripe:setup" },
     });
     cardholderId = ch.id;
     saveEnv("STRIPE_ISSUING_CARDHOLDER_ID", ch.id);

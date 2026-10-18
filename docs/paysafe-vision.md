@@ -1,4 +1,4 @@
-# AgentMart (temp name)
+# PaySafe (temp name)
 
 > A marketplace where AI agents discover, compare, and buy products and services on behalf of the humans (and businesses) they work for.
 
@@ -8,7 +8,7 @@
 
 Today's online stores are built for people: visual layouts, persuasive copy, checkout flows with CAPTCHAs, and pages that change constantly. AI agents can scrape and click through them, but it's slow, brittle, and hard to trust.
 
-AgentMart flips that. It's a storefront designed **agent-first**:
+PaySafe flips that. It's a storefront designed **agent-first**:
 
 - **Structured, machine-readable listings** instead of HTML pages to scrape
 - **A stable API / tool interface** agents can call directly
@@ -59,7 +59,7 @@ The goal: let an agent go from *"find me a 27-inch 4K monitor under $350 that sh
        │ approves (if needed)          │ search / compare / propose cart
        ▼                               ▼
  ┌──────────────────────────────────────────────┐
- │                 AgentMart API                │
+ │                 PaySafe API                │
  │  Catalog · Mandate engine · Checkout · Audit │
  └───────────────┬──────────────────────┬───────┘
                  │                      │
@@ -92,7 +92,7 @@ The goal: let an agent go from *"find me a 27-inch 4K monitor under $350 that sh
 | **Principal dashboard** | Manage agents, mandates, approvals, spending | Web app |
 
 ### Agent interface
-Agents should be able to use AgentMart in two ways:
+Agents should be able to use PaySafe in two ways:
 - **HTTP API** — documented with OpenAPI so any agent framework can call it
 - **Tool server (MCP)** — exposes the same capabilities as tools LLM-based agents can call directly
 
@@ -160,8 +160,8 @@ These guide every design decision:
 > Fill in once the stack is chosen.
 
 ```bash
-git clone https://github.com/<org>/agentmart.git
-cd agentmart
+git clone https://github.com/<org>/paysafe.git
+cd paysafe
 cp .env.example .env        # add payment processor test keys, DB URL
 make dev                    # start services locally
 make seed                   # load sample sellers and listings
@@ -174,7 +174,7 @@ Then point a sample agent at `http://localhost:<port>` (see `examples/`).
 ## Repository layout (proposed)
 
 ```
-agentmart/
+paysafe/
 ├── services/
 │   ├── catalog/
 │   ├── gateway/

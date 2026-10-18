@@ -1,5 +1,5 @@
-import { getWallet, WalletError, type AuthedAgent, type Wallet } from "@agent-wallet/core";
-import { bearer, handleMcpRequest } from "@agent-wallet/mcp";
+import { getWallet, WalletError, type AuthedAgent, type Wallet } from "@paysafe/core";
+import { bearer, handleMcpRequest } from "@paysafe/mcp";
 
 /**
  * Agent-facing REST API + issuer webhooks + cron, as a single Web-standard handler.

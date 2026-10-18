@@ -1,6 +1,6 @@
-# AgentMart dashboard (`apps/web`)
+# PaySafe dashboard (`apps/web`)
 
-The human-facing dashboard from `prompt.md` §9: approvals inbox, agents and freeze controls, the policy editor, the activity log, onboarding, and trust suggestions. It runs on the real backend (`@agent-wallet/core`) and also serves the agent-facing API.
+The human-facing dashboard from `prompt.md` §9: approvals inbox, agents and freeze controls, the policy editor, the activity log, onboarding, and trust suggestions. It runs on the real backend (`@paysafe/core`) and also serves the agent-facing API.
 
 ## Run it
 
@@ -9,7 +9,7 @@ The human-facing dashboard from `prompt.md` §9: approvals inbox, agents and fre
 npm run dev          # http://localhost:3000
 ```
 
-Sign in with your email. Without `RESEND_API_KEY` the sign-in link is printed in the terminal running `npm run dev`. The seed user is `demo@agentwallet.dev`.
+Sign in with your email. Without `RESEND_API_KEY` the sign-in link is printed in the terminal running `npm run dev`. The seed user is `demo@paysafe.dev`.
 
 ## How it's wired
 
@@ -17,7 +17,7 @@ Sign in with your email. Without `RESEND_API_KEY` the sign-in link is printed in
 - **Data:** the dashboard layout loads `wallet.owner.getDashboardSnapshot(userId)` on the server and `lib/server/snapshot.ts` maps it to the view models in `lib/types.ts` (dollars, labeled rule checks, one sentence per audit event).
 - **Mutations:** `lib/actions.ts` holds one Server Action per operation (approve/deny with the cart hash, freeze, unfreeze, freeze all, save policy, create agent, rotate key, accept/dismiss suggestions, push subscribe). Each takes the user id from the session and returns a fresh snapshot.
 - **`lib/store.tsx`** is what every view uses (`useStore()`). It applies action results, shows toasts for errors, and polls every 15 seconds so new requests from agents appear without a reload.
-- **Agent API:** `app/api/[...path]/route.ts` mounts `@agent-wallet/api`: REST at `/api/v1/*`, remote MCP at `/api/mcp`, card-issuer webhooks at `/api/webhooks/issuer`, and the expiry sweep at `/api/cron/expire`.
+- **Agent API:** `app/api/[...path]/route.ts` mounts `@paysafe/api`: REST at `/api/v1/*`, remote MCP at `/api/mcp`, card-issuer webhooks at `/api/webhooks/issuer`, and the expiry sweep at `/api/cron/expire`.
 - **Push:** the header's "Notify me" button registers `public/sw.js` and saves the subscription. It only shows when `VAPID_PUBLIC_KEY` is set.
 - `lib/policy.ts` turns a policy into plain-English sentences for the live preview. It doesn't evaluate rules: rule checks come from the backend's engine.
 

@@ -1,5 +1,5 @@
-import { getWallet } from "@agent-wallet/core";
-import { getDb } from "@agent-wallet/db";
+import { getWallet } from "@paysafe/core";
+import { getDb } from "@paysafe/db";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import NextAuth from "next-auth";
 
@@ -25,9 +25,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => ({
       async sendVerificationRequest({ identifier, url }) {
         await getWallet().deps.email.send({
           to: identifier,
-          subject: "Your AgentMart sign-in link",
-          text: `Sign in to AgentMart:\n${url}\n\nThe link works once and expires in 10 minutes. If you didn't ask for it, ignore this email.`,
-          html: `<p><a href="${escapeHtml(url)}">Sign in to AgentMart</a></p><p>The link works once and expires in 10 minutes. If you didn't ask for it, ignore this email.</p>`,
+          subject: "Your PaySafe sign-in link",
+          text: `Sign in to PaySafe:\n${url}\n\nThe link works once and expires in 10 minutes. If you didn't ask for it, ignore this email.`,
+          html: `<p><a href="${escapeHtml(url)}">Sign in to PaySafe</a></p><p>The link works once and expires in 10 minutes. If you didn't ask for it, ignore this email.</p>`,
         });
       },
     },

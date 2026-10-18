@@ -1,4 +1,4 @@
-import { getWallet, normalizeDomain, formatMoney, type TestChargeResult, type Wallet } from "@agent-wallet/core";
+import { getWallet, normalizeDomain, formatMoney, type TestChargeResult, type Wallet } from "@paysafe/core";
 
 /**
  * A tiny test store for trying the whole flow with test cards (CARD_ISSUER=mock, or Stripe in
@@ -154,7 +154,7 @@ export function createDemoStoreHandler(getW: () => Wallet = getWallet, basePath 
           result.reason === "card_not_found"
             ? "The card number, expiry or CVC is wrong, or the card is closed."
             : result.reason === "webhook_declined"
-              ? "The card's owner declined this charge (Agent Wallet: it doesn't match what was approved)."
+              ? "The card's owner declined this charge (PaySafe: it doesn't match what was approved)."
               : result.reason === "spending_controls"
                 ? "The charge is over this card's limit or outside what it may be used for."
                 : result.reason === "card_canceled" || result.reason === "card_used"

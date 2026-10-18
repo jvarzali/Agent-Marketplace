@@ -1,9 +1,9 @@
 import "server-only";
 
-import { formatMoney, type DashboardSnapshot, type RuleCheck as CoreRuleCheck } from "@agent-wallet/core";
+import { formatMoney, type DashboardSnapshot, type RuleCheck as CoreRuleCheck } from "@paysafe/core";
 import type { AuditEvent, AuditType, PurchaseRequest, RuleCheck, Snapshot } from "@/lib/types";
 
-// Turns @agent-wallet/core's dashboard snapshot into the view models the client renders.
+// Turns @paysafe/core's dashboard snapshot into the view models the client renders.
 // Presentation only: every rule was already evaluated by the backend.
 
 type CoreEvent = DashboardSnapshot["events"][number];

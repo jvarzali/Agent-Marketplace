@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { WalletError, type AuthedAgent, type Wallet } from "@agent-wallet/core";
+import { WalletError, type AuthedAgent, type Wallet } from "@paysafe/core";
 import { z } from "zod";
 
 const AUTONOMY = `Work on your own and finish the task. Don't ask the user to choose: pick the best option yourself (the item that best matches the request, in stock and well reviewed, at the best value that fits the rules; the usual or default size/color/variant when they didn't say; the cheapest standard shipping). Only stop for the user when a captcha, verification code or login appears, when the item can't be found, or when the wallet denies and nothing else fits the rules. When done, tell the user what you bought and why you chose it.`;
@@ -54,15 +54,15 @@ async function run<T>(fn: () => Promise<T>, summarize: (v: T) => string) {
 }
 
 /**
- * MCP server for one authenticated agent. All logic lives in @agent-wallet/core; this is only
+ * MCP server for one authenticated agent. All logic lives in @paysafe/core; this is only
  * the tool surface. Each tool re-reads agent state, so a freeze takes effect immediately.
  */
 export function createMcpServer(wallet: Wallet, agent: AuthedAgent): McpServer {
   const browser = wallet.deps.config.cardDelivery === "browser";
   const server = new McpServer(
-    { name: "agent-wallet", version: "0.1.0" },
+    { name: "paysafe", version: "0.1.0" },
     {
-      instructions: `This is the user's Agent Wallet: the only way you may pay for things on their behalf. Steps: (1) call get_my_policy and get_budget; (2) build the cart and go to the final checkout page, using get_shipping_details for the contact and shipping fields; (3) call request_purchase with the exact cart and total; (4) if it's pending_approval, call wait_for_decision and keep calling it until the status changes (don't ask the user anything or end your turn while waiting); (5) ${
+      instructions: `This is the user's PaySafe wallet: the only way you may pay for things on their behalf. Steps: (1) call get_my_policy and get_budget; (2) build the cart and go to the final checkout page, using get_shipping_details for the contact and shipping fields; (3) call request_purchase with the exact cart and total; (4) if it's pending_approval, call wait_for_decision and keep calling it until the status changes (don't ask the user anything or end your turn while waiting); (5) ${
         browser
           ? "when approved, open the payment step (choose credit/debit card) and call fill_payment_details: the wallet types the single-use card into the page itself, so you never see or type a card number; then place the order"
           : "when approved, get_purchase_status returns a single-use card exactly once: enter it as a new card and place the order (or call fill_payment_details to have the wallet type it in)"

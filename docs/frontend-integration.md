@@ -1,7 +1,7 @@
 # Frontend integration guide
 
 For whoever works on `apps/web` (the Next.js dashboard). The web app is a **thin layer**:
-authenticate the human, call `@agent-wallet/core`, render. No business rules in components or
+authenticate the human, call `@paysafe/core`, render. No business rules in components or
 route handlers.
 
 > **Status: wired.** Everything below is implemented in `apps/web`. Where to find it:
@@ -27,10 +27,10 @@ route handlers.
 
 ```json
 "dependencies": {
-  "@agent-wallet/core": "*",
-  "@agent-wallet/db": "*",
-  "@agent-wallet/api": "*",
-  "@agent-wallet/mcp": "*"
+  "@paysafe/core": "*",
+  "@paysafe/db": "*",
+  "@paysafe/api": "*",
+  "@paysafe/mcp": "*"
 }
 ```
 
@@ -39,13 +39,13 @@ the database driver on the server:
 
 ```ts
 const nextConfig = {
-  transpilePackages: ["@agent-wallet/core", "@agent-wallet/db", "@agent-wallet/api", "@agent-wallet/mcp"],
+  transpilePackages: ["@paysafe/core", "@paysafe/db", "@paysafe/api", "@paysafe/mcp"],
   serverExternalPackages: ["pg", "@prisma/adapter-pg"],
 };
 export default nextConfig;
 ```
 
-Use `@agent-wallet/core/pure` in **client components** (policy schema, plain-English policy
+Use `@paysafe/core/pure` in **client components** (policy schema, plain-English policy
 summary, templates, money formatting). It doesn't import the database. Everything else must
 be server-only (Server Components / Server Actions / route handlers).
 
@@ -55,7 +55,7 @@ One catch-all route serves all agent-facing endpoints:
 
 ```ts
 // apps/web/app/api/[...path]/route.ts
-import { createApiHandler } from "@agent-wallet/api";
+import { createApiHandler } from "@paysafe/api";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -79,7 +79,7 @@ snake_case via `@@map`; the adapter works with model names).
 
 ```ts
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { getDb } from "@agent-wallet/db";
+import { getDb } from "@paysafe/db";
 // NextAuth({ adapter: PrismaAdapter(getDb()), providers: [Resend({ ... })], ... })
 ```
 
@@ -90,7 +90,7 @@ from the request body or URL.
 ## 4. Calling the backend
 
 ```ts
-import { getWallet, WalletError } from "@agent-wallet/core";
+import { getWallet, WalletError } from "@paysafe/core";
 const wallet = getWallet(); // process singleton built from env
 ```
 
@@ -103,7 +103,7 @@ Zod issues in `.details` for per-field form errors.
 | Screen | Call |
 |---|---|
 | Sign up / sign in | Auth.js |
-| Pick a starter template | `policyTemplates(timezone)` from `@agent-wallet/core/pure` → `{ id, name, description, rules }` |
+| Pick a starter template | `policyTemplates(timezone)` from `@paysafe/core/pure` → `{ id, name, description, rules }` |
 | Create first agent | `wallet.owner.createAgent(userId, { name, client, template })` (`client`: `claude` \| `chatgpt` \| `custom`) → `{ agent, apiKey }`. **Show `apiKey` once**, with a copy button. It can't be retrieved again. |
 | Connection instructions | Show the MCP config snippets from the README (§ Connecting an agent) with the key and your `APP_URL` filled in. |
 
@@ -126,8 +126,8 @@ Zod issues in `.details` for per-field form errors.
 | Feature | Call |
 |---|---|
 | Load | `wallet.owner.getPolicy(userId, agentId)` → `{ version, rules, summary }` |
-| Live plain-English preview while editing | `describePolicy(rules)` from `@agent-wallet/core/pure` (client-side), or `wallet.owner.previewPolicy(rules)` |
-| Validate on the client | `safeParsePolicy(rules)` from `@agent-wallet/core/pure` |
+| Live plain-English preview while editing | `describePolicy(rules)` from `@paysafe/core/pure` (client-side), or `wallet.owner.previewPolicy(rules)` |
+| Validate on the client | `safeParsePolicy(rules)` from `@paysafe/core/pure` |
 | Save (creates a new version) | `wallet.owner.updatePolicy(userId, agentId, rules)` |
 | History | `wallet.owner.listPolicyVersions(userId, agentId)` |
 
@@ -189,6 +189,6 @@ Suggestions only. Nothing loosens a policy unless the user accepts.
 
 ## 5. Seed data
 
-`npm run db:seed` creates `demo@agentwallet.dev` with two agents, three weeks of history,
+`npm run db:seed` creates `demo@paysafe.dev` with two agents, three weeks of history,
 a trust suggestion, a security event, a refund and two live pending approvals. Sign in as that
 email (with the console email sender, the magic link prints in the server log).

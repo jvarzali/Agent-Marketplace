@@ -1,4 +1,4 @@
-import type { PurchaseRequest } from "@agent-wallet/db";
+import type { PurchaseRequest } from "@paysafe/db";
 import { z } from "zod";
 import { CardFillError } from "../checkout/browser-fill";
 import { cartHash, CartValidationError, normalizeCart, purchaseRequestInputSchema, type CartItem } from "../cart";

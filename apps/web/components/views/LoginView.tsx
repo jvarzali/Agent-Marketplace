@@ -13,7 +13,7 @@ export function LoginView({ callbackUrl, sent, error }: { callbackUrl: string; s
     <div className="login">
       <div className="login__card">
         <p className="brand">
-          AgentMart
+          PaySafe
         </p>
         {sent ? (
           <>

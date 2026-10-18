@@ -51,7 +51,7 @@ export function AppShell({ children, vapidPublicKey }: { children: React.ReactNo
     <div className="shell">
       <aside className="side" aria-label="Sidebar">
         <Link href="/" className="brand">
-          AgentMart
+          PaySafe
         </Link>
 
         <nav className="side__nav" aria-label="Main">
@@ -112,7 +112,7 @@ export function AppShell({ children, vapidPublicKey }: { children: React.ReactNo
       <div className="frame">
         <header className="bar">
           <Link href="/" className="brand brand--bar">
-            AgentMart
+            PaySafe
           </Link>
           <div className="bar__where">
             <span className="bar__section">{section}</span>

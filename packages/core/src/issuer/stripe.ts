@@ -233,7 +233,7 @@ export class StripeIssuingCardIssuer implements CardIssuer {
         status: 200,
         // Stripe requires the Stripe-Version header on synchronous authorization responses.
         headers: { "content-type": "application/json", "stripe-version": Stripe.API_VERSION },
-        body: JSON.stringify({ approved: decision?.approved ?? false, metadata: { agent_wallet_reason: (decision?.reason ?? "").slice(0, 400) } }),
+        body: JSON.stringify({ approved: decision?.approved ?? false, metadata: { paysafe_reason: (decision?.reason ?? "").slice(0, 400) } }),
       };
     }
     return { status: 200, headers: { "content-type": "application/json" }, body: JSON.stringify({ received: true }) };

@@ -1,4 +1,4 @@
-import { ALWAYS_DENIED_CATEGORIES, DEFAULT_DENIED_CATEGORIES, type PolicyTemplateId } from "@agent-wallet/core/pure";
+import { ALWAYS_DENIED_CATEGORIES, DEFAULT_DENIED_CATEGORIES, type PolicyTemplateId } from "@paysafe/core/pure";
 import { categoryName, money } from "./format";
 import type { Category, Policy } from "./types";
 

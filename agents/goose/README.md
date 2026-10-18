@@ -1,11 +1,11 @@
 # Shopping agent: Goose + Gemini (free) + a real browser
 
-A free, open-source agent that shops in a real browser and can only pay through Agent Wallet.
+A free, open-source agent that shops in a real browser and can only pay through PaySafe.
 
 - **Goose** (Block, open source) is the agent.
 - **Gemini** via a free Google AI Studio key is the model.
 - **Playwright MCP** drives a real Chrome (`agents/browser/start-chrome.sh`).
-- **Agent Wallet** (`/api/mcp`) is the only way it can pay: your rules and approvals, then a
+- **PaySafe** (`/api/mcp`) is the only way it can pay: your rules and approvals, then a
   single-use card capped at what you approved. With `CARD_DELIVERY="browser"` in `.env`, the
   wallet types the card into the checkout page itself (`fill_payment_details`), so the model
   never sees the number.
@@ -69,7 +69,7 @@ that charges more than you approved.
 ```
 
 If `~/.config/goose/config.yaml` already has `extensions:` or a provider, merge the
-`agentwallet` and `playwright` entries by hand instead of appending. `config.example.yaml` shows
+`paysafe` and `playwright` entries by hand instead of appending. `config.example.yaml` shows
 the full shape.
 
 ## 4. Start the browser
@@ -78,7 +78,7 @@ the full shape.
 ./agents/browser/start-chrome.sh      # leave it running while the agent shops
 ```
 
-It's Chrome with its own profile (`~/.agent-wallet/chrome-profile`), separate from your everyday
+It's Chrome with its own profile (`~/.paysafe/chrome-profile`), separate from your everyday
 browser, with card saving and autofill turned off. Log into stores there if you want, but keep
 **no saved cards, PayPal, Shop Pay or gift balance** on those store accounts. Otherwise the agent
 could pay without the wallet.

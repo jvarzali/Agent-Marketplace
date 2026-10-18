@@ -1,4 +1,4 @@
-import { getWallet } from "@agent-wallet/core";
+import { getWallet } from "@paysafe/core";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { AppShell } from "@/components/AppShell";

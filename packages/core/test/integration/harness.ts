@@ -1,4 +1,4 @@
-import { createDb } from "@agent-wallet/db";
+import { createDb } from "@paysafe/db";
 import { MockCardIssuer } from "../../src/issuer/mock";
 import { silentLogger } from "../../src/logger";
 import { ConsoleEmailSender, ConsolePushSender } from "../../src/notify/senders";

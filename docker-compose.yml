@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: agent_wallet
+      POSTGRES_DB: paysafe
     ports:
       - "54329:5432"
     volumes:

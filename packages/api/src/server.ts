@@ -4,7 +4,7 @@
  */
 import { config as loadEnv } from "dotenv";
 import { createServer } from "node:http";
-import { getWallet, MockCardIssuer } from "@agent-wallet/core";
+import { getWallet, MockCardIssuer } from "@paysafe/core";
 import { createApiHandler } from "./handler";
 
 // The monorepo keeps one .env at its root; a package-local .env (if any) wins.
@@ -51,5 +51,5 @@ createServer(async (req, res) => {
     res.end(e instanceof Error ? e.message : "error");
   }
 }).listen(port, () => {
-  process.stdout.write(`agent-wallet API listening on http://localhost:${port}\n`);
+  process.stdout.write(`paysafe API listening on http://localhost:${port}\n`);
 });

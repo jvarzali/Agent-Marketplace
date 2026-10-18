@@ -1,7 +1,7 @@
-// Frontend view models. Built on the server from @agent-wallet/core's dashboard snapshot
+// Frontend view models. Built on the server from @paysafe/core's dashboard snapshot
 // (lib/server/snapshot.ts). Money here is in dollars; the backend works in cents.
 
-import type { PolicyRules } from "@agent-wallet/core/pure";
+import type { PolicyRules } from "@paysafe/core/pure";
 
 export type AgentStatus = "active" | "frozen";
 export type AgentClient = "claude" | "chatgpt" | "custom";
